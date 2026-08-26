@@ -1,10 +1,11 @@
 import secrets
 import string
 from datetime import datetime
+from typing import Optional, List
 
 from sqlalchemy import Enum as SAEnum
-from sqlalchemy import DateTime, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import DateTime, String, func, ForeignKey, JSON
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.models.enums import RoleEnum
@@ -33,7 +34,7 @@ def generate_user_id(role: RoleEnum) -> str:
 
 
 class User(Base):
-    """USERS table — plan.txt §7. Phase 1 only."""
+    """USERS table — Phase 1 + Phase 2."""
 
     __tablename__ = "users"
 
@@ -46,7 +47,8 @@ class User(Base):
     role: Mapped[RoleEnum] = mapped_column(
         SAEnum(RoleEnum, name="role_enum", native_enum=True), nullable=False
     )
-    phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    phone: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    domain_tags: Mapped[Optional[List[str]]] = mapped_column(JSON, nullable=True)  # For solvers
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -56,6 +58,18 @@ class User(Base):
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False,
+    )
+
+    # Relationships (Phase 2) - specify foreign_keys to resolve ambiguity
+    problems_submitted: Mapped[List["Problem"]] = relationship(
+        "Problem", 
+        foreign_keys="Problem.submitter_id",
+        back_populates="submitter"
+    )
+    solutions: Mapped[List["Solution"]] = relationship(
+        "Solution",
+        foreign_keys="Solution.author_id",
+        back_populates="author"
     )
 
     def __init__(self, **kwargs):
