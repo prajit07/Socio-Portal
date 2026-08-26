@@ -11,25 +11,6 @@ from app.core.database import Base
 from app.models.enums import RoleEnum, ProblemStatusEnum, ProblemPriorityEnum, SolutionStatusEnum
 
 
-ROLE_PREFIXES = {
-    RoleEnum.CITIZEN: "ctz",
-    RoleEnum.STUDENT: "stu",
-    RoleEnum.FACULTY: "fac",
-    RoleEnum.UNIVERSITY_ADMIN: "uad",
-    RoleEnum.INDUSTRY: "ind",
-    RoleEnum.GOVERNMENT: "gov",
-    RoleEnum.ADMIN: "adm",
-}
-
-
-def generate_user_id(role: RoleEnum) -> str:
-    """Generate a human-readable user ID with role prefix."""
-    prefix = ROLE_PREFIXES.get(role, "usr")
-    alphabet = string.ascii_lowercase + string.digits
-    random_part = ''.join(secrets.choice(alphabet) for _ in range(8))
-    return f"{prefix}_{random_part}"
-
-
 def generate_problem_id() -> str:
     """Generate a human-readable problem ID."""
     alphabet = string.ascii_lowercase + string.digits
@@ -42,43 +23,6 @@ def generate_solution_id() -> str:
     alphabet = string.ascii_lowercase + string.digits
     random_part = ''.join(secrets.choice(alphabet) for _ in range(10))
     return f"sol_{random_part}"
-
-
-class User(Base):
-    """USERS table — Phase 1."""
-
-    __tablename__ = "users"
-
-    id: Mapped[str] = mapped_column(
-        String(20), primary_key=True, default=lambda: generate_user_id(RoleEnum.CITIZEN)
-    )
-    name: Mapped[str] = mapped_column(String(120), nullable=False)
-    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
-    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
-    role: Mapped[RoleEnum] = mapped_column(
-        SAEnum(RoleEnum, name="role_enum", native_enum=True), nullable=False
-    )
-    phone: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
-    domain_tags: Mapped[Optional[list[str]]] = mapped_column(JSON, nullable=True)  # For solvers
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-        nullable=False,
-    )
-
-    # Relationships
-    problems_submitted: Mapped[list["Problem"]] = relationship(back_populates="submitter")
-    solutions: Mapped[list["Solution"]] = relationship(back_populates="author")
-
-    def __init__(self, **kwargs):
-        role = kwargs.get('role', RoleEnum.CITIZEN)
-        if 'id' not in kwargs:
-            kwargs['id'] = generate_user_id(role)
-        super().__init__(**kwargs)
 
 
 class Problem(Base):
