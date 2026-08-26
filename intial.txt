@@ -1,0 +1,78 @@
+https://chatgpt.com/c/6a8da9ce-10d0-83ee-b44a-76528d65d498
+
+        Citizen
+           │
+           ▼
+     Submit Problem
+           │
+           ▼
+┌─────────────────────┐
+│ Societal Innovation │
+│       Portal        │
+└──────────┬──────────┘
+           │
+           ▼
+   Problem Validation
+           │
+           ▼
+   AI Categorization
+     + Priority
+     + Duplicate Check
+           │
+           ▼
+  University Matching
+           │
+           ▼
+┌─────────────────────┐
+│   University Team   │
+│  + Faculty Mentor   │
+└──────────┬──────────┘
+           │
+           ▼
+   Solution Proposal
+           │
+           ▼
+┌─────────────────────┐
+│ Industry / Startup  │
+│       Partner       │
+└──────────┬──────────┘
+           │
+           ▼
+       Prototype
+           │
+           ▼
+      Pilot Test
+           │
+           ▼
+    Implementation
+           │
+           ▼
+     Social Impact
+
+
+
+
+
+
+the problems the user upload must have evidence(anything works ) even with the voice recording
+as voice recording can ease the work of the users
+
+but it makes us(team) to implement nlp and voice to text , to normalise the problem then we should tag the problem, then the problems are nudged to the solvers registered in the portal(HEI, Startups, even companies, etc..)
+
+
+
+
+
+the problem solvers are tagged with domains they wish to solve, and it is completely optional.
+and higher educational institute dont have any tags to register as, students and mentor can solve any problems they wish.
+
+
+
+for classification of the problems with tags mentioned, we can use llm api's for handling, (https://gemini.google.com/app/0813ff4ed1ff35d8)
+and for higher education institutes, there is no tag, i.e, they receive all the problems listed in the portal, so students can get any ideas reg. that problem
+
+
+later the ideas developed are posted in the same portal so that if any startups/ or any companies wish to develop that, then both the idea innovators and the companies collaborate and implement the idea to solve the problem
+gov. dashboard 
+
+and I wish to add map so, that the map shows if the societal problem is nearby the solvers. then the solver can visit the place to get more info abt the issue if it is a public problem
