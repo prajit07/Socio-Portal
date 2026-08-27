@@ -56,7 +56,7 @@ class Problem(Base):
     # Status and workflow
     status: Mapped[ProblemStatusEnum] = mapped_column(
         SAEnum(ProblemStatusEnum, name="problem_status_enum", native_enum=True),
-        default=ProblemStatusEnum.SUBMITTED,
+        default=ProblemStatusEnum.PENDING_VALIDATION,
         nullable=False
     )
     
@@ -80,6 +80,9 @@ class Problem(Base):
     
     # Relationships
     solutions: Mapped[list["Solution"]] = relationship(back_populates="problem", cascade="all, delete-orphan")
+    evidence: Mapped[list["Evidence"]] = relationship(back_populates="problem", cascade="all, delete-orphan")
+    problem_tags: Mapped[list["ProblemTag"]] = relationship(back_populates="problem", cascade="all, delete-orphan")
+    routing_logs: Mapped[list["RoutingLog"]] = relationship(back_populates="problem", cascade="all, delete-orphan")
 
 
 class Solution(Base):

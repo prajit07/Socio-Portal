@@ -37,13 +37,17 @@ def create_problem(
             detail="Only citizens can submit problems"
         )
     
+    from app.services.pipeline import run_analysis
+
     problem = Problem(
         **problem_in.model_dump(),
         submitter_id=current_user.id,
-        status=ProblemStatusEnum.SUBMITTED,
+        status=ProblemStatusEnum.PENDING_VALIDATION,
     )
     db.add(problem)
-    db.commit()
+    db.flush()
+    # Run AI pipeline: categorize -> prioritize -> dedupe -> route
+    run_analysis(db, problem)
     db.refresh(problem)
     return problem
 
@@ -67,14 +71,11 @@ def list_problems(
     if current_user.role == RoleEnum.CITIZEN:
         # Citizens see only their own problems
         query = query.filter(Problem.submitter_id == current_user.id)
-    elif current_user.role in [RoleEnum.STUDENT, RoleEnum.FACULTY, RoleEnum.UNIVERSITY_ADMIN]:
-        # HEI users see all problems (for browsing/selection)
+    elif current_user.role in [RoleEnum.STUDENT, RoleEnum.FACULTY, RoleEnum.UNIVERSITY_ADMIN, RoleEnum.GOVERNMENT, RoleEnum.ADMIN]:
+        # HEI / Gov / Admin see all problems (for browsing / oversight)
         pass
     elif current_user.role == RoleEnum.INDUSTRY:
-        # Industry sees problems assigned to them or all for browsing
-        pass
-    elif current_user.role == RoleEnum.GOVERNMENT:
-        # Government sees all problems
+        # Industry sees everything; UI can further filter by domain-tag match
         pass
     # Admin sees all
     
@@ -91,6 +92,12 @@ def list_problems(
         query = query.filter(Problem.assigned_to_id == assigned_to_id)
     
     problems = query.order_by(Problem.created_at.desc()).offset(skip).limit(limit).all()
+
+    # Industry: surface only problems whose AI tags match the industry's domain tags
+    if current_user.role == RoleEnum.INDUSTRY:
+        user_tags = set(current_user.domain_tags or [])
+        if user_tags:
+            problems = [p for p in problems if set(p.ai_tags or []) & user_tags]
     return problems
 
 
@@ -264,59 +271,3 @@ def update_solution(
     db.commit()
     db.refresh(solution)
     return solution
-
-
-# ==================== AI Categorization Endpoint (Mock) ====================
-
-@router.post("/{problem_id}/categorize", response_model=ProblemOut)
-def categorize_problem(
-    problem_id: str,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(RoleEnum.ADMIN, RoleEnum.GOVERNMENT, RoleEnum.UNIVERSITY_ADMIN, RoleEnum.FACULTY)),
-):
-    """AI categorization of problem (mock implementation)."""
-    problem = db.query(Problem).filter(Problem.id == problem_id).first()
-    if not problem:
-        raise HTTPException(status_code=404, detail="Problem not found")
-    
-    # Mock AI categorization based on tags/description
-    # In production, this would call an LLM API
-    mock_categories = {
-        "waste": "Waste Management",
-        "water": "Water & Sanitation",
-        "traffic": "Transportation",
-        "education": "Education",
-        "health": "Healthcare",
-        "energy": "Energy & Environment",
-        "agriculture": "Agriculture",
-        "housing": "Housing & Urban Development",
-    }
-    
-    text = (problem.description + " " + (problem.evidence_text or "") + " " + " ".join(problem.tags or [])).lower()
-    
-    ai_category = "General"
-    for keyword, category in mock_categories.items():
-        if keyword in text:
-            ai_category = category
-            break
-    
-    ai_tags = []
-    for keyword in mock_categories.keys():
-        if keyword in text:
-            ai_tags.append(keyword)
-    
-    # Priority based on keywords
-    priority = ProblemPriorityEnum.MEDIUM
-    if any(w in text for w in ["urgent", "critical", "emergency", "dangerous", "hazard"]):
-        priority = ProblemPriorityEnum.HIGH
-    if any(w in text for w in ["life threatening", "disaster", "catastrophe"]):
-        priority = ProblemPriorityEnum.CRITICAL
-    
-    problem.ai_category = ai_category
-    problem.ai_tags = ai_tags
-    problem.ai_priority = priority
-    problem.status = ProblemStatusEnum.CATEGORIZED
-    
-    db.commit()
-    db.refresh(problem)
-    return problem

@@ -1,0 +1,64 @@
+{
+  "categories": [
+    {
+      "id": "water_sanitation",
+      "name": "Water & Sanitation",
+      "keywords": ["water", "sanitation", "sewage", "drainage", "toilet", "drinking", "contamination", "leak", "flood"]
+    },
+    {
+      "id": "waste_management",
+      "name": "Waste Management",
+      "keywords": ["garbage", "waste", "trash", "litter", "dumping", "recycling", "compost", "bins"]
+    },
+    {
+      "id": "health",
+      "name": "Health & Healthcare",
+      "keywords": ["health", "hospital", "clinic", "disease", "medical", "medicine", "doctor", "outbreak", "mosquito", "dengue"]
+    },
+    {
+      "id": "education",
+      "name": "Education",
+      "keywords": ["school", "education", "student", "teacher", "classroom", "learning", "literacy", "college"]
+    },
+    {
+      "id": "transportation",
+      "name": "Transportation & Mobility",
+      "keywords": ["road", "traffic", "transport", "bus", "pothole", "bridge", "commute", "parking", "signal"]
+    },
+    {
+      "id": "energy_environment",
+      "name": "Energy & Environment",
+      "keywords": ["energy", "power", "electricity", "solar", "outage", "pollution", "emission", "climate", "tree", "air"]
+    },
+    {
+      "id": "agriculture",
+      "name": "Agriculture & Rural",
+      "keywords": ["farm", "agriculture", "crop", "farmer", "irrigation", "soil", "rural", "livestock", "fishery"]
+    },
+    {
+      "id": "housing_urban",
+      "name": "Housing & Urban Development",
+      "keywords": ["housing", "slum", "building", "construction", "encroachment", "urban", "settlement", "shelter"]
+    },
+    {
+      "id": "digital_governance",
+      "name": "Digital Governance",
+      "keywords": ["digital", "e-governance", "portal", "online", "certificate", "grievance", "service", "corruption"]
+    },
+    {
+      "id": "livelihood",
+      "name": "Livelihood & Employment",
+      "keywords": ["employment", "job", "livelihood", "skill", "income", "entrepreneur", "self-help", "shg"]
+    },
+    {
+      "id": "disaster",
+      "name": "Disaster Management",
+      "keywords": ["disaster", "flood", "earthquake", "cyclone", "fire", "emergency", "relief", "rescue", "landslide"]
+    },
+    {
+      "id": "public_safety",
+      "name": "Public Safety & Security",
+      "keywords": ["safety", "crime", "theft", "harassment", "police", "violence", "streetlight", "cctv", "accident"]
+    }
+  ]
+}

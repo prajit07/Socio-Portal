@@ -1,0 +1,511 @@
+# SOCIETAL INNOVATION COLLABORATION PORTAL
+## Complete Development Plan — Stack: PostgreSQL + FastAPI + React.js
+
+================================================================================
+## 1. PROJECT OVERVIEW
+================================================================================
+
+A platform connecting four actor types:
+1. CITIZEN (Problem Uploader) — individuals, community groups, PRIs, ULBs, govt depts
+2. UNIVERSITY (HEI - Higher Educational Institution) — students + faculty mentors
+3. INDUSTRY / STARTUP / COMPANY — mentoring, co-development, funding, prototyping
+4. GOVERNMENT — oversight dashboard, analytics, monitoring
+
+Core loop:
+Citizen submits problem (+evidence: photo/video/voice/text/location)
+  -> AI validation, categorization, priority scoring, duplicate detection
+  -> Routed/nudged to registered solvers (tag-matched, except HEIs who see all)
+  -> University team + faculty mentor forms, produces solution proposal
+  -> Proposal posted back on portal -> Industry/Startup can pick it up
+  -> Collaboration -> Prototype -> Pilot -> Implementation -> Social Impact
+  -> Government dashboard tracks everything end-to-end
+
+================================================================================
+## 2. ACTORS, ROLES & PERMISSIONS
+================================================================================
+
+| Role            | Can Do                                                                 |
+|-----------------|-------------------------------------------------------------------------|
+| Citizen         | Register/login, submit problem w/ evidence (text/image/video/voice/geo), track status, view public problems on map, comment/upvote |
+| University Admin| Register institute, manage student/mentor accounts                     |
+| Student         | Join project team, view ALL problems (no domain tag restriction), submit solution proposal, update proposal status |
+| Faculty Mentor  | Approve/guide team, co-sign proposal, manage milestones                |
+| Industry/Startup| Register with optional domain tags, receive tag-matched problems + posted solutions, express interest, fund/co-develop, update prototype/pilot status |
+| Government      | View analytics dashboard, district/sector-wise stats, approve/monitor, no direct problem submission |
+| System/AI Agent | Auto-categorize, tag, detect duplicates, transcribe voice->text, prioritize, route |
+
+Tag rule:
+- Industry/Startup: tags are OPTIONAL (if none, they see all problems too — configurable)
+- University/HEI: NO tags at all — they always receive/see every problem so students can explore freely
+
+================================================================================
+## 3. HIGH-LEVEL SYSTEM FLOW (matches your ASCII diagram)
+================================================================================
+
+Citizen
+  -> Submit Problem (text/image/video/voice + geolocation)
+  -> Societal Innovation Portal (API ingestion)
+  -> Problem Validation (spam/completeness check)
+  -> AI Categorization + Priority Scoring + Duplicate Check (LLM API call)
+  -> Routing Engine: tag match -> University Matching (all HEIs) + Industry Matching (tag-based)
+  -> University Team + Faculty Mentor formed
+  -> Solution Proposal drafted & submitted
+  -> Industry/Startup Partner reviews proposals feed
+  -> Collaboration -> Prototype -> Pilot Test -> Implementation -> Social Impact logged
+  -> Government Dashboard aggregates every stage in real time
+
+================================================================================
+## 4. PAGES / SCREENS (per actor) — for React.js frontend
+================================================================================
+
+### 4.1 PUBLIC / SHARED PAGES
+- /                         Landing page (mission, stats ticker, CTA)
+- /login
+- /register (role selector: Citizen / University / Industry / Govt)
+- /forgot-password
+- /problems/map              Public Google Map view of problems (pins = location, cluster by district)
+- /problems/:id               Public problem detail (if marked public)
+- /about, /faq, /contact
+
+### 4.2 CITIZEN PORTAL
+- /citizen/dashboard           My submitted problems + status timeline
+- /citizen/submit-problem      Multi-step form:
+                                Step 1: Title + Description
+                                Step 2: Evidence upload (image/video/audio/doc) — with voice recorder widget
+                                Step 3: Location picker (Google Maps autocomplete + pin drop)
+                                Step 4: Category preview (AI-suggested, editable) + Review + Submit
+- /citizen/problem/:id          Track single problem: status, assigned university, proposal, updates, comments
+- /citizen/profile
+
+### 4.3 UNIVERSITY / HEI PORTAL
+- /university/dashboard         All incoming problems feed (unfiltered, since HEIs get everything), filters by domain/urgency/district
+- /university/problem/:id       Problem detail + "Form Team" action
+- /university/teams              List of my project teams
+- /university/teams/new          Create team: add students, assign faculty mentor
+- /university/teams/:id          Team workspace: milestones, docs, chat
+- /university/proposal/new/:problemId   Solution proposal editor (rich text + attachments + budget/timeline)
+- /university/proposals          My submitted proposals + status (Draft/Submitted/UnderReview/Accepted/Rejected)
+- /university/mentor/approvals   Faculty-only: pending team/proposal approvals
+- /university/profile
+
+### 4.4 INDUSTRY / STARTUP PORTAL
+- /industry/dashboard            Feed: tag-matched problems + posted solution proposals from universities
+- /industry/domain-tags          Manage optional domain interest tags
+- /industry/proposal/:id         View proposal, "Express Interest" / "Fund" / "Co-Develop" actions
+- /industry/collaborations        Active collaborations w/ status: Prototype / Pilot / Implementation
+- /industry/collaboration/:id     Workspace: milestones, deliverables, IP docs, testing outcomes
+- /industry/map                  Map of problems near their registered location(s)
+- /industry/profile
+
+### 4.5 GOVERNMENT DASHBOARD
+- /gov/dashboard                 KPI cards: total problems, resolved, active collaborations, patents, startups created
+- /gov/analytics                 Charts: district-wise, sector-wise, thematic trends, completion rates
+- /gov/problems                  Full searchable/filterable table of all problems + status
+- /gov/universities               University participation leaderboard
+- /gov/industries                 Industry participation leaderboard
+- /gov/impact-reports             Social impact reports, exportable (PDF/CSV)
+- /gov/map                        Full heat-map of problems by district
+
+### 4.6 ADMIN / SYSTEM (internal)
+- /admin/users                   Manage all accounts, verify institutions/companies
+- /admin/moderation              Flagged/duplicate problem review queue
+- /admin/ai-config                LLM prompt/category taxonomy config
+- /admin/notifications            Broadcast/system messages
+
+================================================================================
+## 5. PAGE FLOW DIAGRAM (Actor Interaction)
+================================================================================
+
+```
+[Citizen]
+   |--submits--> [Problem Record: status=PENDING_VALIDATION]
+   |
+   v
+[AI Service] --validates--> [status=VALIDATED or REJECTED/DUPLICATE]
+   |
+   v
+[AI Service] --categorize/tag/priority-->
+   |
+   +--> broadcast to ALL [University/HEI Dashboards] (status=OPEN)
+   +--> broadcast to tag-matched [Industry Dashboards] (status=OPEN, informational)
+   |
+   v
+[University Student/Mentor] --forms team--> [Team Record]
+   |
+   v
+[University] --drafts--> [Proposal Record: status=DRAFT]
+   |
+   v
+[Faculty Mentor] --approves--> [Proposal: status=SUBMITTED]
+   |
+   v
+[Citizen] sees proposal on /citizen/problem/:id (notified)
+[Industry] sees proposal on /industry/dashboard feed
+   |
+   v
+[Industry] --expresses interest / funds--> [Collaboration Record created]
+   |
+   v
+[Collaboration] progresses: PROTOTYPE -> PILOT -> IMPLEMENTATION -> IMPACT_LOGGED
+   |         (each transition logged with docs/milestones, visible to Citizen + Gov)
+   v
+[Government Dashboard] aggregates all of the above in real time via analytics views
+```
+
+================================================================================
+## 6. DIRECTORY STRUCTURE
+================================================================================
+
+```
+societal-innovation-portal/
+├── backend/                          # FastAPI
+│   ├── app/
+│   │   ├── main.py                   # FastAPI app entrypoint
+│   │   ├── core/
+│   │   │   ├── config.py             # env settings (pydantic-settings)
+│   │   │   ├── security.py           # JWT auth, password hashing
+│   │   │   ├── database.py           # SQLAlchemy engine/session
+│   │   │   └── dependencies.py       # role-based access control deps
+│   │   ├── models/                   # SQLAlchemy ORM models
+│   │   │   ├── user.py
+│   │   │   ├── problem.py
+│   │   │   ├── evidence.py
+│   │   │   ├── university.py
+│   │   │   ├── team.py
+│   │   │   ├── proposal.py
+│   │   │   ├── industry.py
+│   │   │   ├── collaboration.py
+│   │   │   ├── milestone.py
+│   │   │   ├── tag.py
+│   │   │   ├── notification.py
+│   │   │   └── audit_log.py
+│   │   ├── schemas/                  # Pydantic request/response models
+│   │   │   ├── user.py
+│   │   │   ├── problem.py
+│   │   │   ├── proposal.py
+│   │   │   ├── collaboration.py
+│   │   │   └── analytics.py
+│   │   ├── api/
+│   │   │   └── v1/
+│   │   │       ├── router.py
+│   │   │       ├── auth.py
+│   │   │       ├── citizens.py
+│   │   │       ├── problems.py
+│   │   │       ├── evidence.py       # upload handling (image/video/audio)
+│   │   │       ├── universities.py
+│   │   │       ├── teams.py
+│   │   │       ├── proposals.py
+│   │   │       ├── industries.py
+│   │   │       ├── collaborations.py
+│   │   │       ├── government.py
+│   │   │       ├── analytics.py
+│   │   │       ├── notifications.py
+│   │   │       └── admin.py
+│   │   ├── services/
+│   │   │   ├── ai_categorization.py  # LLM API calls: categorize/tag/priority
+│   │   │   ├── duplicate_detection.py# embedding similarity search
+│   │   │   ├── voice_to_text.py      # STT via LLM/Whisper API
+│   │   │   ├── routing_engine.py     # matches problems -> solvers
+│   │   │   ├── notification_service.py
+│   │   │   ├── geocoding_service.py  # Google Maps Geocoding API wrapper
+│   │   │   └── storage_service.py    # S3/local file storage for evidence
+│   │   ├── ml/
+│   │   │   ├── prompts/
+│   │   │   │   ├── categorize_prompt.txt
+│   │   │   │   ├── priority_prompt.txt
+│   │   │   │   └── duplicate_prompt.txt
+│   │   │   └── taxonomy.json         # domain/category tag list
+│   │   ├── utils/
+│   │   │   ├── pagination.py
+│   │   │   └── validators.py
+│   │   └── tests/
+│   │       ├── test_auth.py
+│   │       ├── test_problems.py
+│   │       └── test_routing.py
+│   ├── alembic/                      # DB migrations
+│   │   ├── versions/
+│   │   └── env.py
+│   ├── requirements.txt
+│   ├── Dockerfile
+│   └── .env.example
+│
+├── frontend/                         # React.js
+│   ├── public/
+│   ├── src/
+│   │   ├── main.jsx
+│   │   ├── App.jsx
+│   │   ├── api/
+│   │   │   ├── axiosClient.js
+│   │   │   ├── problemsApi.js
+│   │   │   ├── proposalsApi.js
+│   │   │   ├── collaborationsApi.js
+│   │   │   └── analyticsApi.js
+│   │   ├── context/
+│   │   │   ├── AuthContext.jsx
+│   │   │   └── NotificationContext.jsx
+│   │   ├── components/
+│   │   │   ├── common/ (Navbar, Sidebar, Footer, Loader, ProtectedRoute)
+│   │   │   ├── forms/ (VoiceRecorder, EvidenceUploader, LocationPicker)
+│   │   │   ├── map/ (GoogleMapView, ProblemMarker, HeatmapLayer)
+│   │   │   └── charts/ (KPIChart, TrendChart, DistrictChart)
+│   │   ├── pages/
+│   │   │   ├── public/ (Landing, Login, Register, PublicMap)
+│   │   │   ├── citizen/ (Dashboard, SubmitProblem, ProblemDetail, Profile)
+│   │   │   ├── university/ (Dashboard, TeamWorkspace, ProposalEditor, MentorApprovals)
+│   │   │   ├── industry/ (Dashboard, CollaborationWorkspace, DomainTags)
+│   │   │   ├── government/ (Dashboard, Analytics, ImpactReports)
+│   │   │   └── admin/ (UserManagement, Moderation, AIConfig)
+│   │   ├── routes/
+│   │   │   └── AppRoutes.jsx         # role-based routing
+│   │   ├── hooks/
+│   │   │   ├── useAuth.js
+│   │   │   └── useGoogleMaps.js
+│   │   └── styles/
+│   ├── package.json
+│   ├── .env.example
+│   └── Dockerfile
+│
+├── docker-compose.yml                # postgres + backend + frontend
+├── docs/
+│   ├── ER_DIAGRAM.md
+│   ├── API_SPEC.md (or auto via FastAPI /docs)
+│   └── ARCHITECTURE.md
+└── README.md
+```
+
+================================================================================
+## 7. ER DIAGRAM (PostgreSQL) — described in entity/relationship form
+================================================================================
+
+```
+USERS
+ - id (PK, UUID)
+ - name
+ - email (unique)
+ - password_hash
+ - role (ENUM: citizen, university_admin, student, faculty, industry, government, admin)
+ - phone
+ - created_at, updated_at
+
+CITIZEN_PROFILES
+ - id (PK)
+ - user_id (FK -> USERS.id)
+ - address, district, state
+
+UNIVERSITIES
+ - id (PK)
+ - name, registration_no, address, district, state
+ - verified (bool)
+
+UNIVERSITY_MEMBERS
+ - id (PK)
+ - university_id (FK -> UNIVERSITIES.id)
+ - user_id (FK -> USERS.id)
+ - member_role (ENUM: student, faculty_mentor, admin)
+
+INDUSTRIES
+ - id (PK)
+ - name, type (ENUM: startup, msme, corporate, csr, research_institution, innovation_hub)
+ - registration_no, address, district, state, lat, lng
+ - verified (bool)
+
+INDUSTRY_TAGS
+ - id (PK)
+ - industry_id (FK -> INDUSTRIES.id)
+ - tag_id (FK -> TAGS.id)
+
+TAGS  (domain taxonomy: Agriculture, Health, Education, Water, Sanitation, Energy,
+       Transport, Digital Governance, Environment, Livelihood, etc.)
+ - id (PK)
+ - name, parent_tag_id (nullable, self-FK for hierarchy)
+
+PROBLEMS
+ - id (PK)
+ - citizen_id (FK -> USERS.id)
+ - title, description
+ - status (ENUM: pending_validation, validated, rejected, duplicate, open,
+            in_review, proposal_submitted, in_collaboration, prototype,
+            pilot, implemented, closed)
+ - priority_score (float, AI-generated)
+ - district, state, lat, lng
+ - is_public (bool)
+ - created_at, updated_at
+
+EVIDENCE
+ - id (PK)
+ - problem_id (FK -> PROBLEMS.id)
+ - type (ENUM: image, video, audio, document, text)
+ - file_url
+ - transcript (nullable, text — filled by voice-to-text service)
+ - uploaded_at
+
+PROBLEM_TAGS
+ - id (PK)
+ - problem_id (FK -> PROBLEMS.id)
+ - tag_id (FK -> TAGS.id)
+ - confidence_score (float, from AI categorization)
+
+PROBLEM_DUPLICATES
+ - id (PK)
+ - problem_id (FK -> PROBLEMS.id)
+ - duplicate_of_problem_id (FK -> PROBLEMS.id)
+ - similarity_score (float)
+
+ROUTING_LOG
+ - id (PK)
+ - problem_id (FK -> PROBLEMS.id)
+ - routed_to_type (ENUM: university, industry)
+ - routed_to_id (FK -> UNIVERSITIES.id or INDUSTRIES.id, polymorphic)
+ - routed_at
+
+TEAMS
+ - id (PK)
+ - problem_id (FK -> PROBLEMS.id)
+ - university_id (FK -> UNIVERSITIES.id)
+ - faculty_mentor_id (FK -> USERS.id)
+ - name
+ - created_at
+
+TEAM_MEMBERS
+ - id (PK)
+ - team_id (FK -> TEAMS.id)
+ - student_id (FK -> USERS.id)
+
+PROPOSALS
+ - id (PK)
+ - team_id (FK -> TEAMS.id)
+ - problem_id (FK -> PROBLEMS.id)
+ - title, description, budget_estimate, timeline_estimate
+ - status (ENUM: draft, submitted, under_review, accepted, rejected)
+ - submitted_at
+
+PROPOSAL_ATTACHMENTS
+ - id (PK)
+ - proposal_id (FK -> PROPOSALS.id)
+ - file_url, file_type
+
+COLLABORATIONS
+ - id (PK)
+ - proposal_id (FK -> PROPOSALS.id)
+ - industry_id (FK -> INDUSTRIES.id)
+ - stage (ENUM: interested, funding, prototype, pilot, implementation, impact_logged)
+ - started_at, updated_at
+
+MILESTONES
+ - id (PK)
+ - collaboration_id (FK -> COLLABORATIONS.id)
+ - title, description
+ - due_date, completed_at
+ - status (ENUM: pending, in_progress, completed, delayed)
+
+DELIVERABLES
+ - id (PK)
+ - milestone_id (FK -> MILESTONES.id)
+ - file_url, description
+
+IP_RECORDS
+ - id (PK)
+ - collaboration_id (FK -> COLLABORATIONS.id)
+ - type (ENUM: patent, copyright, trademark, trade_secret)
+ - status (ENUM: filed, granted, pending)
+ - reference_no
+
+SOCIAL_IMPACT_REPORTS
+ - id (PK)
+ - collaboration_id (FK -> COLLABORATIONS.id)
+ - beneficiaries_count
+ - impact_summary
+ - district, state
+ - reported_at
+
+NOTIFICATIONS
+ - id (PK)
+ - user_id (FK -> USERS.id)
+ - message, type
+ - is_read (bool)
+ - created_at
+
+AUDIT_LOG
+ - id (PK)
+ - user_id (FK -> USERS.id)
+ - action, entity_type, entity_id
+ - timestamp
+```
+
+Key relationships:
+- USERS 1--N PROBLEMS (as citizen)
+- PROBLEMS 1--N EVIDENCE
+- PROBLEMS N--N TAGS (via PROBLEM_TAGS)
+- PROBLEMS 1--N TEAMS (a problem can have multiple competing university teams)
+- TEAMS 1--1..N PROPOSALS
+- PROPOSALS 1--N COLLABORATIONS (one proposal, potentially multiple industry partners, or 1:1 if exclusive)
+- COLLABORATIONS 1--N MILESTONES 1--N DELIVERABLES
+- COLLABORATIONS 1--0..1 SOCIAL_IMPACT_REPORTS
+- INDUSTRIES N--N TAGS (via INDUSTRY_TAGS) — optional
+- UNIVERSITIES have NO tag relationship table (by design, per requirement)
+
+================================================================================
+## 8. AI / LLM INTEGRATION POINTS
+================================================================================
+
+1. Voice-to-Text: send audio evidence to an LLM/STT API (e.g., Whisper API or
+   Gemini audio understanding) -> store transcript in EVIDENCE.transcript
+2. Categorization + Tagging: send problem title+description+transcript to LLM
+   with taxonomy.json as context -> return top-N tags + confidence scores
+3. Priority Scoring: LLM prompt scoring urgency/impact/scope (1-10) using
+   rubric (public safety > infra > convenience) -> PROBLEMS.priority_score
+4. Duplicate Detection: generate embeddings (via LLM embeddings API) for each
+   new problem, vector-similarity search (pgvector extension in Postgres)
+   against existing OPEN problems in same district -> flag if similarity > threshold
+5. Routing Engine (rule-based, not LLM): 
+   - ALL problems -> ALL universities (no filter)
+   - Problem tags intersect Industry tags (or industry has no tags set) -> notify industry
+6. Proposal Summarization (optional): LLM generates short public-facing summary
+   of long proposal for citizen/government view
+
+Recommended: keep AI calls in services/ai_categorization.py etc. as thin wrappers
+so the underlying LLM provider is swappable via config.py (model name in .env).
+
+================================================================================
+## 9. GOOGLE MAPS INTEGRATION
+================================================================================
+
+- Frontend: @react-google-maps/api or @vis.gl/react-google-maps
+- Problem submission: Places Autocomplete + draggable pin -> stores lat/lng
+- Public/Industry/Gov map views: marker clustering (MarkerClusterer) +
+  optional heatmap layer (visualization library) for density by district
+- Backend: store lat/lng directly on PROBLEMS and INDUSTRIES tables;
+  proximity queries via PostGIS (ST_DWithin) or Haversine formula in SQL
+  for "problems near me" on industry dashboard
+
+================================================================================
+## 10. TECH STACK SUMMARY
+================================================================================
+
+Backend:  FastAPI, SQLAlchemy 2.0, Alembic, Pydantic v2, PostgreSQL 16 (+pgvector, +PostGIS optional),
+          JWT auth (python-jose/passlib), Celery+Redis (async AI jobs, optional), boto3/S3 or local disk for media
+Frontend: React 18 + Vite, React Router, Zustand/Redux Toolkit, Axios, TailwindCSS,
+          @react-google-maps/api, Recharts (govt analytics), react-hook-form + zod
+Infra:    Docker Compose (postgres, backend, frontend, redis), Nginx reverse proxy
+AI:       Pluggable LLM API (OpenAI/Gemini/Anthropic) for categorization, STT, embeddings
+
+================================================================================
+## 11. BUILD PHASES (for agent execution order)
+================================================================================
+
+Phase 1 - Foundation: DB schema + Alembic migrations, auth (JWT, role-based), base FastAPI router skeleton, React app shell + routing + auth context
+Phase 2 - Citizen flow: submit-problem form (with voice recorder + evidence upload + Google Maps location picker), problems API CRUD, Neon DB(connection string)
+Phase 3 - AI pipeline: voice-to-text service, categorization service, duplicate detection (pgvector), priority scoring, routing engine
+Phase 4 - University flow: dashboard feed (all problems), team formation, proposal editor + submission
+Phase 5 - Industry flow: tag management, matched feed, express interest, collaboration workspace, milestones
+Phase 6 - Government dashboard: analytics aggregation endpoints, charts, exportable reports, full map heatmap
+Phase 7 - Notifications: in-app + email, audit logging, admin moderation panel
+Phase 8 - Polish: testing, Docker deployment, seed data, documentation
+
+================================================================================
+## 12. NEXT STEPS
+================================================================================
+
+Hand this plan.txt directly to a coding agent (e.g., Claude Code) with the
+instruction: "Scaffold the backend/ and frontend/ directories exactly per
+section 6, implement models per section 7, and build Phase 1-2 first."

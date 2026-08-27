@@ -1,0 +1,237 @@
+# DESIGN SYSTEM SPEC — for Societal Innovation Collaboration Portal
+## (Reference pattern: clean corporate-edtech style, Scaler-inspired)
+
+================================================================================
+## 1. BRAND / TONE
+================================================================================
+- Clean, corporate, trust-driven, "serious but modern" — fits a govt-facing
+  civic-tech platform well.
+- Generous white space, card-based content blocks, strong left-aligned headlines.
+- Minimal decoration — no gradients-on-everything, no heavy shadows. Flat +
+  crisp with occasional soft gradient background on hero sections only.
+
+================================================================================
+## 2. COLOR PALETTE
+================================================================================
+
+Primary
+- Primary Blue:        #1E5EFF   (CTAs, links, active nav underline)
+- Primary Blue Dark:   #0B2545   (headings, navbar text, logo)
+- Primary Blue Deep:   #0A2540   (footer bg, dark sections)
+
+Accent / Gradient (hero highlights, headline word accents)
+- Accent Cyan:         #22C7F2
+- Gradient: linear-gradient(90deg, #1E5EFF 0%, #22C7F2 100%)
+  used sparingly on 1-2 keywords inside big headlines (e.g. "Next Decade in AI")
+
+Neutrals
+- Background Base:     #FFFFFF
+- Background Soft:     #F5F8FF   (card image placeholders, section alt-bg)
+- Border/Divider:      #E4E9F2
+- Text Primary:        #0B0B0F   (near-black, headings)
+- Text Secondary:      #4A5568   (body copy, meta text)
+- Text Muted:          #8A94A6   (dates, captions, breadcrumbs)
+
+Semantic tags (category pill backgrounds — solid, high-contrast, rotate per category)
+- Tag Blue:    #1E5EFF (bg) / #FFFFFF (text)
+- Tag Navy:    #0B2545 (bg) / #FFFFFF (text)
+- Tag Success: #1B9C68 (bg) / #FFFFFF (text)   -- e.g. "Resolved"/"Impact"
+- Tag Warning: #E0A100 (bg) / #FFFFFF (text)   -- e.g. "Pending"
+- Tag Danger:  #D64550 (bg) / #FFFFFF (text)   -- e.g. "Urgent"/"Rejected"
+
+Buttons
+- Primary Button:   bg #1E5EFF, text #FFFFFF, hover darken 8% -> #184FDB
+- Secondary Button: bg transparent, border 1px #0B2545, text #0B2545, hover bg #F5F8FF
+- Ghost/Nav Login:  bg transparent, border 1px #D8DEE9, text #0B0B0F
+
+================================================================================
+## 3. TYPOGRAPHY
+================================================================================
+
+Font family: Inter / "Helvetica Neue" / system-ui sans-serif stack (matches
+the geometric, tight-tracking sans used throughout reference).
+
+```css
+font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+```
+
+Scale (desktop):
+- Hero H1:        56–64px / weight 800 / line-height 1.05 / letter-spacing -0.02em
+- Section H2:      32–36px / weight 700 / line-height 1.15
+- Card Title (H3): 20–22px / weight 700 / line-height 1.3
+- Body Large:      18px / weight 400 / line-height 1.6 / color Text Secondary
+- Body:            15–16px / weight 400 / line-height 1.55
+- Caption/Meta:    13px / weight 500 / uppercase optional / color Text Muted
+- Nav Links:       14px / weight 600 / letter-spacing 0.01em
+- Button Label:    14–15px / weight 700 / letter-spacing 0.02em / uppercase for primary CTAs
+
+Mobile scale: reduce Hero H1 to 32–36px, Section H2 to 24px, keep body sizes same.
+
+================================================================================
+## 4. LAYOUT / GRID
+================================================================================
+
+- Max content width: 1280px, centered, 24px side gutters (desktop), 16px (mobile)
+- Navbar height: 72px, sticky top, white bg, 1px bottom border (#E4E9F2), subtle shadow on scroll
+- Section vertical padding: 80–96px desktop / 48px mobile
+- Card grid: 3-column on desktop (grid-template-columns: repeat(3, 1fr), gap 24px),
+  2-column tablet, 1-column mobile
+- Hero section: centered text, max-width 900px, generous top padding (~120px),
+  soft radial gradient background (#F5F8FF -> #FFFFFF)
+
+================================================================================
+## 5. COMPONENT PATTERNS
+================================================================================
+
+### 5.1 Navbar
+- Logo (left) + wordmark, bold, icon in Primary Blue
+- Center/left-aligned nav links, dropdown chevrons for grouped items
+- Right-aligned: outlined "Login" ghost button + solid Primary CTA button
+- Active nav item: Primary Blue underline (2px) under text
+
+### 5.2 Card (Blog/Content Card — reuse for Problem Card, Proposal Card, Collaboration Card)
+```
+┌─────────────────────────────┐
+│  [Image/Illustration 16:9]  │  <- Background Soft (#F5F8FF), flat illustration style
+│  ┌───────────┐              │
+│  │ CATEGORY  │  <- solid pill, Tag color, uppercase, 12px, top-left overlay
+│  └───────────┘              │
+├─────────────────────────────┤
+│  Card Title (2-line clamp)  │  <- H3, Text Primary, bold
+│  By AUTHOR — Date           │  <- Caption, Text Muted, uppercase author
+└─────────────────────────────┘
+```
+- Card bg: #FFFFFF, border 1px #E4E9F2, border-radius 12px, no shadow default;
+  hover: shadow 0 8px 24px rgba(11,37,69,0.08), translateY(-2px), transition 0.2s
+- Adapt for Problem Card: swap illustration for uploaded evidence thumbnail,
+  category pill -> status pill (color per PROBLEM.status), meta line -> district + date
+
+### 5.3 Stat/Metric Card (big-number style -> reuse for Impact Stats)
+```
+┌───────────────────┐
+│  214%  Hike        │  <- huge number (36px, weight 800, Primary Blue Dark)
+│  ─────────────────  │
+│  Name               │  <- 16px bold
+│  Role, Company      │  <- 13px Text Muted
+│  BEFORE: ...         │
+│  NOW: ...            │
+│  [chip: N Offers]  Explore -> │
+└───────────────────┘
+```
+- Use for Govt Dashboard KPI cards: "1,240 Problems Solved", "312 Active
+  Collaborations", "48 Patents Filed" — same big-number-on-top pattern.
+
+### 5.4 Video/Story Card
+- Dark overlay image with centered circular play button (white bg, 48px, blue play triangle)
+- Bottom-left name + role overlay on gradient scrim
+- Use for citizen testimonial / impact-story carousel on landing page
+
+### 5.5 News/Feature Card (2-col: logo/graphic left, headline+date right)
+- Light gray bg block (#F5F8FF) containing two logos separated by an "×" mark
+- Right side: bold headline (18–20px), date below in Text Muted
+- Use for "Featured Collaborations" section: University logo × Industry logo,
+  headline of what they built together, date
+
+### 5.6 Category Filter Bar
+- Horizontal row under page title: "Categories" label (Text Muted) followed by
+  pill-style filter buttons with 1px border, active state = filled Primary Blue Dark bg
+- Reuse directly for Problem domain-tag filters on University/Industry dashboards
+
+### 5.7 Hero Section (Landing Page)
+- Small eyebrow link row above H1: rotating ticker pattern, e.g.
+  "‹ 1,240 PROBLEMS SOLVED THIS YEAR ›"
+- H1 with one phrase highlighted using gradient text + soft highlight box behind
+  a single word (e.g. box bg #E8EEFF behind one keyword)
+- Subtext: 18px, Text Secondary, max-width 640px, centered
+- Dual CTA row: solid Primary Button + outline Secondary Button, centered, 16px gap
+- Small tab row below CTAs, underline-active style
+
+### 5.8 Buttons
+```css
+.btn-primary {
+  background: #1E5EFF; color: #fff; padding: 12px 24px;
+  border-radius: 6px; font-weight: 700; font-size: 14px;
+  letter-spacing: 0.02em; border: none;
+}
+.btn-primary:hover { background: #184FDB; }
+
+.btn-secondary {
+  background: transparent; color: #0B2545; padding: 12px 24px;
+  border-radius: 6px; font-weight: 700; font-size: 14px;
+  border: 1.5px solid #0B2545;
+}
+.btn-secondary:hover { background: #F5F8FF; }
+```
+
+### 5.9 Pagination / Carousel Controls
+- Circular icon buttons, 40px, 1px border #D8DEE9, arrow icon centered
+- Active/hover: border Primary Blue, icon Primary Blue
+
+================================================================================
+## 6. ICONOGRAPHY & ILLUSTRATION
+================================================================================
+- Flat, geometric, 2-3 color line-and-shape illustrations (isometric-lite) for
+  card headers — NOT photographic, NOT skeuomorphic. Consistent stroke width.
+- Use Lucide-react icon set for UI icons (matches minimal geometric style).
+- Illustration palette limited to Primary Blue, Accent Cyan, Text Primary
+  navy, and Background Soft — never full-color/rainbow illustrations.
+
+================================================================================
+## 7. STATUS / TAG COLOR MAPPING (apply consistently across portal)
+================================================================================
+
+| Status/Tag                    | Color                    |
+|---------------------------------|---------------------------|
+| pending_validation               | Tag Warning (#E0A100)      |
+| validated / open                 | Tag Blue (#1E5EFF)         |
+| in_review / proposal_submitted   | Tag Navy (#0B2545)         |
+| in_collaboration / prototype     | Accent Cyan (#22C7F2) on dark |
+| pilot / implementation           | Tag Success (#1B9C68)      |
+| closed / implemented             | Text Muted bg, Text Secondary text |
+| rejected / duplicate             | Tag Danger (#D64550)       |
+| urgent priority (AI-flagged)     | Tag Danger, small alert icon |
+
+================================================================================
+## 8. RESPONSIVE BEHAVIOR
+================================================================================
+- Breakpoints: mobile <640px, tablet 640–1024px, desktop >1024px
+- Navbar collapses to hamburger drawer below 1024px
+- Card grids: 3->2->1 columns per breakpoints above
+- Hero H1 scales down ~45% on mobile, CTAs stack vertically full-width
+
+================================================================================
+## 9. TAILWIND CONFIG SNIPPET (drop into tailwind.config.js theme.extend)
+================================================================================
+
+```js
+theme: {
+  extend: {
+    colors: {
+      primary: { DEFAULT: '#1E5EFF', dark: '#184FDB', navy: '#0B2545', deep: '#0A2540' },
+      accent: { cyan: '#22C7F2' },
+      bg: { soft: '#F5F8FF' },
+      border: { DEFAULT: '#E4E9F2' },
+      text: { primary: '#0B0B0F', secondary: '#4A5568', muted: '#8A94A6' },
+      tag: {
+        blue: '#1E5EFF', navy: '#0B2545', success: '#1B9C68',
+        warning: '#E0A100', danger: '#D64550'
+      }
+    },
+    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+    borderRadius: { card: '12px', btn: '6px' },
+    boxShadow: { card: '0 8px 24px rgba(11,37,69,0.08)' }
+  }
+}
+```
+
+================================================================================
+## 10. AGENT INSTRUCTIONS
+================================================================================
+- Use this design.txt alongside plan.txt when scaffolding frontend/src/styles
+  and components/common.
+- Implement section 5 components as reusable React components first
+  (Card, StatCard, Pill/Tag, Button, FilterBar, Navbar, Hero) before building
+  page-specific screens — every dashboard reuses these primitives.
+- Do not introduce new colors outside section 2's palette; all category/status
+  colors must come from section 7's mapping table so the UI stays consistent
+  across Citizen/University/Industry/Government views.

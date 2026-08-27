@@ -1,120 +1,127 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { homeForRole } from '../lib/routes';
+import { Button, Input, Alert, Card } from '../components/ui';
 
-const roles = [
-  { value: 'citizen', label: 'Citizen' },
-  { value: 'student', label: 'Student' },
-  { value: 'faculty', label: 'Faculty' },
-  { value: 'university_admin', label: 'University Admin' },
-  { value: 'industry', label: 'Industry/Startup' },
-  { value: 'government', label: 'Government' },
+const ROLE_OPTIONS = [
+  { value: 'citizen', title: 'Citizen', desc: 'Report problems in your community.' },
+  { value: 'university_admin', title: 'University', desc: 'Register your institution & mentor teams.' },
+  { value: 'industry', title: 'Industry / Startup', desc: 'Discover & fund solutions.' },
+  { value: 'government', title: 'Government', desc: 'Oversee impact & analytics.' },
 ];
 
 export default function Register() {
+  const { register } = useAuth();
   const navigate = useNavigate();
-  const { register, loading } = useAuth();
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'citizen', phone: '' });
+  const [role, setRole] = useState('citizen');
+  const [form, setForm] = useState({ name: '', email: '', password: '', phone: '', domain_tags: '' });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const update = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
     try {
-      await register(form);
-      navigate('/');
+      const payload = {
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        role,
+        phone: form.phone || undefined,
+        domain_tags:
+          role === 'industry' && form.domain_tags
+            ? form.domain_tags.split(',').map((s) => s.trim()).filter(Boolean)
+            : undefined,
+      };
+      await register(payload);
+      const stored = JSON.parse(localStorage.getItem('user') || '{}');
+      navigate(homeForRole(stored.role));
     } catch (err) {
-      setError(err.response?.data?.detail || 'Registration failed');
+      setError(err.response?.data?.detail || 'Registration failed. Email may already be used.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
-      <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Societal Innovation Portal</h2>
-        <h3 className="text-lg text-center text-gray-600 mb-8">Create your account</h3>
+    <div className="min-h-screen bg-bg-soft flex flex-col">
+      <div className="flex items-center justify-between px-6 h-[72px] border-b border-line bg-white">
+        <Link to="/" className="flex items-center gap-2">
+          <span className="flex h-9 w-9 items-center justify-center rounded-btn bg-primary text-white">
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z" />
+            </svg>
+          </span>
+          <span className="text-lg font-extrabold text-primary-navy">InnoSphere</span>
+        </Link>
+        <Link to="/login" className="text-sm font-semibold text-primary hover:text-primary-dark">
+          Sign in
+        </Link>
+      </div>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded">{error}</div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-            <input
-              type="text"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            />
+      <div className="flex flex-1 items-start justify-center px-4 py-12">
+        <Card className="w-full max-w-xl">
+          <div className="mb-6">
+            <h1 className="text-2xl font-extrabold text-primary-navy">Create your account</h1>
+            <p className="mt-1 text-sm text-ink-soft">Join as the actor you represent.</p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            />
-          </div>
+          {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              required
-              minLength={8}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm font-semibold text-ink mb-2">I am a</label>
+              <div className="grid grid-cols-2 gap-3">
+                {ROLE_OPTIONS.map((r) => (
+                  <button
+                    type="button"
+                    key={r.value}
+                    onClick={() => setRole(r.value)}
+                    className={`text-left rounded-card border p-4 transition-colors ${
+                      role === r.value
+                        ? 'border-primary bg-bg-soft ring-1 ring-primary'
+                        : 'border-line hover:border-primary'
+                    }`}
+                  >
+                    <div className="font-bold text-primary-navy">{r.title}</div>
+                    <div className="text-xs text-ink-soft mt-1">{r.desc}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-            <select
-              name="role"
-              value={form.role}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            >
-              {roles.map((r) => (
-                <option key={r.value} value={r.value}>{r.label}</option>
-              ))}
-            </select>
-          </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input label="Full name" name="name" value={form.name} onChange={update('name')} required />
+              <Input label="Phone (optional)" name="phone" value={form.phone} onChange={update('phone')} />
+            </div>
+            <Input label="Email" type="email" name="email" value={form.email} onChange={update('email')} required />
+            <Input label="Password" type="password" name="password" value={form.password} onChange={update('password')}
+              hint="At least 8 characters." required minLength={8} />
+            {role === 'industry' && (
+              <Input
+                label="Domain tags (optional, comma separated)"
+                name="domain_tags"
+                value={form.domain_tags}
+                onChange={update('domain_tags')}
+                placeholder="water_sanitation, waste_management"
+                hint="Leave blank to receive all problems."
+              />
+            )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Phone (optional)</label>
-            <input
-              type="tel"
-              name="phone"
-              value={form.phone}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            />
-          </div>
+            <Button type="submit" size="lg" loading={loading} className="w-full">
+              Create Account
+            </Button>
+          </form>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-          >
-            {loading ? 'Creating account...' : 'Create Account'}
-          </button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-gray-600">
-          Already have an account? <Link to="/login" className="text-blue-600 hover:underline">Sign In</Link>
-        </p>
+          <p className="mt-6 text-center text-sm text-ink-muted">
+            Already registered?{' '}
+            <Link to="/login" className="font-semibold text-primary hover:underline">Sign in</Link>
+          </p>
+        </Card>
       </div>
     </div>
   );
