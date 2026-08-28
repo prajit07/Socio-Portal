@@ -27,7 +27,7 @@ export default function ProblemsList() {
   const [filters, setFilters] = useState({ status: '', ai_category: '', ai_priority: '' });
 
   useEffect(() => { fetchData(); }, [filters]);
-  useEffect(() => { document.title = 'Problems — InnoSphere'; }, []);
+  useEffect(() => { document.title = 'Problems — Socio Connect'; }, []);
 
   const fetchData = async () => {
     setLoading(true);

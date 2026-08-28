@@ -80,7 +80,7 @@ def _heuristic(title, description, transcript, tags):
 
 def _llm_categorize(title, description, transcript, tags):
     system = (
-        "You are a classification engine for a civic-tech portal (InnoSphere). "
+        "You are a classification engine for a civic-tech portal (Socio Connect). "
         "Classify the reported problem into ONE category and assign 1-4 relevant tags. "
         "Choose the category id from this taxonomy (use the exact id slug):\n"
         f"{_TAXONOMY_LIST}\n"

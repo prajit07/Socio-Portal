@@ -22,7 +22,7 @@ router = APIRouter(prefix="/problems/{problem_id}/evidence", tags=["evidence"])
 def upload_evidence(
     problem_id: str,
     file: UploadFile = File(...),
-    type: EvidenceTypeEnum = EvidenceTypeEnum.DOCUMENT,
+    type: EvidenceTypeEnum = Form(EvidenceTypeEnum.DOCUMENT),
     transcript: Optional[str] = Form(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),

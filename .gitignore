@@ -5,3 +5,4 @@ __pycache__/
 .env
 .initial.txt
 .plan.txt
+.design.txt

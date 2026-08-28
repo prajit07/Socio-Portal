@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { homeForRole } from '../lib/routes';
+import { authApi } from '../api/client';
 import { Button, Input, Alert, Card } from '../components/ui';
 
 const ROLE_OPTIONS = [
@@ -12,14 +13,30 @@ const ROLE_OPTIONS = [
 ];
 
 export default function Register() {
-  const { register } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const [role, setRole] = useState('citizen');
   const [form, setForm] = useState({ name: '', email: '', password: '', phone: '', domain_tags: '' });
+  const [step, setStep] = useState('form'); // 'form' | 'otp'
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [devCode, setDevCode] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState('');
 
   const update = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  const requestCode = async (email, purpose = 'register') => {
+    try {
+      const res = await authApi.requestOtp(email, purpose);
+      setDevCode(res.data.dev_code || '');
+      return res.data;
+    } catch {
+      // non-fatal; user will still get the email if SMTP is configured
+      return null;
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,13 +54,31 @@ export default function Register() {
             ? form.domain_tags.split(',').map((s) => s.trim()).filter(Boolean)
             : undefined,
       };
-      await register(payload);
-      const stored = JSON.parse(localStorage.getItem('user') || '{}');
-      navigate(homeForRole(stored.role));
+      await authApi.register(payload);
+      const rc = await requestCode(form.email, 'register');
+      console.log('[OTP DEBUG] request-code ->', rc);
+      setStep('otp');
     } catch (err) {
       setError(err.response?.data?.detail || 'Registration failed. Email may already be used.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVerify = async (e) => {
+    e.preventDefault();
+    setOtpError('');
+    setOtpLoading(true);
+    console.log('[OTP DEBUG] verify submit ->', { email: form.email, code: otp });
+    try {
+      await authApi.verifyOtp(form.email, otp, 'register');
+      await login(form.email, form.password);
+      navigate(homeForRole(role));
+    } catch (err) {
+      console.warn('[OTP DEBUG] verify failed ->', err.response?.data);
+      setOtpError(err.response?.data?.detail || 'Invalid or expired code.');
+    } finally {
+      setOtpLoading(false);
     }
   };
 
@@ -56,7 +91,7 @@ export default function Register() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z" />
             </svg>
           </span>
-          <span className="text-lg font-extrabold text-primary-navy">InnoSphere</span>
+          <span className="text-lg font-extrabold text-primary-navy">Socio Connect</span>
         </Link>
         <Link to="/login" className="text-sm font-semibold text-primary hover:text-primary-dark">
           Sign in
@@ -65,62 +100,105 @@ export default function Register() {
 
       <div className="flex flex-1 items-start justify-center px-4 py-12">
         <Card className="w-full max-w-xl">
-          <div className="mb-6">
-            <h1 className="text-2xl font-extrabold text-primary-navy">Create your account</h1>
-            <p className="mt-1 text-sm text-ink-soft">Join as the actor you represent.</p>
-          </div>
-
-          {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm font-semibold text-ink mb-2">I am a</label>
-              <div className="grid grid-cols-2 gap-3">
-                {ROLE_OPTIONS.map((r) => (
-                  <button
-                    type="button"
-                    key={r.value}
-                    onClick={() => setRole(r.value)}
-                    className={`text-left rounded-card border p-4 transition-colors ${
-                      role === r.value
-                        ? 'border-primary bg-bg-soft ring-1 ring-primary'
-                        : 'border-line hover:border-primary'
-                    }`}
-                  >
-                    <div className="font-bold text-primary-navy">{r.title}</div>
-                    <div className="text-xs text-ink-soft mt-1">{r.desc}</div>
-                  </button>
-                ))}
+          {step === 'form' ? (
+            <>
+              <div className="mb-6">
+                <h1 className="text-2xl font-extrabold text-primary-navy">Create your account</h1>
+                <p className="mt-1 text-sm text-ink-soft">Join as the actor you represent.</p>
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input label="Full name" name="name" value={form.name} onChange={update('name')} required />
-              <Input label="Phone (optional)" name="phone" value={form.phone} onChange={update('phone')} />
-            </div>
-            <Input label="Email" type="email" name="email" value={form.email} onChange={update('email')} required />
-            <Input label="Password" type="password" name="password" value={form.password} onChange={update('password')}
-              hint="At least 8 characters." required minLength={8} />
-            {role === 'industry' && (
-              <Input
-                label="Domain tags (optional, comma separated)"
-                name="domain_tags"
-                value={form.domain_tags}
-                onChange={update('domain_tags')}
-                placeholder="water_sanitation, waste_management"
-                hint="Leave blank to receive all problems."
-              />
-            )}
+              {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
 
-            <Button type="submit" size="lg" loading={loading} className="w-full">
-              Create Account
-            </Button>
-          </form>
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                  <label className="block text-sm font-semibold text-ink mb-2">I am a</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {ROLE_OPTIONS.map((r) => (
+                      <button
+                        type="button"
+                        key={r.value}
+                        onClick={() => setRole(r.value)}
+                        className={`text-left rounded-card border p-4 transition-colors ${
+                          role === r.value
+                            ? 'border-primary bg-bg-soft ring-1 ring-primary'
+                            : 'border-line hover:border-primary'
+                        }`}
+                      >
+                        <div className="font-bold text-primary-navy">{r.title}</div>
+                        <div className="text-xs text-ink-soft mt-1">{r.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-          <p className="mt-6 text-center text-sm text-ink-muted">
-            Already registered?{' '}
-            <Link to="/login" className="font-semibold text-primary hover:underline">Sign in</Link>
-          </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input label="Full name" name="name" value={form.name} onChange={update('name')} required />
+                  <Input label="Phone (optional)" name="phone" value={form.phone} onChange={update('phone')} />
+                </div>
+                <Input label="Email" type="email" name="email" value={form.email} onChange={update('email')} required />
+                <Input label="Password" type="password" name="password" value={form.password} onChange={update('password')}
+                  hint="At least 8 characters." required minLength={8} />
+                {role === 'industry' && (
+                  <Input
+                    label="Domain tags (optional, comma separated)"
+                    name="domain_tags"
+                    value={form.domain_tags}
+                    onChange={update('domain_tags')}
+                    placeholder="water_sanitation, waste_management"
+                    hint="Leave blank to receive all problems."
+                  />
+                )}
+
+                <Button type="submit" size="lg" loading={loading} className="w-full">
+                  Create Account
+                </Button>
+              </form>
+
+              <p className="mt-6 text-center text-sm text-ink-muted">
+                Already registered?{' '}
+                <Link to="/login" className="font-semibold text-primary hover:underline">Sign in</Link>
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="mb-6">
+                <h1 className="text-2xl font-extrabold text-primary-navy">Verify your email</h1>
+                <p className="mt-1 text-sm text-ink-soft">
+                  We sent a 6-digit code to <span className="font-semibold text-ink">{form.email}</span>. Check your inbox (and spam).
+                </p>
+              </div>
+
+              {otpError && <Alert variant="danger" className="mb-4">{otpError}</Alert>}
+
+              <form onSubmit={handleVerify} className="space-y-5">
+                <Input
+                  label="Verification code"
+                  name="otp"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="123456"
+                  inputMode="numeric"
+                  required
+                />
+                <Button type="submit" size="lg" loading={otpLoading} className="w-full">
+                  Verify & Continue
+                </Button>
+              </form>
+
+              <div className="mt-6 flex items-center justify-between text-sm">
+                <button
+                  type="button"
+                  className="font-semibold text-primary hover:underline"
+                  onClick={() => requestCode(form.email, 'register')}
+                >
+                  Resend code
+                </button>
+                <button type="button" className="text-ink-muted hover:underline" onClick={() => setStep('form')}>
+                  Back
+                </button>
+              </div>
+            </>
+          )}
         </Card>
       </div>
     </div>

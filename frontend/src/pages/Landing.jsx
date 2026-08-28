@@ -125,7 +125,7 @@ export default function Landing() {
 
       <footer className="border-t border-line py-8">
         <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8 text-sm text-ink-muted">
-          © {new Date().getFullYear()} InnoSphere — Societal Innovation Collaboration Portal.
+          © {new Date().getFullYear()} Socio Connect — Societal Innovation Collaboration Portal.
         </div>
       </footer>
     </div>

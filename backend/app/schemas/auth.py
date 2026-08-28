@@ -29,3 +29,4 @@ class UserOut(BaseModel):
     email: EmailStr
     role: RoleEnum
     phone: str | None = None
+    is_email_verified: bool = False

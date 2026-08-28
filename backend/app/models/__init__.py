@@ -1,4 +1,5 @@
 from app.models.user import User  # noqa: F401
+from app.models.otp import OTP  # noqa: F401
 from app.models.enums import (  # noqa: F401
     RoleEnum,
     ProblemStatusEnum,

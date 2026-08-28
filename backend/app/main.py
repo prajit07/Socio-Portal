@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api.v1.router import api_router
 from app.core.config import settings
 
-app = FastAPI(title="Societal Innovation Portal", version="0.1.0")
+app = FastAPI(title="Socio Connect", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,

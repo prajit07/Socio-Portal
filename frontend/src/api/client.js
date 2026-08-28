@@ -30,6 +30,10 @@ export const authApi = {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
   }),
   me: () => api.get('/auth/me'),
+  requestOtp: (email, purpose = 'verify') => api.post('/auth/request-otp', { email, purpose }),
+  verifyOtp: (email, code, purpose = 'verify') => api.post('/auth/verify-otp', { email, code, purpose }),
+  loginRequestCode: (email, password) => api.post('/auth/login/request-code', { email, password }),
+  loginVerify: (email, code) => api.post('/auth/login/verify', { email, code }),
 };
 
 // Problems

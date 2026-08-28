@@ -51,7 +51,13 @@ export function AuthProvider({ children }) {
 
   const register = async (data) => {
     await api.post('/auth/register', data);
-    await login(data.email, data.password);
+  };
+
+  const loginWithOtp = async (email, code) => {
+    const res = await api.post('/auth/login/verify', { email, code });
+    const { access_token } = res.data;
+    localStorage.setItem('token', access_token);
+    await fetchMe();
   };
 
   const logout = () => {
@@ -61,7 +67,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, loading, loginWithOtp }}>
       {children}
     </AuthContext.Provider>
   );
