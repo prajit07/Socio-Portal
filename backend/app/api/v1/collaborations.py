@@ -7,8 +7,8 @@ from app.models.user import User
 from app.models.collaboration import Collaboration, Milestone, Deliverable, IPRecord, SocialImpactReport
 from app.models.problem import Solution, Problem
 from app.models.org import Industry
-from app.models.routing import Notification
 from app.models.enums import ProblemStatusEnum, NotificationTypeEnum
+from app.services.notification_service import create_notification
 from app.schemas.collaboration import (
     CollaborationCreate,
     CollaborationUpdate,
@@ -37,7 +37,7 @@ STAGE_TO_STATUS = {
 
 
 def _notify(db, user_id, message, ref=None):
-    db.add(Notification(user_id=user_id, type=NotificationTypeEnum.GENERIC, message=message, reference_id=ref))
+    create_notification(db, user_id=user_id, message=message, reference_id=ref)
 
 
 @router.post("", response_model=CollaborationOut, status_code=status.HTTP_201_CREATED)

@@ -63,11 +63,16 @@ def _heuristic(title, description, transcript, tags):
         category_id, category_name, tag_candidates = "general", "General", []
 
     out_tags = []
+    seen_ids: set[str] = set()
     for hits, cat in tag_candidates:
-        out_tags.append({"id": cat["id"], "name": cat["name"], "confidence": round(min(1.0, 0.5 + 0.1 * hits), 2)})
+        if cat["id"] not in seen_ids:
+            out_tags.append({"id": cat["id"], "name": cat["name"], "confidence": round(min(1.0, 0.5 + 0.1 * hits), 2)})
+            seen_ids.add(cat["id"])
     for t in tags or []:
-        if t and t.lower() not in [x["id"] for x in out_tags]:
-            out_tags.append({"id": t.lower().replace(" ", "_"), "name": t, "confidence": 0.6})
+        tid = t.lower().replace(" ", "_")
+        if t and tid not in seen_ids:
+            out_tags.append({"id": tid, "name": t, "confidence": 0.6})
+            seen_ids.add(tid)
 
     priority = _score_priority(title, description, transcript, top_hits if scores else 0)
     return {
@@ -110,16 +115,20 @@ def _llm_categorize(title, description, transcript, tags):
         else:
             cid = cid or "general"
             parsed["category_name"] = parsed.get("category_name") or "General"
-    tags_out = []
+    # Deduplicate LLM tags by id — keep highest confidence
+    deduped: dict[str, dict] = {}
     for t in parsed.get("tags", []):
         tid = str(t.get("id") or "").lower().replace(" ", "_")
         if not tid:
             continue
-        tags_out.append({
+        entry = {
             "id": tid,
             "name": t.get("name") or _ID_TO_NAME.get(tid, tid),
             "confidence": float(t.get("confidence", 0.7)),
-        })
+        }
+        if tid not in deduped or entry["confidence"] > deduped[tid]["confidence"]:
+            deduped[tid] = entry
+    tags_out = list(deduped.values())
     try:
         priority = ProblemPriorityEnum(parsed.get("priority", "medium"))
     except ValueError:

@@ -41,6 +41,7 @@ export default function Landing() {
     ? { to: homeForRole(user.role), label: 'Go to Dashboard' }
     : { to: '/register', label: 'Get Started' };
   const secondary = user ? { to: '/problems', label: 'Browse Problems' } : { to: '/login', label: 'Sign In' };
+  const mapLink = { to: '/problems/map', label: 'View Public Map' };
 
   return (
     <div className="min-h-screen bg-white">
@@ -109,6 +110,9 @@ export default function Landing() {
               <Link to="/problems">
                 <Button size="lg" variant="secondary">Browse Problems</Button>
               </Link>
+              <Link to={mapLink.to}>
+                <Button size="lg" variant="secondary">{mapLink.label}</Button>
+              </Link>
             </>
           ) : (
             <>
@@ -117,6 +121,9 @@ export default function Landing() {
               </Link>
               <Link to="/problems">
                 <Button size="lg" variant="secondary">Browse Problems</Button>
+              </Link>
+              <Link to={mapLink.to}>
+                <Button size="lg" variant="secondary">{mapLink.label}</Button>
               </Link>
             </>
           )}

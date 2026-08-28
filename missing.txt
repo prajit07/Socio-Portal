@@ -1,0 +1,195 @@
+# MISSING FEATURES — Plan.txt vs Actual Implementation
+# Generated: August 28, 2026
+# Analysis: Complete comparison of plan.txt §4 (Pages/Screens) + §7 (ER Diagram) + §8 (AI) + §9 (Maps) vs codebase
+
+================================================================================
+## SUMMARY
+================================================================================
+Plan defines ~80+ pages across 6 portals. Project has ~24 frontend pages + 16 backend API modules.
+Many core flows are built, but significant gaps remain in public pages, government analytics,
+industry maps, email notifications, and some infrastructure.
+================================================================================
+
+================================================================================
+## 1. MISSING FRONTEND PAGES / ROUTES
+================================================================================
+
+### 1.1 PUBLIC / SHARED (§4.1)
+- [ ] /forgot-password              — Dedicated forgot-password page (reset flow exists in /settings but no standalone page)
+- [ ] /problems/map                 — Public problem map (non-authenticated users should see the map; current /map requires login)
+- [ ] /problems/:id (public)        — Public problem detail for anonymous visitors (current ProblemTrack requires auth)
+- [ ] /about                        — About page
+- [ ] /faq                          — FAQ page
+- [ ] /contact                      — Contact page
+
+### 1.2 CITIZEN PORTAL (§4.2)
+- [ ] /citizen/profile              — Dedicated citizen profile page (only /settings exists, not role-specific)
+
+### 1.3 UNIVERSITY / HEI PORTAL (§4.3)
+- [ ] /university/proposals         — Dedicated proposals list page (currently embedded as a tab in dashboard)
+- [ ] /university/profile           — Dedicated university profile page
+
+### 1.4 INDUSTRY / STARTUP PORTAL (§4.4)
+- [ ] /industry/domain-tags         — Dedicated domain tags management page (currently in-profile)
+- [ ] /industry/proposal/:id        — Dedicated proposal detail page with Express Interest / Fund / Co-Develop actions
+- [ ] /industry/map                 — Map of problems near industry's registered location(s)
+- [ ] /industry/profile             — Dedicated industry profile page
+
+### 1.5 GOVERNMENT DASHBOARD (§4.5)
+- [ ] /gov/analytics                — Full analytics page with Recharts (district-wise, sector-wise, thematic trends, completion rates)
+- [ ] /gov/problems                 — Full searchable/filterable table of ALL problems + status
+- [ ] /gov/universities             — University participation leaderboard (dedicated page)
+- [ ] /gov/industries               — Industry participation leaderboard (dedicated page)
+- [ ] /gov/impact-reports           — Social impact reports, exportable (PDF/CSV)
+- [ ] /gov/map                      — Full heat-map of problems by district (MarkerClusterer + heatmap layer)
+
+### 1.6 ADMIN / SYSTEM (§4.6)
+- [ ] /admin/notifications          — Dedicated broadcast/system messages page (currently a tab in AdminDashboard)
+
+================================================================================
+## 2. MISSING BACKEND FEATURES
+================================================================================
+
+### 2.1 AI / ML PIPELINE (§8)
+- [ ] Embedding-based duplicate detection — Plan specifies pgvector for vector-similarity search; current impl uses Jaccard token overlap
+- [ ] Proposal Summarization — Plan §8.6: LLM generates short public-facing summary of long proposal (not implemented)
+- [ ] Voice-to-Text error handling — No retry logic, no fallback queue for failed transcriptions
+- [ ] ML prompts directory — Plan §6 specifies app/ml/prompts/ with categorize_prompt.txt, priority_prompt.txt, duplicate_prompt.txt (only taxonomy.json exists)
+
+### 2.2 SERVICES
+- [ ] Geocoding Service — Plan §8.6: Google Maps Geocoding API wrapper for address ↔ lat/lng conversion (not implemented; location is manual pin-drop only)
+- [ ] Notification Service — Plan §6: Dedicated notification_service.py for email/push/websocket delivery (notifications are DB-only, no email/push delivery)
+- [ ] Celery + Redis — Plan §10: Async AI jobs via Celery+Redis (not implemented; AI runs synchronously)
+- [ ] S3/GCS Storage — Plan §8.7: boto3/S3 or local disk (only local disk implemented)
+
+### 2.3 DATABASE / MODELS
+- [ ] PROBLEM_DUPLICATES table — Plan §7 specifies a dedicated junction table (problem_id, duplicate_of_problem_id, similarity_score); current impl stores duplicate_of on the Problem model itself
+- [ ] GeoJSON / PostGIS support — Plan §9 mentions PostGIS (ST_DWithin) for proximity queries; not implemented
+- [ ] Alembic migrations — Plan §6: app/alembic/ directory exists but no actual migration files found
+
+### 2.4 AUTH / SECURITY
+- [ ] Google OAuth / Social Login — Not in plan but commonly expected
+- [ ] Rate limiting — No API rate limiting implemented
+- [ ] CSRF protection — Not explicitly implemented (mitigated by JWT)
+
+================================================================================
+## 3. MISSING FRONTEND COMPONENTS / FEATURES
+================================================================================
+
+### 3.1 REUSABLE COMPONENTS (§6)
+- [ ] VoiceRecorder component — Currently inlined in SubmitProblem.jsx; plan specifies reusable form component
+- [ ] EvidenceUploader component — Currently inlined in SubmitProblem.jsx; plan specifies reusable form component
+- [ ] LocationPicker component — Currently inlined in SubmitProblem.jsx; plan specifies reusable form component
+- [ ] GoogleMapView component — Plan §6: reusable map component with ProblemMarker + HeatmapLayer
+- [ ] ProblemMarker component — Plan §6: Reusable marker for problem pins on map
+- [ ] HeatmapLayer component — Plan §6: For density visualization
+- [ ] KPIChart component — Plan §6: Reusable chart for government analytics
+- [ ] TrendChart component — Plan §6: Reusable trend chart
+- [ ] DistrictChart component — Plan §6: District-wise breakdown chart
+- [ ] Footer component — Plan §6: shared footer
+- [ ] Loader component — Plan §6: global loading spinner (PageLoader exists, but no global Loader)
+- [ ] Sidebar component — Plan §6: role-based navigation sidebar (only Navbar exists)
+
+### 3.2 API CLIENT MODULES (§6)
+- [ ] problemsApi.js — Plan §6: dedicated file (currently merged into client.js)
+- [ ] proposalsApi.js — Plan §6: dedicated file (currently merged into client.js)
+- [ ] collaborationsApi.js — Plan §6: dedicated file (currently merged into client.js)
+- [ ] analyticsApi.js — Plan §6: dedicated file (currently merged into client.js)
+
+### 3.3 HOOKS (§6)
+- [ ] useAuth.js — Plan §6: dedicated hook file (currently inlined in AuthContext.jsx)
+- [ ] useGoogleMaps.js — Plan §6: hook for Google Maps API integration
+
+### 3.4 CONTEXT
+- [ ] NotificationContext.jsx — Plan §6: separate context for real-time notifications (not implemented)
+
+### 3.5 ROUTING (§6)
+- [ ] AppRoutes.jsx — Plan §6: dedicated routes file (currently all routes inlined in App.jsx)
+
+================================================================================
+## 4. MISSING INFRASTRUCTURE (§6, §10)
+================================================================================
+
+- [ ] docker-compose.yml — Plan §6: Docker Compose for postgres + backend + frontend + redis
+- [ ] Dockerfile (backend) — Plan §6: backend Dockerfile
+- [ ] Dockerfile (frontend) — Plan §6: frontend Dockerfile
+- [ ] Nginx reverse proxy — Plan §10: Nginx config for production
+- [ ] docs/ER_DIAGRAM.md — Plan §6: ER diagram documentation
+- [ ] docs/API_SPEC.md — Plan §6: API specification (FastAPI /docs exists but no written spec)
+- [ ] docs/ARCHITECTURE.md — Plan §6: Architecture documentation
+- [ ] README.md — Plan §6: Project readme (exists but minimal)
+- [ ] .env.example (frontend) — Plan §6: Frontend env example
+- [ ] seed data script — Plan §8: Seed data for demo/development
+- [ ] pytest tests — Plan §6: test_auth.py, test_problems.py, test_routing.py (test files exist but are manual test scripts, not pytest)
+
+================================================================================
+## 5. MISSING REAL-TIME FEATURES
+================================================================================
+
+- [ ] WebSocket notifications — No real-time push for notifications
+- [ ] Live collaboration updates — No real-time updates when collaboration stage changes
+- [ ] Government dashboard auto-refresh — No polling or WebSocket for live KPI updates
+
+================================================================================
+## 6. MISSING GOVERNMENT DASHBOARD FEATURES (§4.5, §6)
+================================================================================
+
+- [ ] District-wise charts — Plan: district-wise breakdown (only category + status bars exist)
+- [ ] Sector-wise charts — Plan: sector-wise trend analysis
+- [ ] Thematic trends — Plan: time-series trend charts
+- [ ] Completion rates — Plan: problem resolution rate tracking
+- [ ] Patents/startups created KPI — Plan §4.5: KPI for patents filed + startups created
+- [ ] Heatmap visualization — Plan: heat-map of problems by district
+- [ ] PDF/CSV export — Plan: exportable impact reports
+
+================================================================================
+## 7. MISSING INDUSTRY PORTAL FEATURES (§4.4)
+================================================================================
+
+- [ ] Fund action — Plan: explicit "Fund" button on proposals (only "Express Interest" exists)
+- [ ] Co-Develop action — Plan: explicit "Co-Develop" action on proposals
+- [ ] Testing outcomes in collaboration — Plan: testing outcomes tracking in collaboration workspace
+- [ ] IP document management — Plan: upload/manage IP documents (form exists but no file upload)
+- [ ] Map view with nearby problems — Plan: "problems near me" via proximity query
+
+================================================================================
+## 8. MISSING UNIVERSITY PORTAL FEATURES (§4.3)
+================================================================================
+
+- [ ] Faculty mentor approval workflow — Plan: dedicated approval page for faculty (currently just a "Approve" button in dashboard)
+- [ ] Milestone management for teams — Plan: manage milestones within team workspace (only collaboration milestones exist)
+- [ ] Document collaboration — Plan: shared docs/chat within team workspace
+
+================================================================================
+## 9. DUPLICATE / REDUNDANT FILES (Code Quality)
+================================================================================
+
+- [ ] ProblemList.jsx AND ProblemsList.jsx — Two nearly identical problem list pages exist
+- [ ] SubmitProblem.jsx AND ProblemSubmit.jsx — Two problem submission pages exist
+- [ ] Dashboard.jsx — Unused/legacy dashboard page (separate role-specific dashboards exist)
+- [ ] design.txt — Appears to be a leftover design document
+
+================================================================================
+## 10. PRIORITIZED RECOMMENDATIONS (Highest Impact First)
+================================================================================
+
+### Priority 1 — Critical Gaps
+1. ✅ Government analytics page with Recharts — GovAnalytics.jsx at /gov/analytics
+2. ✅ Public problem map (anonymous access) — PublicMap.jsx at /problems/map
+3. ✅ pgvector-based duplicate detection — 384-dim embeddings + cosine similarity
+
+
+### Priority 2 — High Value
+5. Dedicated industry proposal detail page with Fund/Co-Develop actions
+6. Government impact reports with PDF/CSV export
+7. Geocoding service for address ↔ coordinates
+8. Email notification delivery (currently DB-only)
+9. Merge duplicate pages (ProblemList/ProblemsList, SubmitProblem/ProblemSubmit)
+
+### Priority 3 — Nice to Have
+10. Heatmap visualization on maps
+11. WebSocket real-time notifications
+12. Celery + Redis for async AI processing
+13. S3/GCS file storage
+14. Admin broadcast dedicated page
+15. About/FAQ/Contact pages

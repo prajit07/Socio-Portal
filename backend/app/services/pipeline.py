@@ -14,6 +14,7 @@ from app.models.routing import RoutingLog
 from app.models.enums import ProblemStatusEnum, NotificationTypeEnum
 from app.models.routing import Notification
 from app.services import ai_categorization, duplicate_detection, routing_engine
+from app.services.duplicate_detection import generate_embedding, _PGVECTOR_AVAILABLE
 
 
 def run_analysis(db: Session, problem: Problem) -> dict:
@@ -30,14 +31,39 @@ def run_analysis(db: Session, problem: Problem) -> dict:
     problem.ai_tags = [t["id"] for t in result["tags"]]
     problem.ai_priority = result["priority"]
 
-    # Persist AI tags with confidence
+    # Generate and store embedding for pgvector duplicate detection
+    if _PGVECTOR_AVAILABLE:
+        try:
+            text_content = f"{problem.title} {problem.description} {problem.evidence_text or ''}"
+            embedding = generate_embedding(text_content)
+            problem.embedding = embedding
+        except Exception:
+            pass  # Non-critical: duplicate detection falls back to Jaccard
+
+    # Deduplicate by tag ID — keep highest confidence for each tag.
+    # The AI model can return the same tag_id more than once (e.g. from
+    # overlapping keyword lists), which would violate the uq_problem_tag
+    # unique constraint on (problem_id, tag_id).
+    seen_tag_ids: dict[str, dict] = {}
     for t in result["tags"]:
+        tid = t["id"]
+        if tid not in seen_tag_ids or (t.get("confidence") or 0) > (seen_tag_ids[tid].get("confidence") or 0):
+            seen_tag_ids[tid] = t
+
+    # Persist AI tags with confidence
+    inserted_tag_ids = set()
+    for t in seen_tag_ids.values():
         tag = db.query(Tag).filter(Tag.id == t["id"]).first()
+        if not tag:
+            tag = db.query(Tag).filter(Tag.name == t["name"]).first()
         if not tag:
             tag = Tag(id=t["id"], name=t["name"])
             db.add(tag)
             db.flush()
-        db.add(ProblemTag(problem_id=problem.id, tag_id=tag.id, confidence=t.get("confidence")))
+            
+        if tag.id not in inserted_tag_ids:
+            db.add(ProblemTag(problem_id=problem.id, tag_id=tag.id, confidence=t.get("confidence")))
+            inserted_tag_ids.add(tag.id)
 
     # Duplicate detection
     dups = duplicate_detection.find_duplicates(db, problem)

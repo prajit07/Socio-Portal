@@ -77,6 +77,9 @@ export const problemsApi = {
 
 export const aiApi = {
   analyze: (id) => api.post(`/ai/analyze/${id}`),
+  extractTags: (title, description, transcript = '') =>
+    api.post('/ai/extract-tags', { title, description, transcript }),
+  translate: (text, target_language) => api.post('/ai/translate', { text, target_language }),
 };
 
 export const tagsApi = {
@@ -146,6 +149,7 @@ export const collaborationsApi = {
 export const governmentApi = {
   analytics: () => api.get('/government/analytics'),
   leaderboards: () => api.get('/government/leaderboards'),
+  impactReports: () => api.get('/government/impact-reports'),
 };
 
 // Phase 7 — Admin

@@ -117,8 +117,11 @@ export default function GovernmentDashboard() {
           </Card>
         </div>
 
-        <div className="mt-6">
+        <div className="mt-6 flex gap-4 flex-wrap">
+          <Link to="/gov/analytics" className="text-sm font-semibold text-primary hover:underline">Deep Analytics →</Link>
+          <Link to="/gov/impact-reports" className="text-sm font-semibold text-primary hover:underline">Impact Reports →</Link>
           <Link to="/problems" className="text-sm font-semibold text-primary hover:underline">View all problems →</Link>
+          <Link to="/map" className="text-sm font-semibold text-primary hover:underline">Map View →</Link>
         </div>
       </main>
     </div>

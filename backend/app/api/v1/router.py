@@ -15,6 +15,7 @@ from app.api.v1 import (
     government,
     admin,
     engagement,
+    geocoding,
 )
 
 api_router = APIRouter()
@@ -32,3 +33,4 @@ api_router.include_router(collaborations.router)
 api_router.include_router(government.router)
 api_router.include_router(admin.router)
 api_router.include_router(engagement.router)
+api_router.include_router(geocoding.router)

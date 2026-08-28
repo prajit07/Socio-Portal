@@ -7,6 +7,11 @@ from sqlalchemy import Enum as SAEnum
 from sqlalchemy import DateTime, String, func, ForeignKey, Text, JSON, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+try:
+    from pgvector.sqlalchemy import Vector
+except ImportError:
+    Vector = None
+
 from app.core.database import Base
 from app.models.enums import RoleEnum, ProblemStatusEnum, ProblemPriorityEnum, SolutionStatusEnum
 from app.models.team import Team
@@ -53,6 +58,9 @@ class Problem(Base):
     )
     ai_duplicate_check: Mapped[Optional[bool]] = mapped_column(nullable=True, default=False)
     ai_duplicate_of: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)  # ID of duplicate problem
+
+    # pgvector embedding for semantic duplicate detection (plan.txt §8.4)
+    embedding = None  # Set below if pgvector is available
     
     # Status and workflow
     status: Mapped[ProblemStatusEnum] = mapped_column(
@@ -89,6 +97,11 @@ class Problem(Base):
     evidence: Mapped[list["Evidence"]] = relationship(back_populates="problem", cascade="all, delete-orphan")
     problem_tags: Mapped[list["ProblemTag"]] = relationship(back_populates="problem", cascade="all, delete-orphan")
     routing_logs: Mapped[list["RoutingLog"]] = relationship(back_populates="problem", cascade="all, delete-orphan")
+
+
+# Add pgvector embedding column if available
+if Vector is not None:
+    Problem.embedding = mapped_column(Vector(384), nullable=True)  # 384-dim for small models
 
 
 class Solution(Base):

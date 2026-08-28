@@ -47,6 +47,10 @@ export default function ProblemTrack() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
+  
+  const [targetLang, setTargetLang] = useState('English');
+  const [translating, setTranslating] = useState(false);
+  const [translatedProblem, setTranslatedProblem] = useState(null);
 
   useEffect(() => { load(); }, [id]);
 
@@ -88,6 +92,33 @@ export default function ProblemTrack() {
 
   const isOwner = problem.submitter_id === user?.id;
 
+  const handleTranslate = async () => {
+    if (targetLang === 'English') {
+      setTranslatedProblem(null);
+      return;
+    }
+    setTranslating(true);
+    setError('');
+    try {
+      const [titleRes, descRes] = await Promise.all([
+        aiApi.translate(problem.title, targetLang),
+        aiApi.translate(problem.description, targetLang)
+      ]);
+      setTranslatedProblem({
+        ...problem,
+        title: titleRes.data.translated_text,
+        description: descRes.data.translated_text,
+      });
+    } catch (e) {
+      setError('Translation failed.');
+    } finally {
+      setTranslating(false);
+    }
+  };
+
+  const displayProblem = translatedProblem || problem;
+  const languages = ['English', 'Hindi', 'Tamil', 'Telugu', 'Malayalam', 'Kannada', 'Marathi', 'Bengali'];
+
   return (
     <div className="min-h-screen bg-bg-soft">
       <Navbar />
@@ -102,13 +133,27 @@ export default function ProblemTrack() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Card>
-              <div className="flex flex-wrap items-center gap-2 mb-3">
-                <StatusBadge status={problem.status} />
-                {problem.ai_priority && <PriorityBadge priority={problem.ai_priority} />}
-                {problem.ai_category && <Badge color="primary">{problem.ai_category}</Badge>}
+              <div className="flex flex-wrap items-start justify-between gap-4 mb-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusBadge status={displayProblem.status} />
+                  {displayProblem.ai_priority && <PriorityBadge priority={displayProblem.ai_priority} />}
+                  {displayProblem.ai_category && <Badge color="primary">{displayProblem.ai_category}</Badge>}
+                </div>
+                <div className="flex items-center gap-2">
+                  <select 
+                    value={targetLang} 
+                    onChange={(e) => setTargetLang(e.target.value)}
+                    className="text-xs border border-line rounded px-2 py-1 bg-bg-soft"
+                  >
+                    {languages.map(l => <option key={l} value={l}>{l}</option>)}
+                  </select>
+                  <Button type="button" size="sm" variant="secondary" onClick={handleTranslate} loading={translating} disabled={translating}>
+                    Translate
+                  </Button>
+                </div>
               </div>
-              <h1 className="text-2xl font-extrabold text-primary-navy">{problem.title}</h1>
-              <p className="mt-3 text-ink-soft whitespace-pre-wrap">{problem.description}</p>
+              <h1 className="text-2xl font-extrabold text-primary-navy">{displayProblem.title}</h1>
+              <p className="mt-3 text-ink-soft whitespace-pre-wrap">{displayProblem.description}</p>
 
               {problem.address && (
                 <div className="mt-4 flex items-start gap-2 text-sm text-ink-soft bg-bg-soft rounded-card p-3">
@@ -172,12 +217,15 @@ export default function ProblemTrack() {
               ) : (
                 <ul className="space-y-3">
                   {solutions.map((s) => (
-                    <li key={s.id} className="border border-line rounded-card p-3">
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-primary-navy">{s.title}</span>
-                        <StatusBadge status={s.status} size="sm" />
-                      </div>
-                      <p className="text-sm text-ink-soft mt-1 line-clamp-2">{s.description}</p>
+                    <li key={s.id}>
+                      <Link to={`/problems/${id}/solutions/${s.id}`} className="block border border-line rounded-card p-3 hover:border-primary hover:bg-primary/5 transition">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-primary-navy">{s.title}</span>
+                          <StatusBadge status={s.status} size="sm" />
+                        </div>
+                        <p className="text-sm text-ink-soft mt-1 line-clamp-2">{s.description}</p>
+                        <p className="text-xs text-primary mt-2 font-semibold">View details →</p>
+                      </Link>
                     </li>
                   ))}
                 </ul>

@@ -3,12 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { problemsApi, teamsApi, proposalsApi, universitiesApi } from '../api/client';
-import { Button, Card, StatusBadge, Alert, PageLoader, TextArea } from '../components/ui';
+import { Button, Card, StatusBadge, Alert, PageLoader, TextArea, Input } from '../components/ui';
 
 const asData = (r) => (r && r.data !== undefined ? r.data : r);
 
 export default function UniversityDashboard() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState('problems');
   const [problems, setProblems] = useState([]);
@@ -27,7 +27,8 @@ export default function UniversityDashboard() {
   const [sRoll, setSRoll] = useState('');
   const [sPw, setSPw] = useState('');
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { if (!authLoading) fetchData(); }, [authLoading]);
+
 
   const fetchData = async () => {
     setLoading(true);
@@ -113,7 +114,9 @@ export default function UniversityDashboard() {
     navigate(pid ? `/university/teams/new?problemId=${pid}` : '/university/teams/new');
   };
 
+  if (authLoading || loading) return <PageLoader />;
   if (!['university_admin', 'student', 'faculty'].includes(user?.role)) return <PageLoader />;
+
 
   const tabs = [
     { id: 'problems', label: 'Problem Feed' },

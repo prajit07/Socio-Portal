@@ -1,7 +1,10 @@
-from sqlalchemy import create_engine
+import logging
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from app.core.config import settings
+
+logger = logging.getLogger("database")
 
 
 def _build_engine():
@@ -38,3 +41,21 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def ensure_pgvector():
+    """Enable pgvector extension and add embedding column if available.
+    Safe to call multiple times — no-ops when pgvector is not installed.
+    """
+    try:
+        with engine.connect() as conn:
+            # Enable the vector extension (idempotent)
+            conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            # Add embedding column to problems table if it doesn't exist
+            conn.execute(text(
+                "ALTER TABLE problems ADD COLUMN IF NOT EXISTS embedding vector(384)"
+            ))
+            conn.commit()
+        logger.info("pgvector extension enabled and embedding column ready.")
+    except Exception as e:
+        logger.warning("pgvector setup skipped: %s — duplicate detection will use token overlap.", e)

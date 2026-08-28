@@ -74,6 +74,10 @@ class ProblemListOut(BaseModel):
     ai_category: Optional[str] = None
     ai_priority: Optional[ProblemPriorityEnum] = None
     submitter_id: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    address: Optional[str] = None
+    tags: Optional[List[str]] = None
     created_at: datetime
     deleted_at: Optional[datetime] = None
 

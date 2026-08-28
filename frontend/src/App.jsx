@@ -13,6 +13,9 @@ import ProblemsList from './pages/ProblemsList';
 import Notifications from './pages/Notifications';
 import MapView from './pages/MapView';
 import GovernmentDashboard from './pages/GovernmentDashboard';
+import GovAnalytics from './pages/GovAnalytics';
+import ImpactReports from './pages/ImpactReports';
+import PublicMap from './pages/PublicMap';
 import UniversityDashboard from './pages/UniversityDashboard';
 import TeamWorkspace from './pages/TeamWorkspace';
 import TeamCreate from './pages/TeamCreate';
@@ -21,6 +24,7 @@ import IndustryDashboard from './pages/IndustryDashboard';
 import CollaborationWorkspace from './pages/CollaborationWorkspace';
 import AdminDashboard from './pages/AdminDashboard';
 import ProfileSettings from './pages/ProfileSettings';
+import SolutionDetail from './pages/SolutionDetail';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -66,6 +70,14 @@ function App() {
             }
           />
           <Route
+            path="/problems/:problemId/solutions/:solutionId"
+            element={
+              <ProtectedRoute>
+                <SolutionDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/map"
             element={
               <ProtectedRoute>
@@ -73,6 +85,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/problems/map" element={<PublicMap />} />
           <Route
             path="/notifications"
             element={
@@ -86,6 +99,22 @@ function App() {
             element={
               <ProtectedRoute roles={['government']}>
                 <GovernmentDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/gov/analytics"
+            element={
+              <ProtectedRoute roles={['government']}>
+                <GovAnalytics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/gov/impact-reports"
+            element={
+              <ProtectedRoute roles={['government']}>
+                <ImpactReports />
               </ProtectedRoute>
             }
           />

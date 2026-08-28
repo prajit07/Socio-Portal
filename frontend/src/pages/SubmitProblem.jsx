@@ -1,57 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { APIProvider, Map, Marker, Pin } from '@vis.gl/react-google-maps';
 import Navbar from '../components/Navbar';
+import LocationPicker from '../components/LocationPicker';
 import { useAuth } from '../context/AuthContext';
-import { problemsApi } from '../api/client';
+import { problemsApi, aiApi } from '../api/client';
 import { transcribeAudio } from '../lib/puterSpeech';
 import { Button, Input, TextArea, Card, Badge, Alert, PageLoader } from '../components/ui';
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-
 const STEPS = ['Describe', 'Evidence', 'Location', 'Review'];
-
-function toLatLng(e) {
-  const ll = e.detail.latLng;
-  if (!ll) return null;
-  const lat = typeof ll.lat === 'function' ? ll.lat() : ll.lat;
-  const lng = typeof ll.lng === 'function' ? ll.lng() : ll.lng;
-  return [lat, lng];
-}
-
-function LocationPicker({ position, setPosition, address, setAddress }) {
-  return (
-    <div className="space-y-3">
-      <div className="h-72 w-full rounded-card overflow-hidden border border-line">
-        <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
-          <Map
-            defaultCenter={position ? { lat: position[0], lng: position[1] } : { lat: 20.5937, lng: 78.9629 }}
-            defaultZoom={5}
-            style={{ width: '100%', height: '100%' }}
-            gestureHandling="greedy"
-            onClick={(e) => {
-              const p = toLatLng(e);
-              if (p) setPosition(p);
-            }}
-          >
-            {position && (
-              <Marker position={{ lat: position[0], lng: position[1] }}>
-                <Pin backgroundColor="#1E5EFF" />
-              </Marker>
-            )}
-          </Map>
-        </APIProvider>
-      </div>
-      <p className="text-xs text-ink-muted">Click the map to drop a pin for the problem location.</p>
-      <Input label="Address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="e.g. Sector 12, Dwarka, New Delhi" />
-      {position && (
-        <p className="text-xs text-ink-muted font-mono">
-          lat: {position[0].toFixed(5)}, lng: {position[1].toFixed(5)}
-        </p>
-      )}
-    </div>
-  );
-}
 
 function VoiceRecorder({ onRecordingReady }) {
   const [recording, setRecording] = useState(false);
@@ -59,6 +15,9 @@ function VoiceRecorder({ onRecordingReady }) {
   const [transcript, setTranscript] = useState('');
   const [transcribing, setTranscribing] = useState(false);
   const [error, setError] = useState('');
+  const [targetLang, setTargetLang] = useState('English');
+  const [translating, setTranslating] = useState(false);
+  const [blobRef, setBlobRef] = useState(null);
   const mediaRef = useRef(null);
   const chunksRef = useRef([]);
 
@@ -73,6 +32,7 @@ function VoiceRecorder({ onRecordingReady }) {
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
+        setBlobRef(blob);
         setTranscribing(true);
         let text = '';
         try {
@@ -98,6 +58,24 @@ function VoiceRecorder({ onRecordingReady }) {
     setRecording(false);
   };
 
+  const handleTranslate = async () => {
+    if (!transcript) return;
+    setTranslating(true);
+    setError('');
+    try {
+      const res = await aiApi.translate(transcript, targetLang);
+      const newText = `[Translated to ${targetLang}]: ${res.data.translated_text}\n\n[Original]: ${transcript}`;
+      setTranscript(newText);
+      onRecordingReady(blobRef, 'voice_note.webm', newText);
+    } catch (e) {
+      setError('Translation failed.');
+    } finally {
+      setTranslating(false);
+    }
+  };
+
+  const languages = ['English', 'Hindi', 'Tamil', 'Telugu', 'Malayalam', 'Kannada', 'Marathi', 'Bengali'];
+
   return (
     <div className="border border-line rounded-card p-4 bg-bg-soft">
       <div className="flex items-center gap-3">
@@ -107,10 +85,25 @@ function VoiceRecorder({ onRecordingReady }) {
         {audioUrl && <audio controls src={audioUrl} className="h-8" />}
       </div>
       {transcribing && <p className="text-xs text-ink-muted mt-2">Transcribing with Puter…</p>}
+      
       {transcript && (
         <div className="mt-3 rounded-card border border-line bg-white p-3 text-sm text-ink-soft">
-          <span className="text-xs font-semibold text-ink uppercase tracking-wide">Transcript</span>
-          <p className="mt-1">{transcript}</p>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-ink uppercase tracking-wide">Transcript</span>
+            <div className="flex items-center gap-2">
+              <select 
+                value={targetLang} 
+                onChange={(e) => setTargetLang(e.target.value)}
+                className="text-xs border border-line rounded px-1.5 py-1 bg-bg-soft"
+              >
+                {languages.map(l => <option key={l} value={l}>{l}</option>)}
+              </select>
+              <Button type="button" size="sm" variant="secondary" onClick={handleTranslate} loading={translating} disabled={translating}>
+                Translate
+              </Button>
+            </div>
+          </div>
+          <p className="mt-1 whitespace-pre-wrap">{transcript}</p>
         </div>
       )}
       {error && <p className="text-xs text-tag-danger mt-2">{error}</p>}
@@ -131,7 +124,36 @@ export default function SubmitProblem() {
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
 
+  const [tagExtracting, setTagExtracting] = useState(false);
+  const [tagHint, setTagHint] = useState('');
+
   const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const handleExtractTags = async () => {
+    if (!form.title.trim() && !form.description.trim()) {
+      setTagHint('Please fill in a title and description first.');
+      return;
+    }
+    setTagExtracting(true);
+    setTagHint('');
+    try {
+      const res = await aiApi.extractTags(form.title, form.description, voiceTranscript);
+      const rawTags = res.data?.tags || [];
+      
+      setForm((f) => {
+        const existing = f.tags ? f.tags.split(',').map(s => s.trim()).filter(Boolean) : [];
+        const extracted = rawTags.map((t) => t.name);
+        const combined = [...new Set([...existing, ...extracted])];
+        return { ...f, tags: combined.join(', ') };
+      });
+      
+      setTagHint(`AI suggested ${rawTags.length} tag${rawTags.length !== 1 ? 's' : ''} · ${res.data?.category || ''} · Priority: ${res.data?.priority || ''}`);
+    } catch (e) {
+      setTagHint('Tag extraction failed. You can still type tags manually.');
+    } finally {
+      setTagExtracting(false);
+    }
+  };
 
   const addFiles = (list, kind) => {
     const arr = Array.from(list).map((file) => ({
@@ -249,9 +271,44 @@ export default function SubmitProblem() {
         <Card>
           {step === 0 && (
             <div className="space-y-4">
-              <Input label="Title" name="title" value={form.title} onChange={update('title')} placeholder="Brief, descriptive title" required />
-              <TextArea label="Description" name="description" value={form.description} onChange={update('description')} rows={6} placeholder="What is the issue? Who is affected? How long has it persisted?" required />
-              <Input label="Tags (optional, comma separated)" name="tags" value={form.tags} onChange={update('tags')} placeholder="water, sanitation, health" hint="Keywords help AI categorization." />
+              <Input label="Title *" name="title" value={form.title} onChange={update('title')} placeholder="Brief, descriptive title" required />
+              <TextArea label="Description *" name="description" value={form.description} onChange={update('description')} rows={6} placeholder="What is the issue? Who is affected? How long has it persisted?" required />
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-semibold text-ink">Tags (optional, comma separated)</label>
+                  <button
+                    type="button"
+                    onClick={handleExtractTags}
+                    disabled={tagExtracting || (!form.title.trim() && !form.description.trim())}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold hover:opacity-90 transition disabled:opacity-50 shadow-sm"
+                  >
+                    {tagExtracting ? (
+                      <>
+                        <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        Extracting…
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                        ✨ Extract Tags with AI
+                      </>
+                    )}
+                  </button>
+                </div>
+                <Input name="tags" value={form.tags} onChange={update('tags')} placeholder="water, sanitation, health" hint="Keywords help AI categorization." />
+                
+                {tagHint && (
+                  <p className="text-xs mt-2 px-3 py-1.5 rounded-lg bg-violet-50 border border-violet-200 text-violet-700 font-medium">
+                    {tagHint}
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
