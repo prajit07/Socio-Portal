@@ -9,6 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.models.enums import RoleEnum, ProblemStatusEnum, ProblemPriorityEnum, SolutionStatusEnum
+from app.models.team import Team
 
 
 def generate_problem_id() -> str:
@@ -117,6 +118,10 @@ class Solution(Base):
     # Problem reference
     problem_id: Mapped[str] = mapped_column(String(20), ForeignKey("problems.id"), nullable=False)
     problem: Mapped["Problem"] = relationship(back_populates="solutions")
+
+    # University team that authored this proposal (Phase 4)
+    team_id: Mapped[Optional[str]] = mapped_column(String(20), ForeignKey("teams.id"), nullable=True)
+    team: Mapped[Optional["Team"]] = relationship(back_populates="proposals")
     
     # Author (solver)
     author_id: Mapped[str] = mapped_column(String(20), ForeignKey("users.id"), nullable=False)

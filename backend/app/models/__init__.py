@@ -13,3 +13,13 @@ from app.models.problem import Problem, Solution  # noqa: F401
 from app.models.evidence import Evidence  # noqa: F401
 from app.models.tag import Tag, ProblemTag  # noqa: F401
 from app.models.routing import RoutingLog, Notification  # noqa: F401
+from app.models.org import University, UniversityMember, Industry  # noqa: F401
+from app.models.team import Team, TeamMember  # noqa: F401
+from app.models.collaboration import (  # noqa: F401
+    Collaboration,
+    Milestone,
+    Deliverable,
+    IPRecord,
+    SocialImpactReport,
+)
+from app.models.engagement import Comment, Upvote, CitizenProfile, AuditLog  # noqa: F401

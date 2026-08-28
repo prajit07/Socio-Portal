@@ -13,6 +13,13 @@ import ProblemsList from './pages/ProblemsList';
 import Notifications from './pages/Notifications';
 import MapView from './pages/MapView';
 import GovernmentDashboard from './pages/GovernmentDashboard';
+import UniversityDashboard from './pages/UniversityDashboard';
+import TeamWorkspace from './pages/TeamWorkspace';
+import TeamCreate from './pages/TeamCreate';
+import ProposalEditor from './pages/ProposalEditor';
+import IndustryDashboard from './pages/IndustryDashboard';
+import CollaborationWorkspace from './pages/CollaborationWorkspace';
+import AdminDashboard from './pages/AdminDashboard';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -78,6 +85,73 @@ function App() {
             element={
               <ProtectedRoute roles={['government']}>
                 <GovernmentDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/university/dashboard"
+            element={
+              <ProtectedRoute roles={['university_admin', 'student', 'faculty']}>
+                <UniversityDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/university/teams/new"
+            element={
+              <ProtectedRoute roles={['university_admin', 'student', 'faculty']}>
+                <TeamCreate />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/university/teams/:id"
+            element={
+              <ProtectedRoute roles={['university_admin', 'student', 'faculty']}>
+                <TeamWorkspace />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/university/proposals/new"
+            element={
+              <ProtectedRoute roles={['university_admin', 'student', 'faculty']}>
+                <ProposalEditor />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/university/proposals/:id"
+            element={
+              <ProtectedRoute roles={['university_admin', 'student', 'faculty']}>
+                <ProposalEditor />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/industry/dashboard"
+            element={
+              <ProtectedRoute roles={['industry']}>
+                <IndustryDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/industry/collaborations/:id"
+            element={
+              <ProtectedRoute roles={['industry']}>
+                <CollaborationWorkspace />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute roles={['admin']}>
+                <AdminDashboard />
               </ProtectedRoute>
             }
           />

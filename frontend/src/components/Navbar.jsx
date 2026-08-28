@@ -17,10 +17,23 @@ const navItems = {
     { path: '/citizen/dashboard', label: 'My Problems' },
     { path: '/citizen/submit-problem', label: 'Report Problem' },
   ],
-  student: [{ path: '/problems', label: 'Problems' }],
-  faculty: [{ path: '/problems', label: 'Problems' }],
-  university_admin: [{ path: '/problems', label: 'Problems' }],
-  industry: [{ path: '/problems', label: 'Matched' }],
+  student: [
+    { path: '/university/dashboard', label: 'Workspace' },
+    { path: '/problems', label: 'Problems' },
+  ],
+  faculty: [
+    { path: '/university/dashboard', label: 'Workspace' },
+    { path: '/problems', label: 'Problems' },
+  ],
+  university_admin: [
+    { path: '/university/dashboard', label: 'Workspace' },
+    { path: '/university/teams/new', label: 'Form Team' },
+    { path: '/problems', label: 'Problems' },
+  ],
+  industry: [
+    { path: '/industry/dashboard', label: 'Portal' },
+    { path: '/problems', label: 'Matched' },
+  ],
   government: [{ path: '/gov/dashboard', label: 'Dashboard' }],
   admin: [{ path: '/admin', label: 'Admin' }],
 };
