@@ -31,6 +31,11 @@ export default function PublicMap() {
   const [filterCategory, setFilterCategory] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Location Filter State
+  const [userLocation, setUserLocation] = useState(null); // { lat, lng }
+  const [radiusKm, setRadiusKm] = useState(10);
+  const [fetchingLocation, setFetchingLocation] = useState(false);
 
   useEffect(() => { load(); }, []);
 
@@ -54,19 +59,62 @@ export default function PublicMap() {
   const located = problems.filter(
     (p) => typeof p.latitude === 'number' && typeof p.longitude === 'number'
   );
+  // Haversine formula to calculate distance in km
+  const getDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Radius of the earth in km
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  const handleFetchLocation = () => {
+    setFetchingLocation(true);
+    setError('');
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported by your browser.');
+      setFetchingLocation(false);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+        setFetchingLocation(false);
+      },
+      (err) => {
+        console.warn('Geolocation error:', err);
+        setError('Unable to fetch your location. Please check your browser permissions.');
+        setFetchingLocation(false);
+      }
+    );
+  };
+
   const filtered = located.filter((p) => {
     if (filterCategory && p.ai_category !== filterCategory) return false;
     if (filterStatus && p.status !== filterStatus) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      return p.title?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q) || p.address?.toLowerCase().includes(q);
+      if (!p.title?.toLowerCase().includes(q) && !p.description?.toLowerCase().includes(q) && !p.address?.toLowerCase().includes(q)) {
+        return false;
+      }
+    }
+    if (userLocation) {
+      const dist = getDistance(userLocation.lat, userLocation.lng, p.latitude, p.longitude);
+      if (dist > radiusKm) return false;
     }
     return true;
   });
 
-  const center = filtered[0]
+  const center = userLocation || (filtered[0]
     ? { lat: filtered[0].latitude, lng: filtered[0].longitude }
-    : { lat: 20.5937, lng: 78.9629 }; // India center
+    : { lat: 20.5937, lng: 78.9629 }); // India center
 
   const statusCounts = {};
   filtered.forEach((p) => {
@@ -114,7 +162,7 @@ export default function PublicMap() {
                 { value: '', label: 'All Categories' },
                 ...CATEGORIES.map((c) => ({ value: c, label: c })),
               ]}
-              className="lg:w-56"
+              className="lg:w-48"
             />
             <Select
               label="Status"
@@ -130,8 +178,40 @@ export default function PublicMap() {
                 { value: 'implemented', label: 'Implemented' },
                 { value: 'closed', label: 'Closed' },
               ]}
-              className="lg:w-48"
+              className="lg:w-40"
             />
+            
+            <div className="flex flex-col lg:w-48">
+              <label className="block text-sm font-semibold text-ink mb-1.5">Near Me</label>
+              <div className="flex items-center">
+                <Button 
+                  type="button" 
+                  variant={userLocation ? 'primary' : 'outline'} 
+                  onClick={userLocation ? () => setUserLocation(null) : handleFetchLocation}
+                  loading={fetchingLocation}
+                  disabled={fetchingLocation}
+                  className="w-full whitespace-nowrap"
+                >
+                  {userLocation ? 'Clear Location' : 'Fetch Location'}
+                </Button>
+              </div>
+            </div>
+
+            {userLocation && (
+              <Select
+                label="Radius"
+                value={radiusKm}
+                onChange={(e) => setRadiusKm(Number(e.target.value))}
+                options={[
+                  { value: 5, label: '5 km' },
+                  { value: 10, label: '10 km' },
+                  { value: 25, label: '25 km' },
+                  { value: 50, label: '50 km' },
+                  { value: 100, label: '100 km' },
+                ]}
+                className="lg:w-32"
+              />
+            )}
           </div>
         </Card>
 

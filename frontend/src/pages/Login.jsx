@@ -151,7 +151,7 @@ export default function Login() {
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                   placeholder={t("6-digit code")}
                   maxLength={6}
-                  className="text-center text-2xl tracking-widest"
+                  className="text-center text-xl tracking-widest"
                   autoFocus
                 />
                 <Button type="submit" className="w-full" size="lg" loading={otpLoading} disabled={otpLoading || otp.length !== 6}>

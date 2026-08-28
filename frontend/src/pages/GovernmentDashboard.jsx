@@ -92,7 +92,7 @@ export default function GovernmentDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
           <Card>
             <h2 className="font-bold text-primary-navy mb-4">Top Universities</h2>
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
               {(boards?.universities || []).map((u) => (
                 <div key={u.id} className="flex items-center justify-between border-b border-line pb-2">
                   <span className="font-semibold text-primary-navy">{u.name}</span>
@@ -105,7 +105,7 @@ export default function GovernmentDashboard() {
 
           <Card>
             <h2 className="font-bold text-primary-navy mb-4">Top Industries</h2>
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
               {(boards?.industries || []).map((u) => (
                 <div key={u.id} className="flex items-center justify-between border-b border-line pb-2">
                   <span className="font-semibold text-primary-navy">{u.name}</span>
@@ -117,12 +117,6 @@ export default function GovernmentDashboard() {
           </Card>
         </div>
 
-        <div className="mt-6 flex gap-4 flex-wrap">
-          <Link to="/gov/analytics" className="text-sm font-semibold text-primary hover:underline">Deep Analytics →</Link>
-          <Link to="/gov/impact-reports" className="text-sm font-semibold text-primary hover:underline">Impact Reports →</Link>
-          <Link to="/problems" className="text-sm font-semibold text-primary hover:underline">View all problems →</Link>
-          <Link to="/map" className="text-sm font-semibold text-primary hover:underline">Map View →</Link>
-        </div>
       </main>
     </div>
   );
