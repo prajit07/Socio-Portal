@@ -36,6 +36,8 @@ export const authApi = {
   }),
   me: () => api.get('/auth/me'),
   deleteAccount: () => api.delete('/auth/me'),
+  updateProfile: (data) => api.patch('/auth/me', data),
+  resetPassword: (data) => api.post('/auth/reset-password', data),
   requestOtp: (email, purpose = 'verify') => api.post('/auth/request-otp', { email, purpose }),
   verifyOtp: (email, code, purpose = 'verify') => api.post('/auth/verify-otp', { email, code, purpose }),
   loginRequestCode: (email, password) => api.post('/auth/login/request-code', { email, password }),
@@ -47,6 +49,7 @@ export const problemsApi = {
   list: (params = {}) => api.get('/problems', { params }),
   get: (id) => api.get(`/problems/${id}`),
   create: (data) => api.post('/problems', data),
+  remove: (id, reason) => api.delete(`/problems/${id}`, { data: { reason } }),
   update: (id, data) => api.patch(`/problems/${id}`, data),
   delete: (id) => api.delete(`/problems/${id}`),
   // Evidence (multipart upload). `transcript` is optional client-side STT text

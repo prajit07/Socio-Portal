@@ -107,8 +107,18 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link to="/settings" className="text-sm font-semibold text-ink hover:text-primary">Settings</Link>
-              <span className="text-sm text-ink-soft">
+              <Link
+                to="/settings"
+                className="p-2 rounded-btn text-ink-soft hover:text-primary hover:bg-bg-soft"
+                aria-label="Settings"
+                title="Settings"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.265.217-.384.526-.322.838a6.82 6.82 0 010 .582c-.062.312.057.62.322.838l1.003.827c.407.336.54.872.26 1.43l-1.296 2.247a1.125 1.125 0 01-1.37.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.2 6.2 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.2 6.2 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.265-.217.384-.526.322-.838a6.82 6.82 0 010-.582c.062-.312-.057-.62-.322-.838l-1.003-.827a1.125 1.125 0 01-.26-1.43l1.296-2.247a1.125 1.125 0 011.37-.491l1.217.456c.355.133.75.072 1.076-.124.072-.044.146-.087.22-.128.331-.183.581-.495.644-.869l.213-1.281z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </Link>
+              <span className="hidden lg:inline text-sm text-ink-soft">
                 {user.name} · <span className="font-semibold text-primary-navy">{roleLabels[user.role] || user.role}</span>
               </span>
               <button
@@ -149,13 +159,17 @@ export default function Navbar() {
                 <button className="w-full rounded-btn bg-primary px-4 py-2 text-sm font-bold text-white">Get Started</button>
               </Link>
             </div>
-          ) : (
+           ) : (
             <>
               <Link
                 to="/settings"
                 onClick={() => setOpen(false)}
-                className="block rounded-btn px-3 py-2 text-sm font-semibold text-ink-soft hover:bg-bg-soft"
+                className="flex items-center gap-2 rounded-btn px-3 py-2 text-sm font-semibold text-ink-soft hover:bg-bg-soft"
               >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.265.217-.384.526-.322.838a6.82 6.82 0 010 .582c-.062.312.057.62.322.838l1.003.827c.407.336.54.872.26 1.43l-1.296 2.247a1.125 1.125 0 01-1.37.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.2 6.2 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.2 6.2 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.265-.217.384-.526.322-.838a6.82 6.82 0 010-.582c.062-.312-.057-.62-.322-.838l-1.003-.827a1.125 1.125 0 01-.26-1.43l1.296-2.247a1.125 1.125 0 011.37-.491l1.217.456c.355.133.75.072 1.076-.124.072-.044.146-.087.22-.128.331-.183.581-.495.644-.869l.213-1.281z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
                 Settings
               </Link>
               <button onClick={handleLogout} className="w-full rounded-btn border border-line-soft px-4 py-2 text-sm font-bold">

@@ -76,9 +76,14 @@ class Problem(Base):
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
-        nullable=False,
+        nullable=False
     )
-    
+
+    # Soft-delete (uploader or admin can remove a problem; reason is recorded)
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    deletion_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    deleted_by_id: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+
     # Relationships
     solutions: Mapped[list["Solution"]] = relationship(back_populates="problem", cascade="all, delete-orphan")
     evidence: Mapped[list["Evidence"]] = relationship(back_populates="problem", cascade="all, delete-orphan")

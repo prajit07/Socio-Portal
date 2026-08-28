@@ -13,6 +13,7 @@ from app.schemas.problem import (
     ProblemUpdate,
     ProblemOut,
     ProblemListOut,
+    ProblemDelete,
     SolutionCreate,
     SolutionUpdate,
     SolutionOut,
@@ -65,7 +66,7 @@ def list_problems(
     current_user: User = Depends(get_current_user),
 ):
     """List problems with filters. Access depends on role."""
-    query = db.query(Problem)
+    query = db.query(Problem).filter(Problem.deleted_at.is_(None))
     
     # Role-based filtering
     if current_user.role == RoleEnum.CITIZEN:
@@ -116,6 +117,9 @@ def get_problem(
     if current_user.role == RoleEnum.CITIZEN and problem.submitter_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to view this problem")
     
+    if problem.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Problem not found")
+    
     return problem
 
 
@@ -151,18 +155,27 @@ def update_problem(
 @router.delete("/{problem_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_problem(
     problem_id: str,
+    payload: ProblemDelete,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Delete a problem. Only submitter or admin."""
+    """Soft-delete a problem. Only the submitter (with a reason) or an admin can remove it.
+
+    We soft-delete (record deleted_at + reason) rather than hard-deleting so that
+    linked solutions / teams / comments are preserved and the removal is auditable.
+    """
+    from datetime import datetime, timezone
+
     problem = db.query(Problem).filter(Problem.id == problem_id).first()
-    if not problem:
+    if not problem or problem.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Problem not found")
-    
+
     if problem.submitter_id != current_user.id and current_user.role != RoleEnum.ADMIN:
         raise HTTPException(status_code=403, detail="Not authorized to delete this problem")
-    
-    db.delete(problem)
+
+    problem.deleted_at = datetime.now(timezone.utc)
+    problem.deletion_reason = payload.reason
+    problem.deleted_by_id = current_user.id
     db.commit()
 
 

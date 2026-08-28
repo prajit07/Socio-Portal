@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { problemsApi } from '../api/client';
+import ProblemDeleteButton from '../components/ProblemDeleteButton';
 import { Button, Card, StatCard, StatusBadge, PriorityBadge, Alert, PageLoader, ListSkeleton } from '../components/ui';
 
 const ICONS = {
@@ -86,28 +87,35 @@ export default function CitizenDashboard() {
             </Link>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {problems.map((p) => (
-              <Link key={p.id} to={`/problems/${p.id}`}>
-                <Card hover>
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-bold text-primary-navy line-clamp-2">{p.title}</h3>
-                    <StatusBadge status={p.status} size="sm" />
-                  </div>
-                  <p className="text-sm text-ink-soft mt-2 line-clamp-3">{p.description}</p>
-                  <div className="mt-3 flex items-center justify-between text-xs text-ink-muted">
-                    <span>{new Date(p.created_at).toLocaleDateString()}</span>
+              <Card hover key={p.id}>
+                <div className="flex items-start justify-between gap-2">
+                  <Link to={`/problems/${p.id}`} className="font-bold text-primary-navy line-clamp-2 hover:underline">
+                    {p.title}
+                  </Link>
+                  <StatusBadge status={p.status} size="sm" />
+                </div>
+                <p className="text-sm text-ink-soft mt-2 line-clamp-3">{p.description}</p>
+                <div className="mt-3 flex items-center justify-between text-xs text-ink-muted">
+                  <span>{new Date(p.created_at).toLocaleDateString()}</span>
+                  <div className="flex items-center gap-2">
                     {p.ai_priority && <PriorityBadge priority={p.ai_priority} size="sm" />}
+                    <ProblemDeleteButton
+                      problemId={p.id}
+                      canDelete={user?.id === p.submitter_id || user?.role === 'admin'}
+                      onDeleted={fetchData}
+                    />
                   </div>
-                  {p.ai_category && (
-                    <div className="mt-2">
-                      <span className="inline-block text-[11px] font-semibold uppercase tracking-wide rounded-full bg-tag-blue/10 text-tag-blue px-2 py-0.5">
-                        {p.ai_category}
-                      </span>
-                    </div>
-                  )}
-                </Card>
-              </Link>
+                </div>
+                {p.ai_category && (
+                  <div className="mt-2">
+                    <span className="inline-block text-[11px] font-semibold uppercase tracking-wide rounded-full bg-tag-blue/10 text-tag-blue px-2 py-0.5">
+                      {p.ai_category}
+                    </span>
+                  </div>
+                )}
+              </Card>
             ))}
           </div>
         )}

@@ -60,6 +60,8 @@ class ProblemOut(ProblemBase):
     submitter_id: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+    deleted_at: Optional[datetime] = None
+    deletion_reason: Optional[str] = None
 
 
 class ProblemListOut(BaseModel):
@@ -73,6 +75,11 @@ class ProblemListOut(BaseModel):
     ai_priority: Optional[ProblemPriorityEnum] = None
     submitter_id: Optional[str] = None
     created_at: datetime
+    deleted_at: Optional[datetime] = None
+
+
+class ProblemDelete(BaseModel):
+    reason: str = Field(min_length=1, max_length=500)
 
 
 # ==================== Solution Schemas ====================

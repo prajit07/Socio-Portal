@@ -18,7 +18,7 @@ from app.models.org import UniversityMember
 from app.models.engagement import Comment, Upvote, CitizenProfile, AuditLog
 from app.models.routing import RoutingLog, Notification
 from app.models.evidence import Evidence
-from app.schemas.auth import RegisterIn, TokenOut, UserOut
+from app.schemas.auth import RegisterIn, TokenOut, UserOut, UserUpdate, PasswordReset
 from app.services import otp_service
 
 logger = logging.getLogger("auth")
@@ -153,6 +153,44 @@ def login_verify(payload: LoginVerify, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserOut)
 def me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.patch("/me", response_model=UserOut)
+def update_me(
+    payload: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Update the authenticated user's own profile (name, phone)."""
+    if payload.name is not None:
+        current_user.name = payload.name
+    if payload.phone is not None:
+        current_user.phone = payload.phone
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@router.post("/reset-password")
+def reset_password(payload: PasswordReset, db: Session = Depends(get_db)):
+    """Reset a password after OTP verification (purpose='reset').
+
+    Works for both forgotten-password flows and in-app "change password":
+    the caller first requests an OTP via /auth/request-otp?purpose=reset, then
+    submits it here together with the new password.
+    """
+    ok = otp_service.verify_otp(db, payload.email, payload.code, "reset")
+    if not ok:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired code"
+        )
+    user = db.query(User).filter(User.email == payload.email).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    user.password_hash = hash_password(payload.new_password)
+    user.is_email_verified = True
+    db.commit()
+    return {"detail": "password_reset"}
 
 
 @router.delete("/me", status_code=status.HTTP_200_OK)

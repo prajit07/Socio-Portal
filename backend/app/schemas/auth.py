@@ -33,3 +33,14 @@ class UserOut(BaseModel):
     role: RoleEnum
     phone: str | None = None
     is_email_verified: bool = False
+
+
+class UserUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    phone: str | None = Field(default=None, max_length=32)
+
+
+class PasswordReset(BaseModel):
+    email: EmailStr
+    code: str
+    new_password: str = Field(min_length=8, max_length=128)

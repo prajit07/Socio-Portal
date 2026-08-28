@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { problemsApi, aiApi } from '../api/client';
+import ProblemDeleteButton from '../components/ProblemDeleteButton';
 import { Button, Card, StatusBadge, PriorityBadge, Badge, Alert, PageLoader } from '../components/ui';
 
 const TIMELINE = [
@@ -39,6 +40,7 @@ function Timeline({ status }) {
 export default function ProblemTrack() {
   const { id } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [problem, setProblem] = useState(null);
   const [evidence, setEvidence] = useState([]);
   const [solutions, setSolutions] = useState([]);
@@ -198,6 +200,15 @@ export default function ProblemTrack() {
               <h3 className="font-bold text-primary-navy mb-2">Submitted</h3>
               <p className="text-sm text-ink-soft">{new Date(problem.created_at).toLocaleString()}</p>
               <p className="text-xs text-ink-muted mt-1 font-mono">{problem.id}</p>
+              {isOwner && (
+                <div className="mt-3">
+                  <ProblemDeleteButton
+                    problemId={problem.id}
+                    canDelete={isOwner || user?.role === 'admin'}
+                    onDeleted={() => navigate('/problems')}
+                  />
+                </div>
+              )}
             </Card>
           </div>
         </div>
