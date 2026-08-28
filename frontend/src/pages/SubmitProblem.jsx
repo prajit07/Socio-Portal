@@ -1,43 +1,46 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { APIProvider, Map, Marker, Pin } from '@vis.gl/react-google-maps';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { problemsApi } from '../api/client';
 import { transcribeAudio } from '../lib/puterSpeech';
 import { Button, Input, TextArea, Card, Badge, Alert, PageLoader } from '../components/ui';
 
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
 const STEPS = ['Describe', 'Evidence', 'Location', 'Review'];
 
-const markerIcon = L.divIcon({
-  className: '',
-  html: '<div style="background:#1E5EFF;width:18px;height:18px;border-radius:9999px;border:3px solid white;box-shadow:0 0 0 2px #1E5EFF;"></div>',
-  iconSize: [18, 18],
-  iconAnchor: [9, 9],
-});
+function toLatLng(e) {
+  const ll = e.detail.latLng;
+  if (!ll) return null;
+  const lat = typeof ll.lat === 'function' ? ll.lat() : ll.lat;
+  const lng = typeof ll.lng === 'function' ? ll.lng() : ll.lng;
+  return [lat, lng];
+}
 
 function LocationPicker({ position, setPosition, address, setAddress }) {
-  function ClickHandler() {
-    useMapEvents({
-      click(e) {
-        setPosition([e.latlng.lat, e.latlng.lng]);
-      },
-    });
-    return null;
-  }
   return (
     <div className="space-y-3">
       <div className="h-72 w-full rounded-card overflow-hidden border border-line">
-        <MapContainer center={position || [20.5937, 78.9629]} zoom={5} style={{ height: '100%', width: '100%' }}>
-          <TileLayer
-            attribution='&copy; OpenStreetMap'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <ClickHandler />
-          {position && <Marker position={position} icon={markerIcon} />}
-        </MapContainer>
+        <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
+          <Map
+            defaultCenter={position ? { lat: position[0], lng: position[1] } : { lat: 20.5937, lng: 78.9629 }}
+            defaultZoom={5}
+            style={{ width: '100%', height: '100%' }}
+            gestureHandling="greedy"
+            onClick={(e) => {
+              const p = toLatLng(e);
+              if (p) setPosition(p);
+            }}
+          >
+            {position && (
+              <Marker position={{ lat: position[0], lng: position[1] }}>
+                <Pin backgroundColor="#1E5EFF" />
+              </Marker>
+            )}
+          </Map>
+        </APIProvider>
       </div>
       <p className="text-xs text-ink-muted">Click the map to drop a pin for the problem location.</p>
       <Input label="Address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="e.g. Sector 12, Dwarka, New Delhi" />

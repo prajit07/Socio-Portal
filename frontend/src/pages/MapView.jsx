@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { APIProvider, Map, Marker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
 import Navbar from '../components/Navbar';
 import { problemsApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { Card, StatusBadge, Alert, PageLoader } from '../components/ui';
+
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 const STATUS_COLORS = {
   pending_validation: '#8A94A6',
@@ -23,20 +23,12 @@ const STATUS_COLORS = {
   rejected: '#D64550',
 };
 
-function colorIcon(color) {
-  return L.divIcon({
-    className: '',
-    html: `<div style="background:${color};width:16px;height:16px;border-radius:9999px;border:3px solid white;box-shadow:0 0 0 2px ${color};"></div>`,
-    iconSize: [16, 16],
-    iconAnchor: [8, 8],
-  });
-}
-
 export default function MapView() {
   const { user } = useAuth();
   const [problems, setProblems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [active, setActive] = useState(null);
 
   useEffect(() => { load(); }, []);
 
@@ -53,7 +45,7 @@ export default function MapView() {
   };
 
   const located = problems.filter((p) => p.latitude && p.longitude);
-  const center = located[0] ? [located[0].latitude, located[0].longitude] : [20.5937, 78.9629];
+  const center = located[0] ? { lat: located[0].latitude, lng: located[0].longitude } : { lat: 20.5937, lng: 78.9629 };
 
   return (
     <div className="min-h-screen bg-bg-soft">
@@ -67,20 +59,36 @@ export default function MapView() {
         {loading ? <PageLoader /> : (
           <Card padding="none" className="overflow-hidden">
             <div className="h-[70vh] w-full">
-              <MapContainer center={center} zoom={5} style={{ height: '100%', width: '100%' }}>
-                <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                {located.map((p) => (
-                  <Marker key={p.id} position={[p.latitude, p.longitude]} icon={colorIcon(STATUS_COLORS[p.status] || '#1E5EFF')}>
-                    <Popup>
+              <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
+                <Map
+                  defaultCenter={center}
+                  defaultZoom={5}
+                  style={{ width: '100%', height: '100%' }}
+                  gestureHandling="greedy"
+                >
+                  {located.map((p) => (
+                    <Marker
+                      key={p.id}
+                      position={{ lat: p.latitude, lng: p.longitude }}
+                      onClick={() => setActive(p)}
+                    >
+                      <Pin backgroundColor={STATUS_COLORS[p.status] || '#1E5EFF'} />
+                    </Marker>
+                  ))}
+                  {active && (
+                    <InfoWindow
+                      position={{ lat: active.latitude, lng: active.longitude }}
+                      onCloseClick={() => setActive(null)}
+                    >
                       <div className="space-y-1">
-                        <div className="font-bold">{p.title}</div>
-                        <StatusBadge status={p.status} size="sm" />
-                        <Link to={`/problems/${p.id}`} className="text-primary text-xs font-semibold">View details</Link>
+                        <div className="font-bold">{active.title}</div>
+                        <StatusBadge status={active.status} size="sm" />
+                        <Link to={`/problems/${active.id}`} className="text-primary text-xs font-semibold">View details</Link>
                       </div>
-                    </Popup>
-                  </Marker>
-                ))}
-              </MapContainer>
+                    </InfoWindow>
+                  )}
+                </Map>
+              </APIProvider>
             </div>
           </Card>
         )}
