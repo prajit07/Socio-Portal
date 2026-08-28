@@ -6,6 +6,7 @@ import { authApi, industriesApi } from '../api/client';
 import { Button, Input, Select, Alert, Card } from '../components/ui';
 import DomainMultiSelect from '../components/DomainMultiSelect';
 import InstitutionSelect from '../components/InstitutionSelect';
+import { useTranslation } from 'react-i18next';
 
 const INDUSTRY_TYPES = [
   { value: 'startup', label: 'Startup' },
@@ -26,6 +27,7 @@ const ROLE_OPTIONS = [
 ];
 
 export default function Register() {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const navigate = useNavigate();
   const [role, setRole] = useState('citizen');
@@ -75,7 +77,7 @@ export default function Register() {
       console.log('[OTP DEBUG] request-code ->', rc);
       setStep('otp');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Registration failed. Email may already be used.');
+      setError(err.response?.data?.detail || t('Registration failed. Email may already be used.'));
     } finally {
       setLoading(false);
     }
@@ -103,7 +105,7 @@ export default function Register() {
       navigate(homeForRole(role));
     } catch (err) {
       console.warn('[OTP DEBUG] verify failed ->', err.response?.data);
-      setOtpError(err.response?.data?.detail || 'Invalid or expired code.');
+      setOtpError(err.response?.data?.detail || t('Invalid or expired code.'));
     } finally {
       setOtpLoading(false);
     }
@@ -121,7 +123,7 @@ export default function Register() {
           <span className="text-lg font-extrabold text-primary-navy">Socio Connect</span>
         </Link>
         <Link to="/login" className="text-sm font-semibold text-primary hover:text-primary-dark">
-          Sign in
+          {t('Sign In')}
         </Link>
       </div>
 
@@ -130,15 +132,15 @@ export default function Register() {
           {step === 'form' ? (
             <>
               <div className="mb-6">
-                <h1 className="text-2xl font-extrabold text-primary-navy">Create your account</h1>
-                <p className="mt-1 text-sm text-ink-soft">Join as the actor you represent.</p>
+                <h1 className="text-2xl font-extrabold text-primary-navy">{t('Create Account')}</h1>
+                <p className="mt-1 text-sm text-ink-soft">{t('Join as the actor you represent.')}</p>
               </div>
 
               {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
 
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-2">I am a</label>
+                  <label className="block text-sm font-semibold text-ink mb-2">{t('I am a')}</label>
                   <div className="grid grid-cols-2 gap-3">
                     {ROLE_OPTIONS.map((r) => (
                       <button
@@ -151,24 +153,53 @@ export default function Register() {
                             : 'border-line hover:border-primary'
                         }`}
                       >
-                        <div className="font-bold text-primary-navy">{r.title}</div>
-                        <div className="text-xs text-ink-soft mt-1">{r.desc}</div>
+                        <div className={`font-bold text-sm ${role === r.value ? 'text-primary' : 'text-primary-navy'}`}>
+                          {t(r.title)}
+                        </div>
+                        <div className="mt-1 text-xs text-ink-soft">{t(r.desc)}</div>
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input label="Full name" name="name" value={form.name} onChange={update('name')} required />
-                  <Input label="Phone (optional)" name="phone" value={form.phone} onChange={update('phone')} />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Input
+                    label={t("Full Name")}
+                    required
+                    value={form.name}
+                    onChange={update('name')}
+                    placeholder={t("John Doe")}
+                  />
+                  <Input
+                    label={t("Email")}
+                    type="email"
+                    required
+                    value={form.email}
+                    onChange={update('email')}
+                    placeholder={t("Enter your email")}
+                  />
+                  <Input 
+                    label={t("Password")} 
+                    type="password" 
+                    name="password" 
+                    value={form.password} 
+                    onChange={update('password')}
+                    hint={t("At least 8 characters.")} 
+                    required 
+                    minLength={8} 
+                  />
+                  <Input 
+                    label={t("Phone (optional)")} 
+                    name="phone" 
+                    value={form.phone} 
+                    onChange={update('phone')} 
+                  />
                 </div>
-                <Input label="Email" type="email" name="email" value={form.email} onChange={update('email')} required />
-                <Input label="Password" type="password" name="password" value={form.password} onChange={update('password')}
-                  hint="At least 8 characters." required minLength={8} />
+                
                 {role === 'industry' && (
                   <div className="space-y-4">
                     <Input
-                      label="Organisation Name"
+                      label={t("Organisation Name")}
                       name="company_name"
                       value={form.company_name}
                       onChange={update('company_name')}
@@ -176,95 +207,94 @@ export default function Register() {
                       required
                     />
                     <Select
-                      label="Organisation Type"
+                      label={t("Industry Type")}
                       name="industry_type"
                       value={form.industry_type}
                       onChange={update('industry_type')}
-                      options={INDUSTRY_TYPES}
+                      options={INDUSTRY_TYPES.map(it => ({ ...it, label: t(it.label) }))}
                     />
-                    <div>
-                      <label className="block text-sm font-semibold text-ink mb-2">
-                        Domains of Interest
-                      </label>
-                      <DomainMultiSelect selected={form.domain_tags} onChange={(v) => setForm({ ...form, domain_tags: v })} />
-                      <p className="mt-1 text-xs text-ink-muted">Select all that apply — you'll be matched to related problems.</p>
-                    </div>
+                    <DomainMultiSelect
+                      label={t("Domain Expertise (comma separated)")}
+                      value={form.domain_tags}
+                      onChange={(tags) => setForm({ ...form, domain_tags: tags })}
+                      placeholder={t("e.g. education, healthcare, infrastructure")}
+                    />
                   </div>
                 )}
 
                 {role === 'student' && (
                   <div className="space-y-4">
                     <InstitutionSelect
-                      value={form.university_id}
-                      label={form.university_label}
-                      onChange={(id, lbl) => setForm({ ...form, university_id: id, university_label: lbl })}
+                      label={t("Institution")}
+                      required
+                      value={{ id: form.university_id, label: form.university_label }}
+                      onChange={(val) => setForm({ ...form, university_id: val?.id || '', university_label: val?.label || '' })}
+                      placeholder={t("Select Institution")}
                     />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <Input
-                        label="Department"
-                        name="department"
-                        value={form.department}
-                        onChange={update('department')}
-                        placeholder="e.g. Computer Science"
-                        required
-                      />
-                      <Input
-                        label="Roll Number"
-                        name="roll_number"
-                        value={form.roll_number}
-                        onChange={update('roll_number')}
-                        placeholder="e.g. 21CS101"
-                        required
-                      />
+                      <Input label={t("Department")} name="department" value={form.department} onChange={update('department')} placeholder={t("e.g. Computer Science")} required />
+                      <Input label={t("Roll Number")} name="roll_number" value={form.roll_number} onChange={update('roll_number')} required />
                     </div>
-                    <p className="text-xs text-ink-muted">Your institution can identify you by department & roll number.</p>
                   </div>
                 )}
 
                 <Button type="submit" size="lg" loading={loading} className="w-full">
-                  Create Account
+                  {t('Create Account')}
                 </Button>
               </form>
 
-              <p className="mt-6 text-center text-sm text-ink-muted">
-                Already registered?{' '}
-                <Link to="/login" className="font-semibold text-primary hover:underline">Sign in</Link>
+              <p className="mt-6 text-center text-sm text-ink-soft">
+                {t('Already have an account?')} {' '}
+                <Link to="/login" className="font-semibold text-primary hover:underline">
+                  {t('Sign In')}
+                </Link>
               </p>
             </>
           ) : (
             <>
               <div className="mb-6">
-                <h1 className="text-2xl font-extrabold text-primary-navy">Verify your email</h1>
+                <h1 className="text-2xl font-extrabold text-primary-navy">{t('Verify your email')}</h1>
                 <p className="mt-1 text-sm text-ink-soft">
-                  We sent a 6-digit code to <span className="font-semibold text-ink">{form.email}</span>. Check your inbox (and spam).
+                  {t('We sent a 6-digit code to')} <span className="font-semibold text-ink">{form.email}</span>.
                 </p>
               </div>
 
               {otpError && <Alert variant="danger" className="mb-4">{otpError}</Alert>}
+              {devCode && (
+                <Alert variant="info" className="mb-4 text-xs font-mono">
+                  {t('DEV MODE: Use this code:')} <span className="font-bold text-primary">{devCode}</span>
+                </Alert>
+              )}
 
-              <form onSubmit={handleVerify} className="space-y-5">
+              <form onSubmit={handleVerify} className="space-y-4">
                 <Input
-                  label="Verification code"
+                  label={t("Verification Code")}
                   name="otp"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="123456"
+                  placeholder={t("6-digit code")}
                   inputMode="numeric"
                   required
                 />
                 <Button type="submit" size="lg" loading={otpLoading} className="w-full">
-                  Verify & Continue
+                  {t('Verify & Sign In')}
                 </Button>
               </form>
 
-              <div className="mt-6 flex items-center justify-between text-sm">
+              <div className="mt-6 text-center text-sm">
+                <span className="text-ink-soft">{t("Didn't receive a code?")} </span>
                 <button
                   type="button"
                   className="font-semibold text-primary hover:underline"
-                  onClick={() => requestCode(form.email, 'register')}
+                  onClick={async () => {
+                    await requestCode(form.email, 'register');
+                  }}
                 >
-                  Resend code
+                  {t('Resend')}
                 </button>
+              </div>
+
+              <div className="mt-4 text-center">
                 <button type="button" className="text-ink-muted hover:underline" onClick={() => setStep('form')}>
                   Back
                 </button>

@@ -3,6 +3,7 @@ import Navbar from '../components/Navbar';
 import Hero from '../components/ui/Hero';
 import { Card, Button, Badge } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { homeForRole } from '../lib/routes';
 
 const steps = [
@@ -37,42 +38,44 @@ const features = [
 
 export default function Landing() {
   const { user } = useAuth();
+  const { t } = useTranslation();
+  
   const primary = user
-    ? { to: homeForRole(user.role), label: 'Go to Dashboard' }
-    : { to: '/register', label: 'Get Started' };
-  const secondary = user ? { to: '/problems', label: 'Browse Problems' } : { to: '/login', label: 'Sign In' };
-  const mapLink = { to: '/problems/map', label: 'View Public Map' };
+    ? { to: homeForRole(user.role), label: t('Go to Dashboard') }
+    : { to: '/register', label: t('Get Started') };
+  const secondary = user ? { to: '/problems', label: t('Browse Problems') } : { to: '/login', label: t('Sign In') };
+  const mapLink = { to: '/problems/map', label: t('View Public Map') };
 
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
       <Hero
-        eyebrow="Societal Innovation Collaboration Portal"
-        title="Turn community problems into"
-        highlight="collective solutions"
-        subtitle="A civic-tech platform where citizens report local issues, universities propose solutions, and industry & government turn them into real-world impact."
+        eyebrow={t("Societal Innovation Collaboration Portal")}
+        title={t("Turn community problems into")}
+        highlight={t("collective solutions")}
+        subtitle={t("A civic-tech platform where citizens report local issues, universities propose solutions, and industry & government turn them into real-world impact.")}
         primaryCta={primary}
         secondaryCta={secondary}
         stats={[
-          { label: 'Problems Reported', value: '1,240+' },
-          { label: 'HEI Partners', value: '86' },
-          { label: 'Industry Partners', value: '54' },
-          { label: 'Implemented', value: '312' },
+          { label: t('Problems Reported'), value: '1,240+' },
+          { label: t('HEI Partners'), value: '86' },
+          { label: t('Industry Partners'), value: '54' },
+          { label: t('Implemented'), value: '312' },
         ]}
       />
 
       {/* How it works */}
       <section className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-extrabold text-primary-navy sm:text-4xl">How it works</h2>
-          <p className="mt-3 text-ink-soft">Four steps from a local complaint to measurable change.</p>
+          <h2 className="text-3xl font-extrabold text-primary-navy sm:text-4xl">{t('How it works')}</h2>
+          <p className="mt-3 text-ink-soft">{t('Four steps from a local complaint to measurable change.')}</p>
         </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((s) => (
             <Card key={s.n} className="relative">
               <div className="text-4xl font-extrabold text-primary/15">{s.n}</div>
-              <h3 className="mt-3 text-lg font-bold text-primary-navy">{s.title}</h3>
-              <p className="mt-2 text-sm text-ink-soft">{s.body}</p>
+              <h3 className="mt-3 text-lg font-bold text-primary-navy">{t(s.title)}</h3>
+              <p className="mt-2 text-sm text-ink-soft">{t(s.body)}</p>
             </Card>
           ))}
         </div>
@@ -82,13 +85,13 @@ export default function Landing() {
       <section className="bg-bg-soft py-20">
         <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-extrabold text-primary-navy sm:text-4xl">Built for every actor</h2>
+            <h2 className="text-3xl font-extrabold text-primary-navy sm:text-4xl">{t('Built for every actor')}</h2>
           </div>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {features.map((f) => (
               <Card key={f.title} hover>
-                <Badge color="primary">{f.title}</Badge>
-                <p className="mt-3 text-sm text-ink-soft">{f.body}</p>
+                <Badge color="primary">{t(f.title)}</Badge>
+                <p className="mt-3 text-sm text-ink-soft">{t(f.body)}</p>
               </Card>
             ))}
           </div>
@@ -97,18 +100,18 @@ export default function Landing() {
 
       {/* CTA */}
       <section className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8 py-20 text-center">
-        <h2 className="text-3xl font-extrabold text-primary-navy sm:text-4xl">Report a problem today</h2>
+        <h2 className="text-3xl font-extrabold text-primary-navy sm:text-4xl">{t('Report a problem today')}</h2>
         <p className="mt-3 text-ink-soft max-w-2xl mx-auto">
-          Your community knows what needs fixing. Help us route it to the people who can solve it.
+          {t('Your community knows what needs fixing. Help us route it to the people who can solve it.')}
         </p>
         <div className="mt-8 flex justify-center gap-4">
           {user ? (
             <>
               <Link to={homeForRole(user.role)}>
-                <Button size="lg">Go to Dashboard</Button>
+                <Button size="lg">{t('Go to Dashboard')}</Button>
               </Link>
               <Link to="/problems">
-                <Button size="lg" variant="secondary">Browse Problems</Button>
+                <Button size="lg" variant="secondary">{t('Browse Problems')}</Button>
               </Link>
               <Link to={mapLink.to}>
                 <Button size="lg" variant="secondary">{mapLink.label}</Button>
@@ -117,10 +120,10 @@ export default function Landing() {
           ) : (
             <>
               <Link to="/register">
-                <Button size="lg">Create Account</Button>
+                <Button size="lg">{t('Create Account')}</Button>
               </Link>
               <Link to="/problems">
-                <Button size="lg" variant="secondary">Browse Problems</Button>
+                <Button size="lg" variant="secondary">{t('Browse Problems')}</Button>
               </Link>
               <Link to={mapLink.to}>
                 <Button size="lg" variant="secondary">{mapLink.label}</Button>

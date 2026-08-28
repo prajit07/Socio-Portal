@@ -4,8 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import { homeForRole } from '../lib/routes';
 import { authApi } from '../api/client';
 import { Button, Input, Alert, Card } from '../components/ui';
+import { useTranslation } from 'react-i18next';
 
 export default function Login() {
+  const { t } = useTranslation();
   const { loginWithOtp } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -31,7 +33,7 @@ export default function Login() {
       setDevCode(res.data.dev_code || '');
       setStep('otp');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Invalid email or password.');
+      setError(err.response?.data?.detail || t('Invalid email or password.'));
     } finally {
       setLoading(false);
       requestingRef.current = false;
@@ -60,8 +62,8 @@ export default function Login() {
       setOtpError(
         detail ||
           (err?.response
-            ? 'Invalid or expired code. Click Resend to get a new one.'
-            : 'Cannot reach the server. Is the backend running on :8000? Check the Network tab for a CORS/connection error.')
+            ? t('Invalid or expired code. Click Resend to get a new one.')
+            : t('Cannot reach the server. Is the backend running on :8000? Check the Network tab for a CORS/connection error.'))
       );
     } finally {
       setOtpLoading(false);
@@ -80,7 +82,7 @@ export default function Login() {
           <span className="text-lg font-extrabold text-primary-navy">Socio Connect</span>
         </Link>
         <Link to="/register" className="text-sm font-semibold text-primary hover:text-primary-dark">
-          Create account
+          {t('Create account')}
         </Link>
       </div>
 
@@ -89,73 +91,78 @@ export default function Login() {
           {step === 'credentials' ? (
             <>
               <div className="mb-6">
-                <h1 className="text-2xl font-extrabold text-primary-navy">Welcome back</h1>
-                <p className="mt-1 text-sm text-ink-soft">Sign in to continue to your portal.</p>
+                <h1 className="text-2xl font-extrabold text-primary-navy">{t('Welcome back')}</h1>
+                <p className="mt-1 text-sm text-ink-soft">{t('Sign in to continue to your portal.')}</p>
               </div>
 
               {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
 
               <form onSubmit={handleCredentials} className="space-y-4">
                 <Input
-                  label="Email"
+                  label={t("Email")}
                   type="email"
-                  name="email"
+                  required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
+                  placeholder={t("Enter your email")}
                 />
                 <Input
-                  label="Password"
+                  label={t("Password")}
                   type="password"
-                  name="password"
+                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
+                  placeholder={t("Enter your password")}
                 />
-                <Button type="submit" size="lg" loading={loading} className="w-full">
-                  Continue
+                <Button type="submit" className="w-full" size="lg" loading={loading} disabled={loading}>
+                  {t('Continue')}
                 </Button>
               </form>
 
               <p className="mt-6 text-center text-sm text-ink-muted">
-                New here?{' '}
+                {t('New here?')} {' '}
                 <Link to="/register" className="font-semibold text-primary hover:underline">
-                  Create an account
+                  {t('Create an account')}
                 </Link>
               </p>
             </>
           ) : (
             <>
               <div className="mb-6">
-                <h1 className="text-2xl font-extrabold text-primary-navy">Verify it's you</h1>
+                <h1 className="text-2xl font-extrabold text-primary-navy">{t('Two-Step Verification')}</h1>
                 <p className="mt-1 text-sm text-ink-soft">
-                  We sent a 6-digit code to <span className="font-semibold text-ink">{email}</span>. Check your inbox (and spam).
+                  {t('We sent a 6-digit code to')} <span className="font-semibold text-ink">{email}</span>.
                 </p>
               </div>
 
               {otpError && <Alert variant="danger" className="mb-4">{otpError}</Alert>}
 
+              {devCode && (
+                <Alert variant="info" className="mb-4 text-xs font-mono">
+                  {t('DEV MODE: Use this code:')} <span className="font-bold text-primary">{devCode}</span>
+                </Alert>
+              )}
+
               <form onSubmit={handleVerify} className="space-y-4">
                 <Input
-                  label="Verification code"
-                  name="otp"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="123456"
-                  inputMode="numeric"
+                  label={t("Verification Code")}
                   required
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                  placeholder={t("6-digit code")}
+                  maxLength={6}
+                  className="text-center text-2xl tracking-widest"
+                  autoFocus
                 />
-                <Button type="submit" size="lg" loading={otpLoading} className="w-full">
-                  Sign In
+                <Button type="submit" className="w-full" size="lg" loading={otpLoading} disabled={otpLoading || otp.length !== 6}>
+                  {t('Verify & Sign In')}
                 </Button>
               </form>
 
-              <div className="mt-6 flex items-center justify-between text-sm">
+              <div className="mt-6 text-center text-sm text-ink-soft">
+                {t("Didn't receive a code?")}{' '}
                 <button
                   type="button"
-                  className="font-semibold text-primary hover:underline"
                   onClick={async () => {
                     try {
                       const res = await authApi.loginRequestCode(email, password);
@@ -164,11 +171,15 @@ export default function Login() {
                       /* ignore */
                     }
                   }}
+                  className="font-bold text-primary hover:text-primary-dark"
                 >
-                  Resend code
+                  {t('Resend')}
                 </button>
+              </div>
+
+              <div className="mt-4 text-center">
                 <button type="button" className="text-ink-muted hover:underline" onClick={() => setStep('credentials')}>
-                  Back
+                  {t('Back')}
                 </button>
               </div>
             </>
