@@ -38,6 +38,7 @@ const navItems = {
   government: [
     { path: '/gov/dashboard', label: 'Dashboard' },
     { path: '/gov/analytics', label: 'Analytics' },
+    { path: '/gov/impact-reports', label: 'Impact Reports' },
     { path: '/problems', label: 'Problems' },
     { path: '/map', label: 'Map' },
   ],
