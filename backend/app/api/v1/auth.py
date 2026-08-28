@@ -11,6 +11,7 @@ from app.core.config import settings
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models.enums import RoleEnum
 from app.models.user import User
+from app.models.org import University, UniversityMember
 from app.models.problem import Problem, Solution
 from app.models.team import Team, TeamMember
 from app.models.org import UniversityMember
@@ -64,6 +65,23 @@ def register(payload: RegisterIn, db: Session = Depends(get_db)):
             status_code=status.HTTP_409_CONFLICT, detail="Email already registered"
         )
     db.refresh(user)
+
+    # Students self-registering under an HEI get a verifiable member record
+    # (department + roll number) so the institute can identify them.
+    if payload.role == RoleEnum.STUDENT and payload.university_id:
+        uni = db.get(University, payload.university_id)
+        if not uni:
+            raise HTTPException(status_code=404, detail="University not found")
+        db.add(
+            UniversityMember(
+                university_id=payload.university_id,
+                user_id=user.id,
+                member_role="student",
+                department=payload.department,
+                roll_number=payload.roll_number,
+            )
+        )
+        db.commit()
     return user
 
 

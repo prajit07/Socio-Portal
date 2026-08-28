@@ -15,9 +15,14 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      // Only bounce to login if a session existed and expired. Anonymous/public
+      // calls (e.g. loading the university directory on the register page) must
+      // not be redirected.
+      if (localStorage.getItem('token')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(err);
   }
@@ -83,11 +88,15 @@ export const notificationsApi = {
 
 // Phase 4 — Universities / HEI
 export const universitiesApi = {
-  list: () => api.get('/universities'),
+  list: (params = {}) => api.get('/universities', { params }),
   create: (data) => api.post('/universities', data),
   get: (id) => api.get(`/universities/${id}`),
   addMember: (id, data) => api.post(`/universities/${id}/members`, data),
   members: (id) => api.get(`/universities/${id}/members`),
+  listStudents: (id) => api.get(`/universities/${id}/students`),
+  addStudentsBulk: (id, data) => api.post(`/universities/${id}/students/bulk`, data),
+  options: () => api.get('/universities/options'),
+  suggest: (data) => api.post('/universities/suggest', data),
 };
 
 // Phase 4 — Teams

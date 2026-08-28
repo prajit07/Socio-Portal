@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { homeForRole } from '../lib/routes';
 import { authApi, industriesApi } from '../api/client';
 import { Button, Input, Select, Alert, Card } from '../components/ui';
 import DomainMultiSelect from '../components/DomainMultiSelect';
+import InstitutionSelect from '../components/InstitutionSelect';
 
 const INDUSTRY_TYPES = [
   { value: 'startup', label: 'Startup' },
@@ -18,6 +19,7 @@ const INDUSTRY_TYPES = [
 
 const ROLE_OPTIONS = [
   { value: 'citizen', title: 'Citizen', desc: 'Report problems in your community.' },
+  { value: 'student', title: 'Student', desc: 'Join via your institution (dept & roll no).' },
   { value: 'university_admin', title: 'University', desc: 'Register your institution & mentor teams.' },
   { value: 'industry', title: 'Industry / Startup', desc: 'Discover & fund solutions.' },
   { value: 'government', title: 'Government', desc: 'Oversee impact & analytics.' },
@@ -27,7 +29,7 @@ export default function Register() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [role, setRole] = useState('citizen');
-  const [form, setForm] = useState({ name: '', email: '', password: '', phone: '', company_name: '', industry_type: 'startup', domain_tags: [] });
+  const [form, setForm] = useState({ name: '', email: '', password: '', phone: '', company_name: '', industry_type: 'startup', domain_tags: [], university_id: '', university_label: '', department: '', roll_number: '' });
   const [step, setStep] = useState('form'); // 'form' | 'otp'
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -60,6 +62,9 @@ export default function Register() {
         password: form.password,
         role,
         phone: form.phone || undefined,
+        university_id: role === 'student' && form.university_id ? form.university_id : undefined,
+        department: role === 'student' ? form.department || undefined : undefined,
+        roll_number: role === 'student' ? form.roll_number || undefined : undefined,
         domain_tags:
           role === 'industry' && form.domain_tags
             ? form.domain_tags.split(',').map((s) => s.trim()).filter(Boolean)
@@ -184,6 +189,35 @@ export default function Register() {
                       <DomainMultiSelect selected={form.domain_tags} onChange={(v) => setForm({ ...form, domain_tags: v })} />
                       <p className="mt-1 text-xs text-ink-muted">Select all that apply — you'll be matched to related problems.</p>
                     </div>
+                  </div>
+                )}
+
+                {role === 'student' && (
+                  <div className="space-y-4">
+                    <InstitutionSelect
+                      value={form.university_id}
+                      label={form.university_label}
+                      onChange={(id, lbl) => setForm({ ...form, university_id: id, university_label: lbl })}
+                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Input
+                        label="Department"
+                        name="department"
+                        value={form.department}
+                        onChange={update('department')}
+                        placeholder="e.g. Computer Science"
+                        required
+                      />
+                      <Input
+                        label="Roll Number"
+                        name="roll_number"
+                        value={form.roll_number}
+                        onChange={update('roll_number')}
+                        placeholder="e.g. 21CS101"
+                        required
+                      />
+                    </div>
+                    <p className="text-xs text-ink-muted">Your institution can identify you by department & roll number.</p>
                   </div>
                 )}
 

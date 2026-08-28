@@ -28,6 +28,25 @@ class UniversityOut(BaseModel):
 class UniversityMemberCreate(BaseModel):
     user_id: str
     member_role: str = "student"  # student|faculty_mentor|admin
+    department: Optional[str] = None
+    roll_number: Optional[str] = None
+
+
+class StudentBulkItem(BaseModel):
+    name: str
+    email: str
+    department: str
+    roll_number: str
+    password: Optional[str] = None
+
+
+class StudentBulkAdd(BaseModel):
+    students: List[StudentBulkItem]
+
+
+class UniversitySuggest(BaseModel):
+    name: str
+    state: Optional[str] = None
 
 
 class IndustryCreate(BaseModel):

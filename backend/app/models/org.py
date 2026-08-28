@@ -42,6 +42,8 @@ class UniversityMember(Base):
     university_id: Mapped[str] = mapped_column(String(20), ForeignKey("universities.id"), nullable=False)
     user_id: Mapped[str] = mapped_column(String(20), ForeignKey("users.id"), nullable=False)
     member_role: Mapped[str] = mapped_column(String(20), default="student", nullable=False)  # student|faculty_mentor|admin
+    department: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # student's department
+    roll_number: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)  # student's roll number
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     university: Mapped["University"] = relationship(back_populates="members")

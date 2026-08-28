@@ -9,6 +9,9 @@ class RegisterIn(BaseModel):
     password: str = Field(min_length=8, max_length=128)
     role: RoleEnum
     phone: str | None = Field(default=None, max_length=32)
+    university_id: str | None = None  # students self-registering under an HEI
+    department: str | None = None  # student department
+    roll_number: str | None = None  # student roll number
 
 
 class LoginIn(BaseModel):
