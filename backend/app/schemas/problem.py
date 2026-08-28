@@ -57,7 +57,7 @@ class ProblemOut(ProblemBase):
     ai_duplicate_check: Optional[bool] = None
     ai_duplicate_of: Optional[str] = None
     assigned_to_id: Optional[str] = None
-    submitter_id: str
+    submitter_id: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
@@ -71,7 +71,7 @@ class ProblemListOut(BaseModel):
     status: ProblemStatusEnum
     ai_category: Optional[str] = None
     ai_priority: Optional[ProblemPriorityEnum] = None
-    submitter_id: str
+    submitter_id: Optional[str] = None
     created_at: datetime
 
 
@@ -112,7 +112,7 @@ class SolutionOut(SolutionBase):
     id: str
     status: SolutionStatusEnum
     problem_id: str
-    author_id: str
+    author_id: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
@@ -124,7 +124,7 @@ class SolutionListOut(BaseModel):
     title: str
     status: SolutionStatusEnum
     problem_id: str
-    author_id: str
+    author_id: Optional[str] = None
     created_at: datetime
 
 

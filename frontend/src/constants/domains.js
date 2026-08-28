@@ -1,0 +1,18 @@
+export const DOMAIN_OPTIONS = [
+  'Water & Sanitation',
+  'Waste Management',
+  'Energy',
+  'Healthcare',
+  'Education',
+  'Transportation',
+  'Agriculture',
+  'Environment',
+  'Smart Cities',
+  'Public Safety',
+  'Housing',
+  'Governance',
+  'Disaster Management',
+  'Rural Development',
+  'Employment',
+  'Digital Inclusion',
+];

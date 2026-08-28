@@ -2,8 +2,19 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { homeForRole } from '../lib/routes';
-import { authApi } from '../api/client';
-import { Button, Input, Alert, Card } from '../components/ui';
+import { authApi, industriesApi } from '../api/client';
+import { Button, Input, Select, Alert, Card } from '../components/ui';
+import DomainMultiSelect from '../components/DomainMultiSelect';
+
+const INDUSTRY_TYPES = [
+  { value: 'startup', label: 'Startup' },
+  { value: 'msme', label: 'MSME' },
+  { value: 'corporate', label: 'Corporate' },
+  { value: 'csr', label: 'CSR Arm' },
+  { value: 'research_institution', label: 'Research Institution' },
+  { value: 'innovation_hub', label: 'Innovation Hub' },
+  { value: 'ngo', label: 'NGO' },
+];
 
 const ROLE_OPTIONS = [
   { value: 'citizen', title: 'Citizen', desc: 'Report problems in your community.' },
@@ -16,7 +27,7 @@ export default function Register() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [role, setRole] = useState('citizen');
-  const [form, setForm] = useState({ name: '', email: '', password: '', phone: '', domain_tags: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', phone: '', company_name: '', industry_type: 'startup', domain_tags: [] });
   const [step, setStep] = useState('form'); // 'form' | 'otp'
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -73,6 +84,17 @@ export default function Register() {
     try {
       await authApi.verifyOtp(form.email, otp, 'register');
       await login(form.email, form.password);
+      if (role === 'industry' && form.company_name.trim() && form.domain_tags.length > 0) {
+        try {
+          await industriesApi.create({
+            name: form.company_name.trim(),
+            type: form.industry_type,
+            domain_tags: form.domain_tags,
+          });
+        } catch {
+          // profile creation is best-effort; user can finish it in Settings
+        }
+      }
       navigate(homeForRole(role));
     } catch (err) {
       console.warn('[OTP DEBUG] verify failed ->', err.response?.data);
@@ -139,14 +161,30 @@ export default function Register() {
                 <Input label="Password" type="password" name="password" value={form.password} onChange={update('password')}
                   hint="At least 8 characters." required minLength={8} />
                 {role === 'industry' && (
-                  <Input
-                    label="Domain tags (optional, comma separated)"
-                    name="domain_tags"
-                    value={form.domain_tags}
-                    onChange={update('domain_tags')}
-                    placeholder="water_sanitation, waste_management"
-                    hint="Leave blank to receive all problems."
-                  />
+                  <div className="space-y-4">
+                    <Input
+                      label="Organisation Name"
+                      name="company_name"
+                      value={form.company_name}
+                      onChange={update('company_name')}
+                      placeholder="e.g. Acme CleanTech"
+                      required
+                    />
+                    <Select
+                      label="Organisation Type"
+                      name="industry_type"
+                      value={form.industry_type}
+                      onChange={update('industry_type')}
+                      options={INDUSTRY_TYPES}
+                    />
+                    <div>
+                      <label className="block text-sm font-semibold text-ink mb-2">
+                        Domains of Interest
+                      </label>
+                      <DomainMultiSelect selected={form.domain_tags} onChange={(v) => setForm({ ...form, domain_tags: v })} />
+                      <p className="mt-1 text-xs text-ink-muted">Select all that apply — you'll be matched to related problems.</p>
+                    </div>
+                  </div>
                 )}
 
                 <Button type="submit" size="lg" loading={loading} className="w-full">

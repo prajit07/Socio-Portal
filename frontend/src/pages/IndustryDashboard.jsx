@@ -3,9 +3,19 @@ import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { problemsApi, industriesApi, collaborationsApi } from '../api/client';
-import { Button, Card, Input, StatusBadge, Alert, PageLoader } from '../components/ui';
+import { Button, Card, Input, Select, StatusBadge, Alert, PageLoader } from '../components/ui';
+import DomainMultiSelect from '../components/DomainMultiSelect';
 
 const asData = (r) => (r && r.data !== undefined ? r.data : r);
+const INDUSTRY_TYPES = [
+  { value: 'startup', label: 'Startup' },
+  { value: 'msme', label: 'MSME' },
+  { value: 'corporate', label: 'Corporate' },
+  { value: 'csr', label: 'CSR Arm' },
+  { value: 'research_institution', label: 'Research Institution' },
+  { value: 'innovation_hub', label: 'Innovation Hub' },
+  { value: 'ngo', label: 'NGO' },
+];
 
 export default function IndustryDashboard() {
   const { user } = useAuth();
@@ -14,11 +24,15 @@ export default function IndustryDashboard() {
   const [proposals, setProposals] = useState([]);
   const [collaborations, setCollaborations] = useState([]);
   const [problems, setProblems] = useState([]);
-  const [tags, setTags] = useState('');
+  const [tags, setTags] = useState([]);
   const [tab, setTab] = useState('proposals');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [createStep, setCreateStep] = useState('details'); // details | domains
+  const [newName, setNewName] = useState('');
+  const [newType, setNewType] = useState('startup');
+  const [newDomains, setNewDomains] = useState([]);
 
   useEffect(() => { load(); }, []);
 
@@ -37,7 +51,7 @@ export default function IndustryDashboard() {
       const allCol = asData(col) || [];
       setCollaborations(myInd ? allCol.filter((c) => c.industry_id === myInd.id) : allCol);
       setProblems(asData(p) || []);
-      setTags((myInd?.domain_tags || []).join(', '));
+      setTags(myInd?.domain_tags || []);
     } catch (e) {
       setError(e.response?.data?.detail || 'Failed to load dashboard.');
     } finally {
@@ -62,11 +76,28 @@ export default function IndustryDashboard() {
     if (!industry) return;
     setBusy(true);
     try {
-      await industriesApi.update(industry.id, { domain_tags: tags.split(',').map((s) => s.trim()).filter(Boolean) });
+      await industriesApi.update(industry.id, { domain_tags: tags });
       setError('');
       await load();
     } catch (e) {
       setError(e.response?.data?.detail || 'Failed to save profile.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const createIndustry = async () => {
+    if (!newName.trim()) { setError('Please enter your organisation name.'); return; }
+    if (newDomains.length === 0) { setError('Please select at least one domain of interest.'); return; }
+    setBusy(true);
+    try {
+      const res = await industriesApi.create({ name: newName, type: newType, domain_tags: newDomains });
+      setError('');
+      await load();
+      setCreateStep('details');
+      setNewName(''); setNewType('startup'); setNewDomains([]);
+    } catch (e) {
+      setError(e.response?.data?.detail || 'Failed to create industry profile.');
     } finally {
       setBusy(false);
     }
@@ -164,20 +195,51 @@ export default function IndustryDashboard() {
         )}
 
         {tab === 'profile' && (
-          <Card className="max-w-2xl">
-            <h2 className="font-bold text-primary-navy mb-3">Industry Profile</h2>
+          <div className="max-w-2xl space-y-6">
             {industry ? (
-              <>
+              <Card>
+                <h2 className="font-bold text-primary-navy mb-1">Industry Profile</h2>
                 <p className="text-sm text-ink-soft mb-4">Name: <span className="font-semibold text-primary-navy">{industry.name}</span> · Type: {industry.type}</p>
-                <Input label="Domain Tags (comma separated)" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="water, energy, health" />
+                <label className="block text-sm font-semibold text-ink mb-2">Domains of Interest</label>
+                <DomainMultiSelect selected={tags} onChange={setTags} />
                 <div className="mt-4">
-                  <Button size="sm" loading={busy} onClick={saveTags}>Save Profile</Button>
+                  <Button size="sm" loading={busy} onClick={saveTags}>Save Domains</Button>
                 </div>
-              </>
+              </Card>
             ) : (
-              <p className="text-sm text-ink-soft">No industry profile found. Contact an admin to create one.</p>
+              <Card>
+                <h2 className="font-bold text-primary-navy mb-1">Create your industry profile</h2>
+                <p className="text-sm text-ink-soft mb-4">
+                  Step {createStep === 'details' ? '1 of 2' : '2 of 2'}:{' '}
+                  {createStep === 'details' ? 'Organisation details' : 'Select domains of interest'}
+                </p>
+
+                {createStep === 'details' ? (
+                  <div className="space-y-4">
+                    <Input label="Organisation Name" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. Acme CleanTech" />
+                    <Select
+                      label="Organisation Type"
+                      value={newType}
+                      onChange={(e) => setNewType(e.target.value)}
+                      options={INDUSTRY_TYPES}
+                    />
+                    <div className="flex justify-end">
+                      <Button size="sm" onClick={() => setCreateStep('domains')} disabled={!newName.trim()}>Next</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <label className="block text-sm font-semibold text-ink mb-2">Select all domains you are interested in</label>
+                    <DomainMultiSelect selected={newDomains} onChange={setNewDomains} />
+                    <div className="flex justify-between">
+                      <Button size="sm" variant="secondary" onClick={() => setCreateStep('details')}>Back</Button>
+                      <Button size="sm" loading={busy} onClick={createIndustry}>Create Profile</Button>
+                    </div>
+                  </div>
+                )}
+              </Card>
             )}
-          </Card>
+          </div>
         )}
       </main>
     </div>

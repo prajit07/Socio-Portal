@@ -18,7 +18,7 @@ class TeamOut(BaseModel):
     problem_id: str
     university_id: Optional[str] = None
     name: str
-    created_by: str
+    created_by: Optional[str] = None
     created_at: datetime
 
 

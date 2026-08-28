@@ -20,6 +20,7 @@ import ProposalEditor from './pages/ProposalEditor';
 import IndustryDashboard from './pages/IndustryDashboard';
 import CollaborationWorkspace from './pages/CollaborationWorkspace';
 import AdminDashboard from './pages/AdminDashboard';
+import ProfileSettings from './pages/ProfileSettings';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -152,6 +153,15 @@ function App() {
             element={
               <ProtectedRoute roles={['admin']}>
                 <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <ProfileSettings />
               </ProtectedRoute>
             }
           />

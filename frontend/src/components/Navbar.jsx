@@ -107,6 +107,7 @@ export default function Navbar() {
             </>
           ) : (
             <>
+              <Link to="/settings" className="text-sm font-semibold text-ink hover:text-primary">Settings</Link>
               <span className="text-sm text-ink-soft">
                 {user.name} · <span className="font-semibold text-primary-navy">{roleLabels[user.role] || user.role}</span>
               </span>
@@ -149,9 +150,18 @@ export default function Navbar() {
               </Link>
             </div>
           ) : (
-            <button onClick={handleLogout} className="w-full rounded-btn border border-line-soft px-4 py-2 text-sm font-bold">
-              Log out
-            </button>
+            <>
+              <Link
+                to="/settings"
+                onClick={() => setOpen(false)}
+                className="block rounded-btn px-3 py-2 text-sm font-semibold text-ink-soft hover:bg-bg-soft"
+              >
+                Settings
+              </Link>
+              <button onClick={handleLogout} className="w-full rounded-btn border border-line-soft px-4 py-2 text-sm font-bold">
+                Log out
+              </button>
+            </>
           )}
         </div>
       )}

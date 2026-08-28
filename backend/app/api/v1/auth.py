@@ -11,6 +11,12 @@ from app.core.config import settings
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models.enums import RoleEnum
 from app.models.user import User
+from app.models.problem import Problem, Solution
+from app.models.team import Team, TeamMember
+from app.models.org import UniversityMember
+from app.models.engagement import Comment, Upvote, CitizenProfile, AuditLog
+from app.models.routing import RoutingLog, Notification
+from app.models.evidence import Evidence
 from app.schemas.auth import RegisterIn, TokenOut, UserOut
 from app.services import otp_service
 
@@ -129,3 +135,37 @@ def login_verify(payload: LoginVerify, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserOut)
 def me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.delete("/me", status_code=status.HTTP_200_OK)
+def delete_my_account(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Delete the authenticated user's own account (self-service, all roles).
+
+    Removes the user's personal records and orphans the problems / solutions /
+    teams they own (their ownership FKs are nullable) rather than cascading a
+    destructive delete across the whole related graph.
+    """
+    uid = current_user.id
+
+    # Strict child rows that reference the user (delete them).
+    db.query(Comment).filter(Comment.user_id == uid).delete()
+    db.query(Upvote).filter(Upvote.user_id == uid).delete()
+    db.query(CitizenProfile).filter(CitizenProfile.user_id == uid).delete()
+    db.query(UniversityMember).filter(UniversityMember.user_id == uid).delete()
+    db.query(TeamMember).filter(TeamMember.user_id == uid).delete()
+    db.query(Notification).filter(Notification.user_id == uid).delete()
+    db.query(RoutingLog).filter(RoutingLog.routed_to_id == uid).delete()
+    db.query(AuditLog).filter(AuditLog.user_id == uid).delete()
+    db.query(Evidence).filter(Evidence.uploaded_by_id == uid).delete()
+
+    # Orphan owned content (keep the data, drop the link to this user).
+    db.query(Problem).filter(Problem.submitter_id == uid).update({Problem.submitter_id: None})
+    db.query(Solution).filter(Solution.author_id == uid).update({Solution.author_id: None})
+    db.query(Team).filter(Team.created_by == uid).update({Team.created_by: None})
+
+    db.delete(current_user)
+    db.commit()
+    return {"detail": "Account deleted"}
