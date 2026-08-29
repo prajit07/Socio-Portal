@@ -1,7 +1,16 @@
 import axios from 'axios';
 
+const getBaseURL = () => {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+  if (typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+    // Deployed (e.g. Vercel): call the backend on the same origin.
+    return '/api/v1';
+  }
+  return 'http://localhost:8000/api/v1';
+};
+
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api/v1',
+  baseURL: getBaseURL(),
   headers: { 'Content-Type': 'application/json' },
 });
 

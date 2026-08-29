@@ -3,7 +3,11 @@ import { APIProvider, Map, Marker, Pin } from '@vis.gl/react-google-maps';
 import { Button, Input } from './ui';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-const API_BASE = 'http://localhost:8000/api/v1';
+const isLocalhost =
+  typeof window !== 'undefined' &&
+  ['localhost', '127.0.0.1'].includes(window.location.hostname);
+const API_BASE =
+  import.meta.env.VITE_API_URL || (isLocalhost ? 'http://localhost:8000/api/v1' : '/api/v1');
 
 function toLatLng(e) {
   const ll = e.detail?.latLng;
