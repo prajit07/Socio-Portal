@@ -1,0 +1,50 @@
+INFO:     Will watch for changes in these directories: ['C:\\Users\\praji\\OneDrive\\Desktop\\SIH\\backend']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [10664] using WatchFiles
+INFO:     Started server process [3584]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app\api\v1\industries.py', 'app\schemas\collaboration.py', 'app\api\v1\collaborations.py', 'app\models\org.py', 'seed.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3584]
+WARNING:  WatchFiles detected changes in 'alembic\versions\f6a7b8c9d0e1_add_vector_embedding.py', 'app\models\problem.py', 'app\core\database.py', 'app\services\notification_service.py', 'app\services\duplicate_detection.py', 'app\api\v1\router.py', 'app\api\v1\collaborations.py', 'app\api\v1\problems.py', 'app\api\v1\geocoding.py', 'app\api\v1\government.py', 'app\services\ai_categorization.py', 'app\main.py', 'app\services\geocoding_service.py', 'app\api\v1\ai.py', 'app\schemas\problem.py', 'app\services\pipeline.py'. Reloading...
+INFO:     Started server process [27384]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    Traceback (most recent call last):
+  File "C:\Users\praji\AppData\Local\Programs\Python\Python312\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\praji\AppData\Local\Programs\Python\Python312\Lib\asyncio\base_events.py", line 686, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+asyncio.exceptions.CancelledError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\praji\AppData\Local\Programs\Python\Python312\Lib\asyncio\runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\praji\AppData\Local\Programs\Python\Python312\Lib\asyncio\runners.py", line 123, in run
+    raise KeyboardInterrupt()
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\praji\OneDrive\Desktop\SIH\backend\.venv\Lib\site-packages\starlette\routing.py", line 700, in lifespan
+    await receive()
+  File "C:\Users\praji\OneDrive\Desktop\SIH\backend\.venv\Lib\site-packages\uvicorn\lifespan\on.py", line 137, in receive
+    return await self.receive_queue.get()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\praji\AppData\Local\Programs\Python\Python312\Lib\asyncio\queues.py", line 158, in get
+    await getter
+asyncio.exceptions.CancelledError
+
+INFO:     Started server process [23252]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.

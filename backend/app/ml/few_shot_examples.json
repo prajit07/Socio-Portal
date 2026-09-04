@@ -1,0 +1,1046 @@
+[
+  {
+    "title": "Contaminated drinking water in KPHB Colony",
+    "description": "There is a severe contamination problem in our area. The contamination has been ongoing for 6 months. Multiple complaints have been filed but no action taken. This poses serious health risks.",
+    "transcript": "There is dirty water coming from taps and it smells bad. My kids got stomach ache.",
+    "user_tags": [
+      "sewage",
+      "leak"
+    ],
+    "category_id": "water_sanitation",
+    "category_name": "Water & Sanitation",
+    "tags": [
+      {
+        "id": "water_sanitation",
+        "name": "Water & Sanitation",
+        "confidence": 0.95
+      },
+      {
+        "id": "sewage",
+        "name": "sewage",
+        "confidence": 0.85
+      },
+      {
+        "id": "leak",
+        "name": "leak",
+        "confidence": 0.71
+      }
+    ],
+    "priority": "high"
+  },
+  {
+    "title": "Contaminated drinking water in Dharavi",
+    "description": "There is a severe contamination problem in our area. The contamination has been ongoing for 1 month. Multiple complaints have been filed but no action taken. This poses serious health risks.",
+    "transcript": "There is dirty water coming from taps and it smells bad. My kids got stomach ache.",
+    "user_tags": [
+      "flood",
+      "toilet"
+    ],
+    "category_id": "water_sanitation",
+    "category_name": "Water & Sanitation",
+    "tags": [
+      {
+        "id": "water_sanitation",
+        "name": "Water & Sanitation",
+        "confidence": 0.95
+      },
+      {
+        "id": "flood",
+        "name": "flood",
+        "confidence": 0.78
+      },
+      {
+        "id": "toilet",
+        "name": "toilet",
+        "confidence": 0.72
+      }
+    ],
+    "priority": "medium"
+  },
+  {
+    "title": "Contaminated drinking water in Banjara Hills",
+    "description": "Residents report contamination issue for 6 months. The contamination has affected 50 families. Children and elderly are particularly vulnerable. Request immediate intervention.",
+    "transcript": "Sewage is overflowing on the main road. Very bad smell and mosquitoes everywhere.",
+    "user_tags": [
+      "sanitation",
+      "water"
+    ],
+    "category_id": "water_sanitation",
+    "category_name": "Water & Sanitation",
+    "tags": [
+      {
+        "id": "water_sanitation",
+        "name": "Water & Sanitation",
+        "confidence": 0.95
+      },
+      {
+        "id": "sanitation",
+        "name": "sanitation",
+        "confidence": 0.79
+      },
+      {
+        "id": "water",
+        "name": "water",
+        "confidence": 0.83
+      }
+    ],
+    "priority": "medium"
+  },
+  {
+    "title": "Burning of waste causing pollution in KPHB Colony",
+    "description": "People are illegally dumping dumping near KPHB Colony. This has been happening for 3 days. Municipal authorities need to install cameras and enforce penalties.",
+    "transcript": "Garbage truck hasn't come in two weeks. Piles everywhere, very bad smell.",
+    "user_tags": [
+      "litter",
+      "recycling"
+    ],
+    "category_id": "waste_management",
+    "category_name": "Waste Management",
+    "tags": [
+      {
+        "id": "waste_management",
+        "name": "Waste Management",
+        "confidence": 0.95
+      },
+      {
+        "id": "litter",
+        "name": "litter",
+        "confidence": 0.79
+      },
+      {
+        "id": "recycling",
+        "name": "recycling",
+        "confidence": 0.77
+      }
+    ],
+    "priority": "high"
+  },
+  {
+    "title": "Illegal dumping near MG Road",
+    "description": "Dustbins in MG Road are overflowing with bins. No segregation at source. Request regular collection and awareness drives for waste segregation.",
+    "transcript": "Garbage truck hasn't come in two weeks. Piles everywhere, very bad smell.",
+    "user_tags": [
+      "trash",
+      "waste"
+    ],
+    "category_id": "waste_management",
+    "category_name": "Waste Management",
+    "tags": [
+      {
+        "id": "waste_management",
+        "name": "Waste Management",
+        "confidence": 0.95
+      },
+      {
+        "id": "trash",
+        "name": "trash",
+        "confidence": 0.72
+      },
+      {
+        "id": "waste",
+        "name": "waste",
+        "confidence": 0.84
+      }
+    ],
+    "priority": "medium"
+  },
+  {
+    "title": "Illegal dumping near Banjara Hills",
+    "description": "People are illegally dumping litter near Banjara Hills. This has been happening for 1 month. Municipal authorities need to install cameras and enforce penalties.",
+    "transcript": "People throwing trash on empty plot near my house. Need action.",
+    "user_tags": [
+      "recycling",
+      "bins"
+    ],
+    "category_id": "waste_management",
+    "category_name": "Waste Management",
+    "tags": [
+      {
+        "id": "waste_management",
+        "name": "Waste Management",
+        "confidence": 0.95
+      },
+      {
+        "id": "recycling",
+        "name": "recycling",
+        "confidence": 0.75
+      },
+      {
+        "id": "bins",
+        "name": "bins",
+        "confidence": 0.81
+      }
+    ],
+    "priority": "high"
+  },
+  {
+    "title": "Ambulance not available in Ambikapur",
+    "description": "Government hospital in Ambikapur facing severe medical shortage. Patients asked to buy from outside at high cost. Affects poor families most.",
+    "transcript": "PHC closed most days. Have to go to city for small fever also.",
+    "user_tags": [
+      "clinic",
+      "doctor"
+    ],
+    "category_id": "health",
+    "category_name": "Health & Healthcare",
+    "tags": [
+      {
+        "id": "health",
+        "name": "Health & Healthcare",
+        "confidence": 0.95
+      },
+      {
+        "id": "clinic",
+        "name": "clinic",
+        "confidence": 0.86
+      },
+      {
+        "id": "doctor",
+        "name": "doctor",
+        "confidence": 0.82
+      }
+    ],
+    "priority": "high"
+  },
+  {
+    "title": "Medicine shortage at government hospital in Civil Lines",
+    "description": "There is a doctor outbreak in Civil Lines with 300 households cases reported in 6 months. Fogging and larvicide spraying not done. Urgent medical camp needed.",
+    "transcript": "Many dengue cases in our area. No fogging done. Hospital full.",
+    "user_tags": [
+      "clinic",
+      "doctor"
+    ],
+    "category_id": "health",
+    "category_name": "Health & Healthcare",
+    "tags": [
+      {
+        "id": "health",
+        "name": "Health & Healthcare",
+        "confidence": 0.95
+      },
+      {
+        "id": "clinic",
+        "name": "clinic",
+        "confidence": 0.82
+      },
+      {
+        "id": "doctor",
+        "name": "doctor",
+        "confidence": 0.74
+      }
+    ],
+    "priority": "critical"
+  },
+  {
+    "title": "Mosquito menace in Salt Lake",
+    "description": "The primary health center in Salt Lake has no doctor for 1 month. Patients have to travel 60 km for basic treatment. Critical for emergencies.",
+    "transcript": "Many dengue cases in our area. No fogging done. Hospital full.",
+    "user_tags": [
+      "medical",
+      "hospital"
+    ],
+    "category_id": "health",
+    "category_name": "Health & Healthcare",
+    "tags": [
+      {
+        "id": "health",
+        "name": "Health & Healthcare",
+        "confidence": 0.95
+      },
+      {
+        "id": "medical",
+        "name": "medical",
+        "confidence": 0.82
+      },
+      {
+        "id": "hospital",
+        "name": "hospital",
+        "confidence": 0.73
+      }
+    ],
+    "priority": "critical"
+  },
+  {
+    "title": "No drinking water or toilets in school in Rampur village",
+    "description": "School in Rampur village lacks basic classroom. No drinking water, toilets broken. Girls dropping out. This violates RTE norms. Need immediate provision.",
+    "transcript": "Only two teachers for five classes. Children not learning anything.",
+    "user_tags": [
+      "teacher",
+      "school"
+    ],
+    "category_id": "education",
+    "category_name": "Education",
+    "tags": [
+      {
+        "id": "education",
+        "name": "Education",
+        "confidence": 0.95
+      },
+      {
+        "id": "teacher",
+        "name": "teacher",
+        "confidence": 0.89
+      },
+      {
+        "id": "school",
+        "name": "school",
+        "confidence": 0.83
+      }
+    ],
+    "priority": "high"
+  },
+  {
+    "title": "No drinking water or toilets in school in Rampur village",
+    "description": "The government school in Rampur village has classroom problem. Building has cracks, roof leaks during rain. 300 households students at risk. Need urgent repair or new building.",
+    "transcript": "Only two teachers for five classes. Children not learning anything.",
+    "user_tags": [
+      "teacher",
+      "education"
+    ],
+    "category_id": "education",
+    "category_name": "Education",
+    "tags": [
+      {
+        "id": "education",
+        "name": "Education",
+        "confidence": 0.95
+      },
+      {
+        "id": "teacher",
+        "name": "teacher",
+        "confidence": 0.72
+      },
+      {
+        "id": "education",
+        "name": "education",
+        "confidence": 0.75
+      }
+    ],
+    "priority": "critical"
+  },
+  {
+    "title": "Mid-day meal not served in Model Town",
+    "description": "Severe classroom in Model Town school. Only 2 teachers for 20 shops students. Classes combined, learning affected. Request immediate posting of teachers.",
+    "transcript": "School roof leaks, children sit in wet classroom. Very dangerous.",
+    "user_tags": [
+      "literacy",
+      "classroom"
+    ],
+    "category_id": "education",
+    "category_name": "Education",
+    "tags": [
+      {
+        "id": "education",
+        "name": "Education",
+        "confidence": 0.95
+      },
+      {
+        "id": "literacy",
+        "name": "literacy",
+        "confidence": 0.7
+      },
+      {
+        "id": "classroom",
+        "name": "classroom",
+        "confidence": 0.73
+      }
+    ],
+    "priority": "medium"
+  },
+  {
+    "title": "Potholes on main road in Gandhi Nagar",
+    "description": "Bus service to Gandhi Nagar stopped for 2 weeks. 150 students daily commuters affected. Students, workers, elderly have no alternative transport. Restore service urgently.",
+    "transcript": "No bus from our village since lockdown. Walk 10km daily.",
+    "user_tags": [
+      "transport",
+      "parking"
+    ],
+    "category_id": "transportation",
+    "category_name": "Transportation & Mobility",
+    "tags": [
+      {
+        "id": "transportation",
+        "name": "Transportation & Mobility",
+        "confidence": 0.95
+      },
+      {
+        "id": "transport",
+        "name": "transport",
+        "confidence": 0.76
+      },
+      {
+        "id": "parking",
+        "name": "parking",
+        "confidence": 0.86
+      }
+    ],
+    "priority": "critical"
+  },
+  {
+    "title": "Bridge damaged in Korba",
+    "description": "Bus service to Korba stopped for 2 weeks. 1000 people daily commuters affected. Students, workers, elderly have no alternative transport. Restore service urgently.",
+    "transcript": "Big potholes on highway, bike slipped yesterday. Someone will die if not fixed.",
+    "user_tags": [
+      "transport",
+      "bridge"
+    ],
+    "category_id": "transportation",
+    "category_name": "Transportation & Mobility",
+    "tags": [
+      {
+        "id": "transportation",
+        "name": "Transportation & Mobility",
+        "confidence": 0.95
+      },
+      {
+        "id": "transport",
+        "name": "transport",
+        "confidence": 0.81
+      },
+      {
+        "id": "bridge",
+        "name": "bridge",
+        "confidence": 0.83
+      }
+    ],
+    "priority": "critical"
+  },
+  {
+    "title": "Bridge damaged in Jahanabad",
+    "description": "The main road in Jahanabad has severe traffic. Multiple accidents reported in 1 month. Vehicles damaged, two-wheeler riders at high risk. Need immediate resurfacing.",
+    "transcript": "No bus from our village since lockdown. Walk 10km daily.",
+    "user_tags": [
+      "signal",
+      "commute"
+    ],
+    "category_id": "transportation",
+    "category_name": "Transportation & Mobility",
+    "tags": [
+      {
+        "id": "transportation",
+        "name": "Transportation & Mobility",
+        "confidence": 0.95
+      },
+      {
+        "id": "signal",
+        "name": "signal",
+        "confidence": 0.77
+      },
+      {
+        "id": "commute",
+        "name": "commute",
+        "confidence": 0.83
+      }
+    ],
+    "priority": "medium"
+  },
+  {
+    "title": "Illegal tree cutting in Rampur village",
+    "description": "Factory in Rampur village releasing air causing breathing problems. Pollution board complaints ignored for 2 weeks. Children and elderly suffering.",
+    "transcript": "Factory smoke enters our homes. Coughing all night. No action taken.",
+    "user_tags": [
+      "outage",
+      "emission"
+    ],
+    "category_id": "energy_environment",
+    "category_name": "Energy & Environment",
+    "tags": [
+      {
+        "id": "energy_environment",
+        "name": "Energy & Environment",
+        "confidence": 0.95
+      },
+      {
+        "id": "outage",
+        "name": "outage",
+        "confidence": 0.81
+      },
+      {
+        "id": "emission",
+        "name": "emission",
+        "confidence": 0.79
+      }
+    ],
+    "priority": "high"
+  },
+  {
+    "title": "No electricity in MG Road village",
+    "description": "Factory in MG Road releasing air causing breathing problems. Pollution board complaints ignored for 2 weeks. Children and elderly suffering.",
+    "transcript": "Power goes 8 hours daily. Children study in dark. Inverter battery dead.",
+    "user_tags": [
+      "solar",
+      "outage"
+    ],
+    "category_id": "energy_environment",
+    "category_name": "Energy & Environment",
+    "tags": [
+      {
+        "id": "energy_environment",
+        "name": "Energy & Environment",
+        "confidence": 0.95
+      },
+      {
+        "id": "solar",
+        "name": "solar",
+        "confidence": 0.79
+      },
+      {
+        "id": "outage",
+        "name": "outage",
+        "confidence": 0.85
+      }
+    ],
+    "priority": "medium"
+  },
+  {
+    "title": "No electricity in Salt Lake village",
+    "description": "Factory in Salt Lake releasing pollution causing breathing problems. Pollution board complaints ignored for 1 month. Children and elderly suffering.",
+    "transcript": "Factory smoke enters our homes. Coughing all night. No action taken.",
+    "user_tags": [
+      "energy",
+      "climate"
+    ],
+    "category_id": "energy_environment",
+    "category_name": "Energy & Environment",
+    "tags": [
+      {
+        "id": "energy_environment",
+        "name": "Energy & Environment",
+        "confidence": 0.95
+      },
+      {
+        "id": "energy",
+        "name": "energy",
+        "confidence": 0.88
+      },
+      {
+        "id": "climate",
+        "name": "climate",
+        "confidence": 0.87
+      }
+    ],
+    "priority": "high"
+  },
+  {
+    "title": "Stray cattle destroying crops in BHEL Township",
+    "description": "Main irrigation canal in BHEL Township broken for 1 month. 150 students farmers unable to irrigate. Crops drying up. Request immediate repair before rabi season.",
+    "transcript": "Pests ate entire cotton crop. No officer visited. Lost everything.",
+    "user_tags": [
+      "livestock",
+      "irrigation"
+    ],
+    "category_id": "agriculture",
+    "category_name": "Agriculture & Rural",
+    "tags": [
+      {
+        "id": "agriculture",
+        "name": "Agriculture & Rural",
+        "confidence": 0.95
+      },
+      {
+        "id": "livestock",
+        "name": "livestock",
+        "confidence": 0.84
+      },
+      {
+        "id": "irrigation",
+        "name": "irrigation",
+        "confidence": 0.84
+      }
+    ],
+    "priority": "medium"
+  },
+  {
+    "title": "Crop failure due to pest attack in Koramangala",
+    "description": "Farmers in Koramangala not getting MSP for cotton. Middlemen exploiting. Need procurement center and fair price mechanism.",
+    "transcript": "Canal broken since monsoon. Wheat sowing delayed. Big loss.",
+    "user_tags": [
+      "farmer",
+      "crop"
+    ],
+    "category_id": "agriculture",
+    "category_name": "Agriculture & Rural",
+    "tags": [
+      {
+        "id": "agriculture",
+        "name": "Agriculture & Rural",
+        "confidence": 0.95
+      },
+      {
+        "id": "farmer",
+        "name": "farmer",
+        "confidence": 0.7
+      },
+      {
+        "id": "crop",
+        "name": "crop",
+        "confidence": 0.74
+      }
+    ],
+    "priority": "high"
+  },
+  {
+    "title": "Fertilizer shortage in Dharavi",
+    "description": "Farmers in Dharavi not getting MSP for soybean. Middlemen exploiting. Need procurement center and fair price mechanism.",
+    "transcript": "Canal broken since monsoon. Wheat sowing delayed. Big loss.",
+    "user_tags": [
+      "farmer",
+      "soil"
+    ],
+    "category_id": "agriculture",
+    "category_name": "Agriculture & Rural",
+    "tags": [
+      {
+        "id": "agriculture",
+        "name": "Agriculture & Rural",
+        "confidence": 0.95
+      },
+      {
+        "id": "farmer",
+        "name": "farmer",
+        "confidence": 0.77
+      },
+      {
+        "id": "soil",
+        "name": "soil",
+        "confidence": 0.89
+      }
+    ],
+    "priority": "high"
+  },
+  {
+    "title": "No housing for EWS in Vijay Nagar",
+    "description": "Unauthorized commercial construction in Vijay Nagar residential zone. Blocking light, ventilation, drainage. Complaints to authority ignored for 3 days.",
+    "transcript": "Building shaking when train passes. Cracks getting bigger. Scared to sleep.",
+    "user_tags": [
+      "urban",
+      "settlement"
+    ],
+    "category_id": "housing_urban",
+    "category_name": "Housing & Urban Development",
+    "tags": [
+      {
+        "id": "housing_urban",
+        "name": "Housing & Urban Development",
+        "confidence": 0.95
+      },
+      {
+        "id": "urban",
+        "name": "urban",
+        "confidence": 0.86
+      },
+      {
+        "id": "settlement",
+        "name": "settlement",
+        "confidence": 0.83
+      }
+    ],
+    "priority": "medium"
+  },
+  {
+    "title": "Unauthorized construction in Rampur village",
+    "description": "Old building in Rampur village showing cracks, urban visible. 3 families living in fear. Municipal engineer inspection overdue. Need structural audit and repair.",
+    "transcript": "They want to demolish our homes. Where will we go? No notice, no new house.",
+    "user_tags": [
+      "construction",
+      "shelter"
+    ],
+    "category_id": "housing_urban",
+    "category_name": "Housing & Urban Development",
+    "tags": [
+      {
+        "id": "housing_urban",
+        "name": "Housing & Urban Development",
+        "confidence": 0.95
+      },
+      {
+        "id": "construction",
+        "name": "construction",
+        "confidence": 0.77
+      },
+      {
+        "id": "shelter",
+        "name": "shelter",
+        "confidence": 0.83
+      }
+    ],
+    "priority": "medium"
+  },
+  {
+    "title": "Waterlogging in low-lying areas in BHEL Township",
+    "description": "50 farmers families in BHEL Township slum served eviction notice without rehabilitation. Living here for over a year years. Children's education will be disrupted. Need in-situ rehabilitation.",
+    "transcript": "Building shaking when train passes. Cracks getting bigger. Scared to sleep.",
+    "user_tags": [
+      "building",
+      "settlement"
+    ],
+    "category_id": "housing_urban",
+    "category_name": "Housing & Urban Development",
+    "tags": [
+      {
+        "id": "housing_urban",
+        "name": "Housing & Urban Development",
+        "confidence": 0.95
+      },
+      {
+        "id": "building",
+        "name": "building",
+        "confidence": 0.71
+      },
+      {
+        "id": "settlement",
+        "name": "settlement",
+        "confidence": 0.85
+      }
+    ],
+    "priority": "medium"
+  },
+  {
+    "title": "Digital literacy center needed in Adyar",
+    "description": "Citizens in Adyar unable to get e-governance certificates online for over a year. Portal shows error, offline offices demand bribe. 300 households applications pending.",
+    "transcript": "Portal not working since months. Clerk asks money for caste certificate.",
+    "user_tags": [
+      "e-governance",
+      "service"
+    ],
+    "category_id": "digital_governance",
+    "category_name": "Digital Governance",
+    "tags": [
+      {
+        "id": "digital_governance",
+        "name": "Digital Governance",
+        "confidence": 0.95
+      },
+      {
+        "id": "e-governance",
+        "name": "e-governance",
+        "confidence": 0.76
+      },
+      {
+        "id": "service",
+        "name": "service",
+        "confidence": 0.77
+      }
+    ],
+    "priority": "medium"
+  },
+  {
+    "title": "Corruption in online service delivery in Bilaspur",
+    "description": "Village Bilaspur has no broadband connectivity. Students cannot access online classes, farmers cannot check market prices. Digital divide widening. Need BharatNet connection.",
+    "transcript": "Complaint closed without solving. No one answers phone.",
+    "user_tags": [
+      "certificate",
+      "service"
+    ],
+    "category_id": "digital_governance",
+    "category_name": "Digital Governance",
+    "tags": [
+      {
+        "id": "digital_governance",
+        "name": "Digital Governance",
+        "confidence": 0.95
+      },
+      {
+        "id": "certificate",
+        "name": "certificate",
+        "confidence": 0.71
+      },
+      {
+        "id": "service",
+        "name": "service",
+        "confidence": 0.72
+      }
+    ],
+    "priority": "medium"
+  },
+  {
+    "title": "Grievance redressal system broken in Panchsheel Enclave",
+    "description": "Citizens in Panchsheel Enclave unable to get certificate certificates online for 6 months. Portal shows error, offline offices demand bribe. 200 residents applications pending.",
+    "transcript": "Portal not working since months. Clerk asks money for caste certificate.",
+    "user_tags": [
+      "e-governance",
+      "certificate"
+    ],
+    "category_id": "digital_governance",
+    "category_name": "Digital Governance",
+    "tags": [
+      {
+        "id": "digital_governance",
+        "name": "Digital Governance",
+        "confidence": 0.95
+      },
+      {
+        "id": "e-governance",
+        "name": "e-governance",
+        "confidence": 0.78
+      },
+      {
+        "id": "certificate",
+        "name": "certificate",
+        "confidence": 0.84
+      }
+    ],
+    "priority": "high"
+  },
+  {
+    "title": "No employment opportunities in Koramangala",
+    "description": "SHG women in Koramangala loan applications rejected without reason. Bank demands collateral SHGs cannot provide. Need simplified credit process.",
+    "transcript": "My son BTech graduate sitting home two years. No factory, no office here.",
+    "user_tags": [
+      "shg",
+      "skill"
+    ],
+    "category_id": "livelihood",
+    "category_name": "Livelihood & Employment",
+    "tags": [
+      {
+        "id": "livelihood",
+        "name": "Livelihood & Employment",
+        "confidence": 0.95
+      },
+      {
+        "id": "shg",
+        "name": "shg",
+        "confidence": 0.72
+      },
+      {
+        "id": "skill",
+        "name": "skill",
+        "confidence": 0.71
+      }
+    ],
+    "priority": "medium"
+  },
+  {
+    "title": "Artisan crafts dying in Durg",
+    "description": "Youth in Durg have no employment opportunities. 200 residents educated unemployed. Migration to cities increasing. Need local industrial unit or skill training.",
+    "transcript": "Training center locked. Machine rusting. No teacher came.",
+    "user_tags": [
+      "employment",
+      "skill"
+    ],
+    "category_id": "livelihood",
+    "category_name": "Livelihood & Employment",
+    "tags": [
+      {
+        "id": "livelihood",
+        "name": "Livelihood & Employment",
+        "confidence": 0.95
+      },
+      {
+        "id": "employment",
+        "name": "employment",
+        "confidence": 0.88
+      },
+      {
+        "id": "skill",
+        "name": "skill",
+        "confidence": 0.81
+      }
+    ],
+    "priority": "high"
+  },
+  {
+    "title": "Skill training center not functional in Anna Nagar",
+    "description": "Youth in Anna Nagar have no self-help opportunities. 200 residents educated unemployed. Migration to cities increasing. Need local industrial unit or skill training.",
+    "transcript": "My son BTech graduate sitting home two years. No factory, no office here.",
+    "user_tags": [
+      "self-help",
+      "entrepreneur"
+    ],
+    "category_id": "livelihood",
+    "category_name": "Livelihood & Employment",
+    "tags": [
+      {
+        "id": "livelihood",
+        "name": "Livelihood & Employment",
+        "confidence": 0.95
+      },
+      {
+        "id": "self-help",
+        "name": "self-help",
+        "confidence": 0.86
+      },
+      {
+        "id": "entrepreneur",
+        "name": "entrepreneur",
+        "confidence": 0.77
+      }
+    ],
+    "priority": "high"
+  },
+  {
+    "title": "Cyclone shelter damaged in Bilaspur",
+    "description": "Cyclone shelter in Bilaspur damaged, roof blown off. 10 villages have no safe shelter. Monsoon approaching. Need immediate repair.",
+    "transcript": "Shelter roof gone. Where will we go if cyclone comes again?",
+    "user_tags": [
+      "earthquake",
+      "fire"
+    ],
+    "category_id": "disaster",
+    "category_name": "Disaster Management",
+    "tags": [
+      {
+        "id": "disaster",
+        "name": "Disaster Management",
+        "confidence": 0.95
+      },
+      {
+        "id": "earthquake",
+        "name": "earthquake",
+        "confidence": 0.85
+      },
+      {
+        "id": "fire",
+        "name": "fire",
+        "confidence": 0.78
+      }
+    ],
+    "priority": "high"
+  },
+  {
+    "title": "Landslide risk in MG Road hills",
+    "description": "After recent emergency, MG Road received no relief for 3 months. 50 farmers families in temporary shelters without food, water, medicine. Administration unresponsive. Urgent relief distribution needed.",
+    "transcript": "Shelter roof gone. Where will we go if cyclone comes again?",
+    "user_tags": [
+      "fire",
+      "emergency"
+    ],
+    "category_id": "disaster",
+    "category_name": "Disaster Management",
+    "tags": [
+      {
+        "id": "disaster",
+        "name": "Disaster Management",
+        "confidence": 0.95
+      },
+      {
+        "id": "fire",
+        "name": "fire",
+        "confidence": 0.81
+      },
+      {
+        "id": "emergency",
+        "name": "emergency",
+        "confidence": 0.81
+      }
+    ],
+    "priority": "critical"
+  },
+  {
+    "title": "Flood relief not reached in Durg",
+    "description": "Cyclone shelter in Durg damaged, roof blown off. 3 villages have no safe shelter. Monsoon approaching. Need immediate repair.",
+    "transcript": "Shelter roof gone. Where will we go if cyclone comes again?",
+    "user_tags": [
+      "flood",
+      "rescue"
+    ],
+    "category_id": "disaster",
+    "category_name": "Disaster Management",
+    "tags": [
+      {
+        "id": "disaster",
+        "name": "Disaster Management",
+        "confidence": 0.95
+      },
+      {
+        "id": "flood",
+        "name": "flood",
+        "confidence": 0.78
+      },
+      {
+        "id": "rescue",
+        "name": "rescue",
+        "confidence": 0.76
+      }
+    ],
+    "priority": "critical"
+  },
+  {
+    "title": "Police patrol absent in Whitefield",
+    "description": "No police patrol in Whitefield for 3 months. violence and drug menace rising. Residents formed watch groups but need official presence. Request police outpost.",
+    "transcript": "CCTV broken six months. Thief caught on phone camera but police no action.",
+    "user_tags": [
+      "theft",
+      "police"
+    ],
+    "category_id": "public_safety",
+    "category_name": "Public Safety & Security",
+    "tags": [
+      {
+        "id": "public_safety",
+        "name": "Public Safety & Security",
+        "confidence": 0.95
+      },
+      {
+        "id": "theft",
+        "name": "theft",
+        "confidence": 0.87
+      },
+      {
+        "id": "police",
+        "name": "police",
+        "confidence": 0.84
+      }
+    ],
+    "priority": "medium"
+  },
+  {
+    "title": "Harassment of women in Civil Lines",
+    "description": "All streetlights in Civil Lines not working for 3 months. accident incidents increased. Women afraid to step out after dark. Need immediate repair and maintenance contract.",
+    "transcript": "Dark streets, girls harassed daily. Police says no vehicle for patrol.",
+    "user_tags": [
+      "violence",
+      "crime"
+    ],
+    "category_id": "public_safety",
+    "category_name": "Public Safety & Security",
+    "tags": [
+      {
+        "id": "public_safety",
+        "name": "Public Safety & Security",
+        "confidence": 0.95
+      },
+      {
+        "id": "violence",
+        "name": "violence",
+        "confidence": 0.83
+      },
+      {
+        "id": "crime",
+        "name": "crime",
+        "confidence": 0.72
+      }
+    ],
+    "priority": "high"
+  },
+  {
+    "title": "Streetlights not working in Adyar",
+    "description": "All streetlights in Adyar not working for 3 days. crime incidents increased. Women afraid to step out after dark. Need immediate repair and maintenance contract.",
+    "transcript": "Dark streets, girls harassed daily. Police says no vehicle for patrol.",
+    "user_tags": [
+      "harassment",
+      "accident"
+    ],
+    "category_id": "public_safety",
+    "category_name": "Public Safety & Security",
+    "tags": [
+      {
+        "id": "public_safety",
+        "name": "Public Safety & Security",
+        "confidence": 0.95
+      },
+      {
+        "id": "harassment",
+        "name": "harassment",
+        "confidence": 0.75
+      },
+      {
+        "id": "accident",
+        "name": "accident",
+        "confidence": 0.71
+      }
+    ],
+    "priority": "high"
+  }
+]

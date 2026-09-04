@@ -103,7 +103,7 @@ def _pgvector_candidates(db: Session, embedding: list[float], threshold: float, 
         return []
     try:
         # Check if the embedding column exists and has data
-        embed_str = json.dumps(embedbing)
+        embed_str = json.dumps(embedding)
         # pgvector cosine distance: embedding <=> query < threshold means similarity > (1 - threshold)
         # We use 1 - threshold as the distance cutoff
         distance_cutoff = 1.0 - threshold

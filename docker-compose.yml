@@ -1,0 +1,124 @@
+version: "3.8"
+
+services:
+  # PostgreSQL database (uses Neon in production, local for dev)
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: socio-connect-db
+    environment:
+      POSTGRES_DB: neondb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for Celery (async AI jobs) - optional
+  redis:
+    image: redis:7-alpine
+    container_name: socio-connect-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend FastAPI
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: socio-connect-backend
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/neondb?sslmode=disable
+      - JWT_SECRET=${JWT_SECRET:-local-dev-secret-change-me-before-deploy}
+      - JWT_ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=60
+      - CORS_ORIGINS=http://localhost:5173,http://frontend:5173,https://your-domain.com
+      - CLOUDFLARE_ACCOUNT_ID=${CLOUDFLARE_ACCOUNT_ID}
+      - CLOUDFLARE_AI_API_KEY=${CLOUDFLARE_AI_API_KEY}
+      - CLOUDFLARE_AI_MODEL=@cf/moonshotai/kimi-k2.7-code
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
+      - EMAIL_FROM_NAME=SocioConnect
+      - OTP_TTL_SECONDS=300
+      - OTP_LENGTH=6
+      - EMAIL_VERIFICATION_REQUIRED=False
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend/uploads:/app/uploads
+    restart: unless-stopped
+
+  # Celery worker for async AI jobs (optional)
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: socio-connect-celery
+    command: celery -A app.tasks.celery_app worker --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/neondb?sslmode=disable
+      - CLOUDFLARE_ACCOUNT_ID=${CLOUDFLARE_ACCOUNT_ID}
+      - CLOUDFLARE_AI_API_KEY=${CLOUDFLARE_AI_API_KEY}
+      - CLOUDFLARE_AI_MODEL=@cf/moonshotai/kimi-k2.7-code
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Frontend React (Vite dev server for dev, Nginx for prod)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: socio-connect-frontend
+    environment:
+      - VITE_API_URL=http://localhost:8000/api/v1
+      - VITE_GOOGLE_MAPS_API_KEY=${VITE_GOOGLE_MAPS_API_KEY}
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    restart: unless-stopped
+
+  # Nginx reverse proxy (production)
+  nginx:
+    image: nginx:alpine
+    container_name: socio-connect-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

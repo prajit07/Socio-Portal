@@ -16,12 +16,19 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Socio Connect", version="0.1.0", lifespan=lifespan)
 
+# CORS configuration - properly handles deployment scenarios
+cors_origins = settings.cors_origins_list
+# In production, if no explicit origins, allow all (for flexibility with different domains)
+if not cors_origins:
+    cors_origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=cors_origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Serve uploaded evidence media.

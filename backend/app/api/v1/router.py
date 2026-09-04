@@ -16,6 +16,7 @@ from app.api.v1 import (
     admin,
     engagement,
     geocoding,
+    classification_feedback,
 )
 
 api_router = APIRouter()
@@ -34,3 +35,4 @@ api_router.include_router(government.router)
 api_router.include_router(admin.router)
 api_router.include_router(engagement.router)
 api_router.include_router(geocoding.router)
+api_router.include_router(classification_feedback.router)

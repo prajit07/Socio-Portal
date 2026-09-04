@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     # AI / LLM (pluggable). Leave CLOUDFLARE_* empty to use the built-in heuristic engine.
     CLOUDFLARE_ACCOUNT_ID: str = ""
     CLOUDFLARE_AI_API_KEY: str = ""
-    CLOUDFLARE_AI_MODEL: str = "@cf/moonshotai/kimi-k2.7-code"
+    CLOUDFLARE_AI_MODEL: str = "@cf/meta/llama-3.1-8b-instruct"
     DUPLICATE_THRESHOLD: float = 0.6
 
     # Email OTP (Google SMTP). Paste your sender address + app password below to

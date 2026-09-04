@@ -3,6 +3,9 @@
 Primary path: Cloudflare Workers AI (settings.CLOUDFLARE_*). If the key is missing
 or the call fails, a deterministic heuristic (taxonomy keyword matching) is used so
 the pipeline always works.
+
+Few-shot prompting: Loads synthetic examples from ml/few_shot_examples.json
+to improve classification accuracy without manual labeling.
 """
 import json
 import os
@@ -14,6 +17,7 @@ from app.models.enums import ProblemPriorityEnum
 from app.services.cloudflare_ai import chat
 
 _TAXONOMY_PATH = os.path.join(os.path.dirname(__file__), "..", "ml", "taxonomy.json")
+_FEW_SHOT_PATH = os.path.join(os.path.dirname(__file__), "..", "ml", "few_shot_examples.json")
 
 
 def _load_taxonomy():
@@ -21,9 +25,31 @@ def _load_taxonomy():
         return json.load(f)["categories"]
 
 
+def _load_few_shot_examples(max_per_category: int = 2) -> list[dict]:
+    """Load few-shot examples, balanced across categories."""
+    if not os.path.exists(_FEW_SHOT_PATH):
+        return []
+    with open(_FEW_SHOT_PATH, "r", encoding="utf-8") as f:
+        examples = json.load(f)
+    # Balance: take max_per_category per category
+    by_cat: dict[str, list] = {}
+    for ex in examples:
+        cid = ex["category_id"]
+        if cid not in by_cat:
+            by_cat[cid] = []
+        if len(by_cat[cid]) < max_per_category:
+            by_cat[cid].append(ex)
+    # Flatten
+    balanced = []
+    for cat_examples in by_cat.values():
+        balanced.extend(cat_examples)
+    return balanced
+
+
 CATEGORIES = _load_taxonomy()
 _ID_TO_NAME = {c["id"]: c["name"] for c in CATEGORIES}
 _TAXONOMY_LIST = "\n".join(f"- {c['id']}: {c['name']}" for c in CATEGORIES)
+_FEW_SHOT_EXAMPLES = _load_few_shot_examples(max_per_category=2)
 
 
 def _tokenize(text: str) -> set:
@@ -84,6 +110,24 @@ def _heuristic(title, description, transcript, tags):
 
 
 def _llm_categorize(title, description, transcript, tags):
+    # Build few-shot examples string
+    few_shot_str = ""
+    if _FEW_SHOT_EXAMPLES:
+        few_shot_str = "\n\nHere are examples of correct classifications:\n"
+        for ex in _FEW_SHOT_EXAMPLES:
+            few_shot_str += (
+                f"Input: Title: {ex['title']}\n"
+                f"Description: {ex['description']}\n"
+                f"Transcript: {ex['transcript'] or 'none'}\n"
+                f"User tags: {', '.join(ex['user_tags']) or 'none'}\n"
+                f"Output: {{\n"
+                f'  "category_id": "{ex["category_id"]}",\n'
+                f'  "category_name": "{ex["category_name"]}",\n'
+                f'  "tags": {json.dumps(ex["tags"])},\n'
+                f'  "priority": "{ex["priority"]}"\n'
+                f"}}\n\n"
+            )
+
     system = (
         "You are a classification engine for a civic-tech portal (Socio Connect). "
         "Classify the reported problem into ONE category and assign 1-4 relevant tags. "
@@ -93,6 +137,7 @@ def _llm_categorize(title, description, transcript, tags):
         '{"category_id": "<id>", "category_name": "<human name>", '
         '"tags": [{"id": "<id>", "name": "<human name>", "confidence": 0.0-1.0}], '
         '"priority": "low|medium|high|critical"}'
+        f"{few_shot_str}"
     )
     user = (
         f"Title: {title}\nDescription: {description}\n"

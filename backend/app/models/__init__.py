@@ -23,3 +23,4 @@ from app.models.collaboration import (  # noqa: F401
     SocialImpactReport,
 )
 from app.models.engagement import Comment, Upvote, CitizenProfile, AuditLog  # noqa: F401
+from app.models.classification_feedback import ClassificationFeedback, ClassificationMetrics  # noqa: F401

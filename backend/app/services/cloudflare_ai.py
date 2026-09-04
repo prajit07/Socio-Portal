@@ -42,7 +42,11 @@ def chat(messages: list, model: str = None, max_tokens: int = 700, temperature: 
     result = _post(model, {"messages": messages, "max_tokens": max_tokens, "temperature": temperature})
     if not result:
         return None
-    # Cloudflare returns either {response: "..."} or {content: "..."}
+    # Cloudflare returns different formats depending on model:
+    # 1. {response: "..."} or {content: "..."} (older models)
+    # 2. {choices: [{message: {content: "..."}}]} (OpenAI-compatible models like llama-3.1)
+    if "choices" in result and result["choices"]:
+        return result["choices"][0].get("message", {}).get("content")
     return result.get("response") or result.get("content")
 
 
