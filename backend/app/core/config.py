@@ -32,6 +32,17 @@ class Settings(BaseSettings):
     OTP_LENGTH: int = 6
     EMAIL_VERIFICATION_REQUIRED: bool = False
 
+    # Evidence file storage: "local" writes to backend/uploads/ (served at
+    # /uploads/...), "s3" uploads to any S3-compatible bucket — AWS S3,
+    # Cloudflare R2, Backblaze B2, Supabase Storage, or self-hosted MinIO.
+    STORAGE_BACKEND: str = "local"
+    S3_ENDPOINT_URL: str = ""  # empty = AWS S3; e.g. https://<acct>.r2.cloudflarestorage.com for R2
+    S3_REGION: str = "auto"  # "auto" works for R2/MinIO; e.g. us-east-1 for AWS
+    S3_BUCKET: str = ""
+    S3_ACCESS_KEY: str = ""
+    S3_SECRET_KEY: str = ""
+    S3_PUBLIC_BASE_URL: str = ""  # e.g. https://pub-<id>.r2.dev or your CDN; empty = auto AWS URL
+
     @property
     def ai_enabled(self) -> bool:
         return bool(self.CLOUDFLARE_ACCOUNT_ID and self.CLOUDFLARE_AI_API_KEY)
@@ -39,6 +50,14 @@ class Settings(BaseSettings):
     @property
     def email_configured(self) -> bool:
         return bool(self.EMAIL_USER and self.EMAIL_PASS)
+
+    @property
+    def storage_is_s3(self) -> bool:
+        return self.STORAGE_BACKEND.strip().lower() == "s3"
+
+    @property
+    def s3_configured(self) -> bool:
+        return bool(self.S3_BUCKET and self.S3_ACCESS_KEY and self.S3_SECRET_KEY)
 
     @property
     def cors_origins_list(self) -> list[str]:

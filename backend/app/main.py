@@ -31,16 +31,18 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-# Serve uploaded evidence media.
-import os
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
-try:
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-    app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
-except Exception:
-    # On read-only/serverless filesystems (e.g. Vercel) we can't guarantee a
-    # writable uploads dir; skip mounting so the API still boots.
-    pass
+# Serve uploaded evidence media (local backend only — S3 files are served
+# straight from the bucket / CDN via their public file_url).
+if not settings.storage_is_s3:
+    import os
+    UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
+    try:
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+        app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+    except Exception:
+        # On read-only/serverless filesystems (e.g. Vercel) we can't guarantee a
+        # writable uploads dir; skip mounting so the API still boots.
+        pass
 
 
 @app.get("/health", tags=["meta"])
