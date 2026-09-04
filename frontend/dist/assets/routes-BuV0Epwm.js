@@ -1,0 +1,1 @@
+var e=e=>{switch(e){case`citizen`:return`/citizen/dashboard`;case`government`:return`/gov/dashboard`;default:return`/problems`}};export{e as t};

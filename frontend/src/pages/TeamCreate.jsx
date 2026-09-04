@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { useAuth } from '../context/AuthContext';
 import { teamsApi, universitiesApi } from '../api/client';
 import { Button, Card, Input, Select, Alert, PageLoader } from '../components/ui';
 
@@ -10,7 +9,6 @@ const asData = (r) => (r && r.data !== undefined ? r.data : r);
 export default function TeamCreate() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [problemId, setProblemId] = useState(params.get('problemId') || '');
   const [name, setName] = useState('');
   const [universityId, setUniversityId] = useState('');

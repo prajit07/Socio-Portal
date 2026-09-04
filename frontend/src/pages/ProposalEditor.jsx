@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { useAuth } from '../context/AuthContext';
 import { proposalsApi } from '../api/client';
 import { Button, Card, Input, TextArea, Alert, PageLoader } from '../components/ui';
 
@@ -11,7 +10,6 @@ export default function ProposalEditor() {
   const [params] = useSearchParams();
   const { id: paramId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   const id = params.get('id') || paramId || null;
   const teamId = params.get('teamId');

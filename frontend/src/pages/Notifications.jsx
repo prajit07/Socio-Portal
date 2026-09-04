@@ -1,17 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { useAuth } from '../context/AuthContext';
 import { notificationsApi } from '../api/client';
-import { Button, Card, Badge, Alert, PageLoader } from '../components/ui';
+import { Button, Card, Alert, PageLoader } from '../components/ui';
 
 export default function Notifications() {
-  const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await notificationsApi.list();
@@ -21,9 +19,10 @@ export default function Notifications() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  // eslint-disable-next-line react/set-state-in-effect -- initial server data fetch on mount
+  useEffect(() => { load(); }, [load]);
 
   const markRead = async (id) => {
     await notificationsApi.markRead(id);
@@ -66,6 +65,9 @@ export default function Notifications() {
                   </div>
                   {n.reference_id && (
                     <Link to={`/problems/${n.reference_id}`} className="text-xs font-semibold text-primary hover:underline">View</Link>
+                  )}
+                  {!n.is_read && (
+                    <button onClick={() => markRead(n.id)} className="text-xs font-semibold text-ink-muted hover:text-primary hover:underline">Mark read</button>
                   )}
                 </div>
               </Card>

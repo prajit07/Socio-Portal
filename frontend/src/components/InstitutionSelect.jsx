@@ -24,7 +24,9 @@ export default function InstitutionSelect({ value, label, onChange, error }) {
     const cached = sessionStorage.getItem('socio_inst_options');
     if (cached) {
       try {
+        // eslint-disable-next-line react/set-state-in-effect -- hydrates local cache from sessionStorage on mount
         setAll(JSON.parse(cached));
+        // eslint-disable-next-line react/set-state-in-effect -- hydrates local cache from sessionStorage on mount
         setLoaded(true);
         return;
       } catch { /* fall through */ }

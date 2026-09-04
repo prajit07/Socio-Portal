@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { problemsApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { Button, Card, CardContent, Badge, StatusBadge, PriorityBadge, Alert, Modal, Input, Select, PageLoader } from '../components/ui';
+import { Button, Card, CardContent, Badge, StatusBadge, PriorityBadge, Input, PageLoader } from '../components/ui';
 import Navbar from '../components/Navbar';
 
 const roleLabels = { citizen:'Citizen', student:'Student', faculty:'Faculty', university_admin:'University Admin', industry:'Industry', government:'Government', admin:'Admin' };
@@ -18,15 +18,17 @@ export default function ProblemDetail(){
   const [form,setForm]=useState({title:'',description:'',approach:'',tech_stack:'',timeline:'',budget:''});
   const [submitting,setSubmitting]=useState(false);
 
-  useEffect(()=>{ if(!authLoading) fetchData(); },[authLoading,id]);
-  const fetchData=async()=>{
+  const fetchData=useCallback(async()=>{
     setLoading(true);
     try{
       const [p,s]=await Promise.all([problemsApi.get(id), problemsApi.solutions.list(id)]);
       setProblem(p.data); setSolutions(s.data);
     }catch(e){ setError(e.response?.data?.detail||'Failed to fetch'); }
     finally{ setLoading(false); }
-  };
+  },[id]);
+
+  // eslint-disable-next-line react/set-state-in-effect -- initial server data fetch
+  useEffect(()=>{ if(!authLoading) fetchData(); },[authLoading,fetchData]);
   const canSolve = user && ['student','faculty','university_admin','industry','admin'].includes(user.role);
   const handleSubmit=async(e)=>{
     e.preventDefault(); setSubmitting(true);

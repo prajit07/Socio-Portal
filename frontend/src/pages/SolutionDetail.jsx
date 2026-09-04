@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { problemsApi, collaborationsApi, industriesApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { Button, Card, CardContent, Badge, StatusBadge, Input, Select, PageLoader, Alert } from '../components/ui';
+import { Button, Card, Badge, StatusBadge, Select, PageLoader, Alert } from '../components/ui';
 import Navbar from '../components/Navbar';
 
 const roleLabels = {
@@ -51,9 +51,7 @@ export default function SolutionDetail() {
   const [existingCollab, setExistingCollab] = useState(null);
   const [actionBusy, setActionBusy] = useState('');
 
-  useEffect(() => { if (!authLoading) fetchData(); }, [authLoading]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const r = await problemsApi.solutions.get(problemId, solutionId);
@@ -77,7 +75,10 @@ export default function SolutionDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [problemId, solutionId, user]);
+
+  // eslint-disable-next-line react/set-state-in-effect -- initial server data fetch
+  useEffect(() => { if (!authLoading) fetchData(); }, [authLoading, fetchData]);
 
   const handleUpdate = async (e) => {
     e.preventDefault();

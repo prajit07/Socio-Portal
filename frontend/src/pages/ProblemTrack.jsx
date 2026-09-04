@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
@@ -24,7 +24,7 @@ function Timeline({ status }) {
   const idx = ORDER.indexOf(status);
   return (
     <ol className="relative border-l border-line ml-3 space-y-4">
-      {TIMELINE.map((step, i) => {
+      {TIMELINE.map((step) => {
         const reached = idx >= ORDER.indexOf(step.key);
         return (
           <li key={step.key} className="ml-4">
@@ -52,9 +52,7 @@ export default function ProblemTrack() {
   const [translating, setTranslating] = useState(false);
   const [translatedProblem, setTranslatedProblem] = useState(null);
 
-  useEffect(() => { load(); }, [id]);
-
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const [p, ev, sol] = await Promise.all([
@@ -70,7 +68,10 @@ export default function ProblemTrack() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  // eslint-disable-next-line react/set-state-in-effect -- initial server data fetch
+  useEffect(() => { load(); }, [load]);
 
   const runAnalysis = async () => {
     setAnalyzing(true);
@@ -109,7 +110,7 @@ export default function ProblemTrack() {
         title: titleRes.data.translated_text,
         description: descRes.data.translated_text,
       });
-    } catch (e) {
+    } catch {
       setError('Translation failed.');
     } finally {
       setTranslating(false);

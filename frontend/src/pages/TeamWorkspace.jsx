@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { useAuth } from '../context/AuthContext';
 import { teamsApi, problemsApi } from '../api/client';
 import { Button, Card, Input, Alert, PageLoader, StatusBadge } from '../components/ui';
 
@@ -9,8 +8,6 @@ const asData = (r) => (r && r.data !== undefined ? r.data : r);
 
 export default function TeamWorkspace() {
   const { id } = useParams();
-  const { user } = useAuth();
-  const navigate = useNavigate();
   const [team, setTeam] = useState(null);
   const [problem, setProblem] = useState(null);
   const [userId, setUserId] = useState('');
@@ -19,9 +16,7 @@ export default function TeamWorkspace() {
   const [error, setError] = useState('');
   const [adding, setAdding] = useState(false);
 
-  useEffect(() => { fetchData(); }, [id]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const t = asData(await teamsApi.get(id));
@@ -34,7 +29,10 @@ export default function TeamWorkspace() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  // eslint-disable-next-line react/set-state-in-effect -- initial server data fetch
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleAdd = async (e) => {
     e.preventDefault();

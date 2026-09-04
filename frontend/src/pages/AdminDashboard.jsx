@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { adminApi } from '../api/client';
-import { Button, Card, Input, TextArea, Select, StatusBadge, RoleBadge, Alert, PageLoader } from '../components/ui';
+import { Button, Card, TextArea, Select, RoleBadge, Alert, PageLoader } from '../components/ui';
 
 const asData = (r) => (r && r.data !== undefined ? r.data : r);
 const ROLES = ['citizen', 'student', 'faculty', 'university_admin', 'industry', 'government', 'admin'];
@@ -19,7 +19,7 @@ export default function AdminDashboard() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const [u, m, c] = await Promise.all([adminApi.users(), adminApi.moderation(), adminApi.aiConfig()]);
@@ -31,9 +31,10 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  // eslint-disable-next-line react/set-state-in-effect -- initial server data fetch on mount
+  useEffect(() => { load(); }, [load]);
 
   const setUserRole = async (uid, role) => {
     setBusy(true);

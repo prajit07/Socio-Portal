@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
@@ -25,7 +25,7 @@ export default function CollaborationWorkspace() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const c = asData(await collaborationsApi.get(id));
@@ -36,9 +36,10 @@ export default function CollaborationWorkspace() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  useEffect(() => { load(); }, [id]);
+  // eslint-disable-next-line react/set-state-in-effect -- initial server data fetch
+  useEffect(() => { load(); }, [load]);
 
   const guard = () => {
     if (user?.role !== 'industry') { setError('Only industry partners can update collaborations.'); return false; }

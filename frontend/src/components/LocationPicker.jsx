@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import { APIProvider, Map, Marker, Pin } from '@vis.gl/react-google-maps';
-import { Button, Input } from './ui';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const isLocalhost =
@@ -82,7 +81,7 @@ export default function LocationPicker({ position, setPosition, address, setAddr
         reverseGeocode(lat, lng);
         setGeoLoading(false);
       },
-      (err) => {
+      () => {
         setError('Could not get your location. Please check browser permissions.');
         setGeoLoading(false);
       },

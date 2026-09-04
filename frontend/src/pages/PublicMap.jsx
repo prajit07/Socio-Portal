@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { APIProvider, Map, Marker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
 import Navbar from '../components/Navbar';
@@ -37,9 +37,7 @@ export default function PublicMap() {
   const [radiusKm, setRadiusKm] = useState(10);
   const [fetchingLocation, setFetchingLocation] = useState(false);
 
-  useEffect(() => { load(); }, []);
-
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       // Try fetching as authenticated; fall back to empty on 401
@@ -53,7 +51,10 @@ export default function PublicMap() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // eslint-disable-next-line react/set-state-in-effect -- initial server data fetch on mount
+  useEffect(() => { load(); }, [load]);
 
   // Only keep problems where lat/lng are actual numbers
   const located = problems.filter(

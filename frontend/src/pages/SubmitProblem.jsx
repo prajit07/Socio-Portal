@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import LocationPicker from '../components/LocationPicker';
@@ -37,7 +37,7 @@ function VoiceRecorder({ onRecordingReady }) {
         let text = '';
         try {
           text = (await transcribeAudio(blob)) || '';
-        } catch (e) {
+        } catch {
           text = '';
         }
         setTranscript(text);
@@ -48,7 +48,7 @@ function VoiceRecorder({ onRecordingReady }) {
       mediaRef.current = mr;
       mr.start();
       setRecording(true);
-    } catch (e) {
+    } catch {
       setError('Microphone access denied or unavailable. You can upload an audio file instead.');
     }
   };
@@ -67,7 +67,7 @@ function VoiceRecorder({ onRecordingReady }) {
       const newText = `[Translated to ${targetLang}]: ${res.data.translated_text}\n\n[Original]: ${transcript}`;
       setTranscript(newText);
       onRecordingReady(blobRef, 'voice_note.webm', newText);
-    } catch (e) {
+    } catch {
       setError('Translation failed.');
     } finally {
       setTranslating(false);
@@ -148,7 +148,7 @@ export default function SubmitProblem() {
       });
       
       setTagHint(`AI suggested ${rawTags.length} tag${rawTags.length !== 1 ? 's' : ''} · ${res.data?.category || ''} · Priority: ${res.data?.priority || ''}`);
-    } catch (e) {
+    } catch {
       setTagHint('Tag extraction failed. You can still type tags manually.');
     } finally {
       setTagExtracting(false);

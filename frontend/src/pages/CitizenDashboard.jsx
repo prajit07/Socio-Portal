@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { problemsApi } from '../api/client';
 import ProblemDeleteButton from '../components/ProblemDeleteButton';
-import { Button, Card, StatCard, StatusBadge, PriorityBadge, Alert, PageLoader, ListSkeleton } from '../components/ui';
+import { Button, Card, StatCard, StatusBadge, PriorityBadge, Alert, ListSkeleton } from '../components/ui';
 
 const ICONS = {
   total: (
@@ -27,9 +27,7 @@ export default function CitizenDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => { fetchData(); }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const res = await problemsApi.list({ limit: 50 });
@@ -39,7 +37,10 @@ export default function CitizenDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // eslint-disable-next-line react/set-state-in-effect -- initial server data fetch on mount
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const stats = {
     total: problems.length,

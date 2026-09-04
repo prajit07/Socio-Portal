@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
@@ -34,9 +34,7 @@ export default function IndustryDashboard() {
   const [newType, setNewType] = useState('startup');
   const [newDomains, setNewDomains] = useState([]);
 
-  useEffect(() => { load(); }, []);
-
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const inds = asData(await industriesApi.list()) || [];
@@ -57,7 +55,10 @@ export default function IndustryDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // eslint-disable-next-line react/set-state-in-effect -- initial server data fetch on mount
+  useEffect(() => { load(); }, [load]);
 
   const expressInterest = async (proposalId) => {
     if (!industry) { setError('Create your industry profile first.'); return; }
@@ -91,7 +92,7 @@ export default function IndustryDashboard() {
     if (newDomains.length === 0) { setError('Please select at least one domain of interest.'); return; }
     setBusy(true);
     try {
-      const res = await industriesApi.create({ name: newName, type: newType, domain_tags: newDomains });
+      await industriesApi.create({ name: newName, type: newType, domain_tags: newDomains });
       setError('');
       await load();
       setCreateStep('details');

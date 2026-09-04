@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../api/client';
 
 const AuthContext = createContext(null);
@@ -7,18 +7,13 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    if (token && storedUser) {
-      setUser(JSON.parse(storedUser));
-      fetchMe();
-    } else {
-      setLoading(false);
-    }
+  const logout = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
   }, []);
 
-  const fetchMe = async () => {
+  const fetchMe = useCallback(async () => {
     try {
       console.log('Fetching /auth/me...');
       const res = await api.get('/auth/me');
@@ -31,7 +26,19 @@ export function AuthProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [logout]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+    if (token && storedUser) {
+      // eslint-disable-next-line react/set-state-in-effect -- rehydrate session from storage on mount
+      setUser(JSON.parse(storedUser));
+      fetchMe();
+    } else {
+      setLoading(false);
+    }
+  }, [fetchMe]);
 
   const login = async (email, password) => {
     console.log('Attempting login for:', email);
@@ -60,19 +67,14 @@ export function AuthProvider({ children }) {
     await fetchMe();
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUser(null);
-  };
-
   return (
-    <AuthContext.Provider value={{ user, setUser, login, register, logout, loading, loginWithOtp }}>
+    <AuthContext.Provider value={{ user, setUser, login, register, logout, loading, loginWithOtp, fetchMe }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
+// eslint-disable-next-line react/only-export-components -- hook co-located with its provider by design
 export function useAuth() {
   return useContext(AuthContext);
 }

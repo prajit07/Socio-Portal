@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
-import { problemsApi, tagsApi } from '../api/client';
-import { Button, Input, Select, Card, StatusBadge, PriorityBadge, FilterBar, Alert, PageLoader, ListSkeleton } from '../components/ui';
+import { problemsApi } from '../api/client';
+import { Input, Select, Card, StatusBadge, PriorityBadge, Alert, ListSkeleton } from '../components/ui';
 
 const STATUS_OPTIONS = [
   { value: '', label: 'All Statuses' },
@@ -26,10 +26,7 @@ export default function ProblemsList() {
   const [error, setError] = useState('');
   const [filters, setFilters] = useState({ status: '', ai_category: '', ai_priority: '' });
 
-  useEffect(() => { fetchData(); }, [filters]);
-  useEffect(() => { document.title = 'Problems — Socio Connect'; }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const params = { limit: 50 };
@@ -43,7 +40,11 @@ export default function ProblemsList() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
+
+  // eslint-disable-next-line react/set-state-in-effect -- refetch from server when filters change
+  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { document.title = 'Problems — Socio Connect'; }, []);
 
   // Industry users: API already filters by domain tags; show a hint banner
   const isIndustry = user?.role === 'industry';

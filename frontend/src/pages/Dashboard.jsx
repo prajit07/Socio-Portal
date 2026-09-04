@@ -1,18 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { problemsApi } from '../api/client';
 import Navbar from '../components/Navbar';
-
-const roleLabels = {
-  citizen: 'Citizen',
-  student: 'Student',
-  faculty: 'Faculty',
-  university_admin: 'University Admin',
-  industry: 'Industry/Startup',
-  government: 'Government',
-  admin: 'Admin',
-};
 
 const roleDashboards = {
   citizen: {
@@ -67,14 +57,7 @@ export default function Dashboard() {
 
   const config = roleDashboards[user?.role] || roleDashboards.citizen;
 
-  useEffect(() => {
-    if (!authLoading) {
-      fetchStats();
-      fetchRecentProblems();
-    }
-  }, [authLoading, user?.role]);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const promises = config.stats.map((status) =>
         problemsApi.list({ status, limit: 1 }).then((res) => ({ status, count: res.data.length }))
@@ -86,9 +69,9 @@ export default function Dashboard() {
     } catch (err) {
       console.error('Failed to fetch stats:', err);
     }
-  };
+  }, [config]);
 
-  const fetchRecentProblems = async () => {
+  const fetchRecentProblems = useCallback(async () => {
     try {
       const res = await problemsApi.list({ limit: 5 });
       setRecentProblems(res.data);
@@ -97,7 +80,16 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!authLoading) {
+      // eslint-disable-next-line react/set-state-in-effect -- initial server data fetch
+      fetchStats();
+      // eslint-disable-next-line react/set-state-in-effect -- initial server data fetch
+      fetchRecentProblems();
+    }
+  }, [authLoading, fetchStats, fetchRecentProblems]);
 
   if (authLoading) {
     return (

@@ -17,13 +17,6 @@ const COLORS = [
   '#EC4899', '#06B6D4', '#10B981', '#F97316', '#6366F1', '#EF4444',
 ];
 
-const STATUS_COLORS = {
-  pending_validation: '#8A94A6', validated: '#1E5EFF', open: '#1E5EFF',
-  in_review: '#0B2545', proposal_submitted: '#0B2545', in_collaboration: '#22C7F2',
-  prototype: '#22C7F2', pilot: '#1B9C68', implemented: '#1B9C68', closed: '#8A94A6',
-  duplicate: '#D64550', rejected: '#D64550',
-};
-
 const PRIORITY_COLORS = { low: '#8A94A6', medium: '#F59E0B', high: '#F97316', critical: '#D64550' };
 
 export default function GovAnalytics() {

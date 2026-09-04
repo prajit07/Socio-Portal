@@ -1,36 +1,40 @@
+import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import Navbar from './components/Navbar';
+import { PageLoader } from './components/ui';
 
-import Landing from './pages/Landing';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import CitizenDashboard from './pages/CitizenDashboard';
-import SubmitProblem from './pages/SubmitProblem';
-import ProblemTrack from './pages/ProblemTrack';
-import ProblemsList from './pages/ProblemsList';
-import Notifications from './pages/Notifications';
-import MapView from './pages/MapView';
-import GovernmentDashboard from './pages/GovernmentDashboard';
-import GovAnalytics from './pages/GovAnalytics';
-import ImpactReports from './pages/ImpactReports';
-import PublicMap from './pages/PublicMap';
-import UniversityDashboard from './pages/UniversityDashboard';
-import TeamWorkspace from './pages/TeamWorkspace';
-import TeamCreate from './pages/TeamCreate';
-import ProposalEditor from './pages/ProposalEditor';
-import IndustryDashboard from './pages/IndustryDashboard';
-import CollaborationWorkspace from './pages/CollaborationWorkspace';
-import AdminDashboard from './pages/AdminDashboard';
-import ProfileSettings from './pages/ProfileSettings';
-import SolutionDetail from './pages/SolutionDetail';
-import NotFound from './pages/NotFound';
+// Route-level code splitting: each page loads on demand instead of
+// bloating the initial bundle (see vite.config.js manualChunks).
+const Landing = lazy(() => import('./pages/Landing'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const CitizenDashboard = lazy(() => import('./pages/CitizenDashboard'));
+const SubmitProblem = lazy(() => import('./pages/SubmitProblem'));
+const ProblemTrack = lazy(() => import('./pages/ProblemTrack'));
+const ProblemsList = lazy(() => import('./pages/ProblemsList'));
+const Notifications = lazy(() => import('./pages/Notifications'));
+const MapView = lazy(() => import('./pages/MapView'));
+const GovernmentDashboard = lazy(() => import('./pages/GovernmentDashboard'));
+const GovAnalytics = lazy(() => import('./pages/GovAnalytics'));
+const ImpactReports = lazy(() => import('./pages/ImpactReports'));
+const PublicMap = lazy(() => import('./pages/PublicMap'));
+const UniversityDashboard = lazy(() => import('./pages/UniversityDashboard'));
+const TeamWorkspace = lazy(() => import('./pages/TeamWorkspace'));
+const TeamCreate = lazy(() => import('./pages/TeamCreate'));
+const ProposalEditor = lazy(() => import('./pages/ProposalEditor'));
+const IndustryDashboard = lazy(() => import('./pages/IndustryDashboard'));
+const CollaborationWorkspace = lazy(() => import('./pages/CollaborationWorkspace'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const ProfileSettings = lazy(() => import('./pages/ProfileSettings'));
+const SolutionDetail = lazy(() => import('./pages/SolutionDetail'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
@@ -198,6 +202,7 @@ function App() {
           <Route path="/404" element={<NotFound />} />
           <Route path="*" element={<Navigate to="/404" replace />} />
         </Routes>
+        </Suspense>
       </BrowserRouter>
     </AuthProvider>
   );

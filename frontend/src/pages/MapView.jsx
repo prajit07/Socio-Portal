@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { APIProvider, Map, Marker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
 import Navbar from '../components/Navbar';
 import { problemsApi } from '../api/client';
-import { useAuth } from '../context/AuthContext';
 import { Card, StatusBadge, Alert, Badge } from '../components/ui';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -24,15 +23,12 @@ const STATUS_COLORS = {
 };
 
 export default function MapView() {
-  const { user } = useAuth();
   const [problems, setProblems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [active, setActive] = useState(null);
 
-  useEffect(() => { load(); }, []);
-
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -47,7 +43,10 @@ export default function MapView() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // eslint-disable-next-line react/set-state-in-effect -- initial server data fetch on mount
+  useEffect(() => { load(); }, [load]);
 
   const located = problems.filter(
     (p) => typeof p.latitude === 'number' && typeof p.longitude === 'number'

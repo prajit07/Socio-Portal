@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
@@ -27,10 +27,7 @@ export default function UniversityDashboard() {
   const [sRoll, setSRoll] = useState('');
   const [sPw, setSPw] = useState('');
 
-  useEffect(() => { if (!authLoading) fetchData(); }, [authLoading]);
-
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [p, t, pr] = await Promise.all([
@@ -52,7 +49,10 @@ export default function UniversityDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  // eslint-disable-next-line react/set-state-in-effect -- initial server data fetch
+  useEffect(() => { if (!authLoading) fetchData(); }, [authLoading, fetchData]);
 
   const loadStudents = async () => {
     if (!universityId) return;
