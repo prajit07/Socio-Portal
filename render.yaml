@@ -2,8 +2,45 @@ services:
   - type: web
     name: socio-portal-api
     runtime: python
+    # Repo root has backend/ + frontend/ — this service runs from backend/
+    rootDir: backend
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
+    # Run DB migrations before each deploy (needs DATABASE_URL set)
+    preDeployCommand: alembic upgrade head
+    # FastAPI is ASGI: gunicorn must use the uvicorn worker class.
+    # $PORT is injected by Render.
+    startCommand: gunicorn app.main:app --worker-class uvicorn.workers.UvicornWorker --workers 2 --bind 0.0.0.0:$PORT --timeout 120
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.8
+      # Non-sensitive storage config (Backblaze B2, S3-compatible)
+      - key: STORAGE_BACKEND
+        value: s3
+      - key: S3_ENDPOINT_URL
+        value: https://s3.us-east-005.backblazeb2.com
+      - key: S3_REGION
+        value: us-east-005
+      - key: S3_BUCKET
+        value: socio-connect
+      - key: CLOUDFLARE_AI_MODEL
+        value: "@cf/meta/llama-3.1-8b-instruct"
+      # Secrets / environment-specific — fill in via Render dashboard
+      # (sync: false keeps dashboard values, never commits secrets).
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        sync: false
+      - key: S3_ACCESS_KEY
+        sync: false
+      - key: S3_SECRET_KEY
+        sync: false
+      - key: CLOUDFLARE_ACCOUNT_ID
+        sync: false
+      - key: CLOUDFLARE_AI_API_KEY
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
