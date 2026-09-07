@@ -13,8 +13,43 @@ from app.models.tag import Tag, ProblemTag
 from app.models.routing import RoutingLog
 from app.models.enums import ProblemStatusEnum, NotificationTypeEnum
 from app.models.routing import Notification
+from app.models.classification_feedback import ClassificationFeedback
+from app.core.config import settings
 from app.services import ai_categorization, duplicate_detection, routing_engine
 from app.services.duplicate_detection import generate_embedding, _PGVECTOR_AVAILABLE
+
+
+def _log_lora_shadow(db: Session, problem: Problem, result: dict):
+    """Phase 2 shadow mode: record baseline-vs-LoRA disagreement for cutover metrics.
+    Guarded: never breaks the pipeline. Uses submitter as the feedback author.
+    Idempotent: prior shadow rows for this problem are replaced on re-analysis,
+    mirroring the ProblemTag/RoutingLog cleanup in run_analysis."""
+    try:
+        shadow = (result or {}).get("_lora_shadow") or {}
+        if not (settings.lora_enabled and shadow.get("lora_available")):
+            return
+        db.query(ClassificationFeedback).filter(
+            ClassificationFeedback.problem_id == problem.id,
+            ClassificationFeedback.notes.startswith("lora-shadow"),
+        ).delete()
+        tag_ids = [t["id"] for t in (result.get("tags") or [])
+                   if isinstance(t, dict) and t.get("id")]
+        db.add(ClassificationFeedback(
+            problem_id=problem.id,
+            ai_category_id=result.get("category_id"),
+            ai_category_name=result.get("category_name"),
+            ai_tags=tag_ids,
+            ai_priority=result.get("priority").value if result.get("priority") else None,
+            corrected_category_id=shadow.get("lora") or result.get("category_id"),
+            corrected_category_name=shadow.get("lora") or result.get("category_name"),
+            user_id=problem.submitter_id,
+            is_correction=not shadow.get("agree", True),
+            notes=f"lora-shadow agree={shadow.get('agree')} label10={shadow.get('label10')} "
+                  f"lossy={shadow.get('lossy_map')} baseline={shadow.get('baseline')}",
+        ))
+        db.flush()
+    except Exception:
+        pass
 
 
 def run_analysis(db: Session, problem: Problem) -> dict:
@@ -26,6 +61,7 @@ def run_analysis(db: Session, problem: Problem) -> dict:
     result = ai_categorization.categorize(
         problem.title, problem.description, problem.evidence_text, problem.tags
     )
+    _log_lora_shadow(db, problem, result)
 
     problem.ai_category = result["category_name"]
     problem.ai_tags = [t["id"] for t in result["tags"]]

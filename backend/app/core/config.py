@@ -20,6 +20,16 @@ class Settings(BaseSettings):
     CLOUDFLARE_AI_MODEL: str = "@cf/meta/llama-3.1-8b-instruct"
     DUPLICATE_THRESHOLD: float = 0.6
 
+    # Phase 2: LoRA fine-tune inference (Cloudflare BYO LoRA or Modal fallback).
+    # Disabled unless fully set. Shadow mode runs LoRA alongside the baseline and
+    # logs disagreements without changing user-visible results.
+    LORA_PROVIDER: str = "off"  # cloudflare | modal | off
+    CLOUDFLARE_LORA_MODEL: str = "@cf/mistralai/mistral-7b-instruct-v0.2-lora"
+    CLOUDFLARE_LORA_FINETUNE: str = ""  # finetune name or id (e.g. jharkhand-classifier)
+    LORA_SHADOW_MODE: bool = True  # True = log-only; False = cut over (LoRA wins)
+    MODAL_ENDPOINT: str = ""  # e.g. https://<workspace>--lora-classify.modal.run
+    MODAL_API_KEY: str = ""
+
     # Email OTP (Google SMTP). Paste your sender address + app password below to
     # enable real email sending. When EMAIL_USER/EMAIL_PASS are empty, OTP codes are
     # printed to the server console (dev mode) so the flow is testable without creds.
@@ -54,6 +64,15 @@ class Settings(BaseSettings):
     @property
     def ai_enabled(self) -> bool:
         return bool(self.CLOUDFLARE_ACCOUNT_ID and self.CLOUDFLARE_AI_API_KEY)
+
+    @property
+    def lora_enabled(self) -> bool:
+        """LoRA path active? Requires provider + finetune (cloudflare) or endpoint (modal)."""
+        if self.LORA_PROVIDER.strip().lower() in ("", "off"):
+            return False
+        if self.LORA_PROVIDER.strip().lower() == "modal":
+            return bool(self.MODAL_ENDPOINT)
+        return bool(self.ai_enabled and self.CLOUDFLARE_LORA_FINETUNE)
 
     @property
     def email_configured(self) -> bool:

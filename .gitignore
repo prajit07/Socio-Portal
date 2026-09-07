@@ -6,3 +6,13 @@ __pycache__/
 .initial.txt
 .plan.txt
 .design.txt
+# Model training: track scripts, ignore generated data/weights.
+# (The one blessed runtime artifact is force-added:
+#  git add -f backend/app/ml/category_classifier.joblib)
+/Model_Training/*
+!/Model_Training/*.py
+*.joblib
+!backend/app/ml/category_classifier.joblib
+*.jsonl
+lora_adapter/
+lora_real_eval.csv

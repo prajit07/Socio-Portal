@@ -186,13 +186,48 @@ def _llm_categorize(title, description, transcript, tags):
     }
 
 
-def categorize(title: str, description: str, transcript: Optional[str] = None, tags: Optional[list[str]] = None):
-    """Return {category_id, category_name, tags:[{id,name,confidence}], priority}. Uses Cloudflare LLM, falls back to heuristic."""
+def _baseline(title: str, description: str, transcript: Optional[str] = None, tags: Optional[list[str]] = None):
+    """Pre-LoRA order: local sklearn -> Cloudflare LLM -> heuristic."""
+    try:
+        from app.services.local_classifier import predict as _local_predict
+        local = _local_predict(title, description, transcript)
+        if local:
+            cid, cname, conf = local
+            heur = _heuristic(title, description, transcript, tags)
+            # Keep local category, reuse heuristic tags/priority (cheap, deterministic)
+            heur["category_id"] = cid
+            heur["category_name"] = cname
+            if heur.get("tags"):
+                heur["tags"][0] = {"id": cid, "name": cname, "confidence": conf}
+            else:
+                heur["tags"] = [{"id": cid, "name": cname, "confidence": conf}]
+            return heur
+    except Exception:
+        pass
     if settings.ai_enabled:
         llm = _llm_categorize(title, description, transcript, tags)
         if llm:
             return llm
     return _heuristic(title, description, transcript, tags)
+
+
+def categorize(title: str, description: str, transcript: Optional[str] = None, tags: Optional[list[str]] = None):
+    """Baseline + Phase-2 LoRA. Shadow (default): baseline wins, LoRA logged
+    under result['_lora_shadow'] for pipeline.py. Cutover (LORA_SHADOW_MODE=false):
+    LoRA wins, baseline is the fallback. Cloudflare LLM/heuristic stay fallback."""
+    baseline = _baseline(title, description, transcript, tags)
+    try:
+        if settings.lora_enabled:
+            from app.services import lora_classifier as _lora
+            lora_res = _lora.classify(title, description, transcript)
+            shadow = _lora.shadow_compare(baseline, lora_res)
+            if lora_res and not settings.LORA_SHADOW_MODE:
+                lora_res["_lora_shadow"] = shadow
+                return lora_res
+            baseline["_lora_shadow"] = shadow
+    except Exception:
+        pass
+    return baseline
 
 
 def _score_priority(title, description, transcript, keyword_hits) -> ProblemPriorityEnum:
