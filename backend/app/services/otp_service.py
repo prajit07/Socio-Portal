@@ -1,10 +1,11 @@
 """OTP generation, storage and delivery (plan.txt — email/phone verification).
 
 - Codes are stored hashed (HMAC-SHA256 with JWT_SECRET as the key), never in plaintext.
-- Email delivery uses Google SMTP when EMAIL_USER/EMAIL_PASS are set; otherwise the
-  code is printed to the server console (dev mode) so the flow works without creds.
-- `request_otp` returns the plaintext code ONLY in dev mode (email not configured),
-  for easy local testing; in production it always returns None.
+- Email delivery prefers the Gmail API (GMAIL_* OAuth settings); falls back to
+  Google SMTP (EMAIL_USER/EMAIL_PASS); otherwise the code is printed to the
+  server console (dev mode) so the flow works without creds.
+- `request_otp` returns the plaintext code ONLY in dev mode (no email path
+  configured), for easy local testing; in production it always returns None.
 """
 import hashlib
 import hmac
@@ -33,37 +34,50 @@ def _hash(code: str) -> str:
 
 
 def _send_email(email: str, code: str, purpose: str) -> bool:
-    """Send the OTP via SMTP. Returns True on success, False on any failure
+    """Send the OTP email. Returns True on success, False on any failure
     (so the caller can fall back to surfacing the code for local testing)."""
     if not settings.email_configured:
         logger.info("[DEV OTP] %s (%s): %s", email, purpose, code)
         return False
-    try:
-        msg = EmailMessage()
-        msg["Subject"] = "Your Socio Connect verification code"
-        msg["From"] = f"{settings.EMAIL_FROM_NAME} <{settings.EMAIL_USER}>"
-        msg["To"] = email
-        msg.set_content(
-            f"Your verification code is: {code}\n"
-            f"It expires in {settings.OTP_TTL_SECONDS // 60} minute(s). "
-            f"If you did not request this, you can ignore this email."
-        )
-        with smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT, timeout=20) as server:
-            server.starttls(context=ssl.create_default_context())
-            server.login(settings.EMAIL_USER, settings.EMAIL_PASS)
-            server.send_message(msg)
-        logger.info("OTP email sent to %s (%s)", email, purpose)
-        return True
-    except Exception as e:  # noqa: BLE001 - SMTP misconfig should not break the flow
-        logger.error(
-            "[OTP EMAIL FAILED] %s (%s): %s: %s — dev fallback code: %s",
-            email,
-            purpose,
-            type(e).__name__,
-            e,
-            code,
-        )
-        return False
+    body = (
+        f"Your verification code is: {code}\n"
+        f"It expires in {settings.OTP_TTL_SECONDS // 60} minute(s). "
+        f"If you did not request this, you can ignore this email."
+    )
+    if settings.gmail_configured:
+        try:
+            from app.services.gmail_api import send_gmail
+
+            send_gmail(email, "Your Socio Connect verification code", body)
+            logger.info("OTP email sent via Gmail API to %s (%s)", email, purpose)
+            return True
+        except Exception as e:  # noqa: BLE001 - fall through to SMTP/dev fallback
+            logger.error("[OTP GMAIL-API FAILED] %s (%s): %s: %s", email, purpose, type(e).__name__, e)
+    if settings.EMAIL_USER and settings.EMAIL_PASS:
+        try:
+            msg = EmailMessage()
+            msg["Subject"] = "Your Socio Connect verification code"
+            msg["From"] = f"{settings.EMAIL_FROM_NAME} <{settings.EMAIL_USER}>"
+            msg["To"] = email
+            msg.set_content(body)
+            with smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT, timeout=20) as server:
+                server.starttls(context=ssl.create_default_context())
+                server.login(settings.EMAIL_USER, settings.EMAIL_PASS)
+                server.send_message(msg)
+            logger.info("OTP email sent via SMTP to %s (%s)", email, purpose)
+            return True
+        except Exception as e:  # noqa: BLE001 - SMTP misconfig should not break the flow
+            logger.error(
+                "[OTP EMAIL FAILED] %s (%s): %s: %s — dev fallback code: %s",
+                email,
+                purpose,
+                type(e).__name__,
+                e,
+                code,
+            )
+            return False
+    logger.info("[DEV OTP] %s (%s): %s", email, purpose, code)
+    return False
 
 
 def request_otp(db: Session, identifier: str, purpose: str, channel: str = "email") -> Optional[str]:

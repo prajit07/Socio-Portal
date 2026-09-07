@@ -32,6 +32,14 @@ class Settings(BaseSettings):
     OTP_LENGTH: int = 6
     EMAIL_VERIFICATION_REQUIRED: bool = False
 
+    # Gmail API (OAuth2) delivery — preferred over SMTP. Run once:
+    #   python -m app.services.gmail_api url   (then ... exchange <code>)
+    # and paste the resulting refresh token + sender address below.
+    GMAIL_CLIENT_ID: str = ""
+    GMAIL_CLIENT_SECRET: str = ""
+    GMAIL_REFRESH_TOKEN: str = ""
+    GMAIL_SENDER: str = ""  # Gmail account that granted consent (mail is sent as this account)
+
     # Evidence file storage: "local" writes to backend/uploads/ (served at
     # /uploads/...), "s3" uploads to any S3-compatible bucket — AWS S3,
     # Cloudflare R2, Backblaze B2, Supabase Storage, or self-hosted MinIO.
@@ -49,7 +57,23 @@ class Settings(BaseSettings):
 
     @property
     def email_configured(self) -> bool:
-        return bool(self.EMAIL_USER and self.EMAIL_PASS)
+        return self.gmail_configured or bool(self.EMAIL_USER and self.EMAIL_PASS)
+
+    @property
+    def gmail_configured(self) -> bool:
+        return bool(
+            self.GMAIL_CLIENT_ID
+            and self.GMAIL_CLIENT_SECRET
+            and self.GMAIL_REFRESH_TOKEN
+            and self.GMAIL_SENDER
+        )
+
+    @property
+    def sender_address(self) -> str:
+        """Sender address for the active email path (Gmail API preferred)."""
+        if self.gmail_configured:
+            return self.GMAIL_SENDER
+        return self.EMAIL_USER
 
     @property
     def storage_is_s3(self) -> bool:

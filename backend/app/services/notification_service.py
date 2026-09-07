@@ -13,7 +13,7 @@ Usage:
         message="Your problem has been validated.",
         notif_type=NotificationTypeEnum.STATUS_UPDATED,
         reference_id="prob_xyz",
-        send_email=True,  # optional; requires EMAIL_USER/EMAIL_PASS in .env
+        send_email=True,  # optional; requires GMAIL_* (or EMAIL_USER/EMAIL_PASS) in .env
         email_address="user@example.com",
     )
 """
@@ -39,6 +39,18 @@ def _send_email_async(to_email: str, subject: str, body: str) -> None:
         if not settings.email_configured:
             logger.info("[DEV NOTIFY] To: %s | %s | %s", to_email, subject, body)
             return
+        if settings.gmail_configured:
+            try:
+                from app.services.gmail_api import send_gmail
+
+                send_gmail(to_email, subject, body)
+                logger.info("Notification email sent via Gmail API to %s", to_email)
+                return
+            except Exception as exc:
+                logger.error("Gmail API notification email failed to %s: %s", to_email, exc)
+        if not (settings.EMAIL_USER and settings.EMAIL_PASS):
+            logger.info("[DEV NOTIFY] To: %s | %s | %s", to_email, subject, body)
+            return
         try:
             msg = EmailMessage()
             msg["Subject"] = subject
@@ -49,7 +61,7 @@ def _send_email_async(to_email: str, subject: str, body: str) -> None:
                 server.starttls(context=ssl.create_default_context())
                 server.login(settings.EMAIL_USER, settings.EMAIL_PASS)
                 server.send_message(msg)
-            logger.info("Notification email sent to %s", to_email)
+            logger.info("Notification email sent via SMTP to %s", to_email)
         except Exception as exc:
             logger.error("Notification email failed to %s: %s", to_email, exc)
 
