@@ -74,7 +74,7 @@ def _query_cloudflare(problem_text: str) -> Optional[str]:
                                  headers={"Authorization": f"Bearer {settings.CLOUDFLARE_AI_API_KEY}",
                                           "Content-Type": "application/json"})
     try:
-        with urllib.request.urlopen(req, timeout=40) as r:
+        with urllib.request.urlopen(req, timeout=settings.CLASSIFY_TIMEOUT) as r:
             res = json.loads(r.read().decode()).get("result", {})
         text = res.get("response", "") if isinstance(res, dict) else str(res)
         return _parse_label(text)
@@ -92,7 +92,7 @@ def _query_modal(problem_text: str) -> Optional[str]:
                                           **({"Authorization": f"Bearer {settings.MODAL_API_KEY}"}
                                              if settings.MODAL_API_KEY else {})})
     try:
-        with urllib.request.urlopen(req, timeout=40) as r:
+        with urllib.request.urlopen(req, timeout=settings.CLASSIFY_TIMEOUT) as r:
             return _parse_label(json.loads(r.read().decode()).get("label", ""))
     except Exception:
         return None

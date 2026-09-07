@@ -24,6 +24,12 @@ services:
         value: socio-connect
       - key: CLOUDFLARE_AI_MODEL
         value: "@cf/meta/llama-3.1-8b-instruct"
+      # Classification: explicit safe defaults (local sklearn active when the
+      # committed joblib + sklearn are present; LoRA stays off until configured)
+      - key: LORA_PROVIDER
+        value: off
+      - key: LORA_SHADOW_MODE
+        value: "True"
       # Secrets / environment-specific — fill in via Render dashboard
       # (sync: false keeps dashboard values, never commits secrets).
       - key: DATABASE_URL

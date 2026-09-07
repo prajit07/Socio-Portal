@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     LORA_SHADOW_MODE: bool = True  # True = log-only; False = cut over (LoRA wins)
     MODAL_ENDPOINT: str = ""  # e.g. https://<workspace>--lora-classify.modal.run
     MODAL_API_KEY: str = ""
+    CLASSIFY_TIMEOUT: int = 15  # seconds per remote classify call (LoRA/Modal)
+    LOCAL_MIN_CONFIDENCE: float = 0.35  # below this, local sklearn defers to LLM/heuristic
 
     # Email OTP (Google SMTP). Paste your sender address + app password below to
     # enable real email sending. When EMAIL_USER/EMAIL_PASS are empty, OTP codes are

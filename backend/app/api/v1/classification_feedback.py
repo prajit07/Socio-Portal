@@ -133,11 +133,46 @@ def get_metrics(
     """Get classification accuracy metrics per category (admin/government)."""
     if current_user.role.value not in ("admin", "government"):
         raise HTTPException(status_code=403, detail="Admin/government access only")
-    
+
     metrics = db.query(ClassificationMetrics).order_by(
         ClassificationMetrics.total_predictions.desc()
     ).all()
     return metrics
+
+
+@router.get("/status")
+def get_status(current_user: User = Depends(get_current_user)):
+    """Live provider health for the classification pipeline (admin/government).
+
+    Shows which classify path is actually active in this deployment — the
+    fastest way to confirm a production deploy picked up the model file,
+    env flags, and credentials. No DB access.
+    """
+    if current_user.role.value not in ("admin", "government"):
+        raise HTTPException(status_code=403, detail="Admin/government access only")
+
+    from app.core.config import settings as _settings
+    from app.services import local_classifier as _local
+
+    provider = _settings.LORA_PROVIDER.strip().lower()
+    return {
+        "order": ["local_sklearn", "lora", "cloudflare_llm", "heuristic"],
+        "local_sklearn": _local.status(),
+        "lora": {
+            "enabled": _settings.lora_enabled,
+            "provider": provider or "off",
+            "shadow_mode": _settings.LORA_SHADOW_MODE,
+            "finetune_set": bool(_settings.CLOUDFLARE_LORA_FINETUNE),
+            "endpoint_set": bool(_settings.MODAL_ENDPOINT),
+            "timeout_s": _settings.CLASSIFY_TIMEOUT,
+        },
+        "cloudflare_llm": {
+            "enabled": _settings.ai_enabled,
+            "model": _settings.CLOUDFLARE_AI_MODEL,
+        },
+        "local_min_confidence": _settings.LOCAL_MIN_CONFIDENCE,
+        "heuristic": {"enabled": True},
+    }
 
 
 @router.post("/regenerate-few-shot")

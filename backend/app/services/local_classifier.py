@@ -9,6 +9,8 @@ If model file or sklearn is missing, returns None so callers fall back cleanly.
 import os
 from typing import Optional
 
+from app.core.config import settings
+
 _MODEL_PATH = os.path.join(os.path.dirname(__file__), "..", "ml", "category_classifier.joblib")
 _bundle = None
 _load_error: Optional[str] = None
@@ -50,8 +52,9 @@ def predict(title: str, description: str, transcript: Optional[str] = None):
             label = pipe.predict([text])[0]
             conf = 0.75
         name = next((c["name"] for c in bundle.get("categories", []) if c["id"] == label), label)
-        # Low-confidence predictions defer to LLM/heuristic
-        if conf < 0.35:
+        # Low-confidence predictions defer to LLM/heuristic (threshold is tunable
+        # via LOCAL_MIN_CONFIDENCE without redeploying the model).
+        if conf < settings.LOCAL_MIN_CONFIDENCE:
             return None
         return label, name, round(conf, 3)
     except Exception:

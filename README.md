@@ -229,6 +229,9 @@ societal-innovation-portal/
 
 ### Phase 3: AI Pipeline
 - ✅ AI categorization (Cloudflare Workers AI + heuristic fallback)
+- ✅ Local sklearn classifier (12-category, offline, ~5ms — active when `category_classifier.joblib` is present)
+- ✅ LoRA fine-tune path (Cloudflare BYO LoRA / Modal) with shadow-mode logging, safe defaults
+- ✅ Classification status endpoint (`GET /classification/status`) + accuracy metrics
 - ✅ Priority scoring (critical/high/medium/low)
 - ✅ Duplicate detection (pgvector cosine similarity + Jaccard fallback)
 - ✅ Routing engine (HEIs see all, Industry tag-matched)
@@ -276,6 +279,9 @@ societal-innovation-portal/
 | `/problems/{id}/evidence` | POST | Upload evidence |
 | `/ai/extract-tags` | POST | AI tag extraction |
 | `/ai/analyze/{id}` | POST | Run full AI pipeline |
+| `/classification/status` | GET | Provider health (gov/admin) — confirms prod wiring |
+| `/classification/metrics` | GET | Per-category accuracy (gov/admin) |
+| `/classification/feedback` | POST | Submit classification correction |
 | `/government/analytics` | GET | Dashboard analytics |
 | `/government/impact-reports` | GET | Exportable impact reports |
 
@@ -302,6 +308,8 @@ societal-innovation-portal/
 - Set `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_AI_API_KEY`
 - Check Cloudflare Workers AI quota
 - Heuristic fallback works without AI keys
+- Local sklearn path needs `scikit-learn` + `scipy` installed and `backend/app/ml/category_classifier.joblib` present (committed); check `GET /classification/status` as gov/admin to see which provider is actually active in a deployment
+- LoRA path is off by default (`LORA_PROVIDER=off`); enable only after probe ≥80% + real-data eval, keep `LORA_SHADOW_MODE=True` until cutover
 
 ### Database connection issues
 - For Neon: ensure IP allowlist includes your server IP (or 0.0.0.0/0 for testing)
