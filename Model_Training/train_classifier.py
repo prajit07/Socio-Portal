@@ -11,6 +11,12 @@ Why this instead of Mistral-7B LoRA on Cloudflare:
 
 Usage:
     python train_classifier.py --per-category 300 --model-out category_classifier.joblib
+
+    Diverse-data retraining: NATURAL_TRAIN rows (natural_problems.py) are mixed
+    in with --natural-repeat weight, plus optional human corrections:
+    corrections.jsonl with {"text": ..., "category_id": ...} per line
+    (e.g. exported from /classification/feedback). Unknown category_ids are
+    skipped with a warning. HELD_OUT rows are NEVER ingested — eval only.
 """
 import argparse
 import csv
@@ -33,7 +39,8 @@ from sklearn.metrics import accuracy_score, classification_report
 import joblib  # noqa: E402
 
 
-def build_dataset(per_category: int, seed: int = 42):
+def build_dataset(per_category: int, seed: int = 42, natural_repeat: int = 10,
+                   corrections_path: str | None = None, corrections_repeat: int = 10):
     random.seed(seed)
     rows = []
     id_to_name = {c["id"]: c["name"] for c in CATEGORIES}
@@ -49,7 +56,49 @@ def build_dataset(per_category: int, seed: int = 42):
             rows.append({"text": text, "category_id": ex.category_id,
                          "category_name": ex.category_name})
     random.shuffle(rows)
-    print(f"Built {len(rows)} examples across {len(id_to_name)} categories")
+    n_template = len(rows)
+
+    # Diverse natural rows (weighted by repetition so template mass doesn't drown them)
+    from natural_problems import NATURAL_TRAIN
+    n_natural = 0
+    for cid, title, desc in NATURAL_TRAIN:
+        if cid not in id_to_name:
+            print(f"WARNING: natural row has unknown category {cid!r}, skipping")
+            continue
+        text = f"{title} {desc}".strip()
+        for _ in range(natural_repeat):
+            rows.append({"text": text, "category_id": cid, "category_name": id_to_name[cid]})
+            n_natural += 1
+
+    # Human corrections (highest value per row — user-verified real reports)
+    n_corr, n_bad = 0, 0
+    if corrections_path and os.path.exists(corrections_path):
+        import json as _json
+        with open(corrections_path, encoding="utf-8") as f:
+            for lineno, line in enumerate(f, 1):
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = _json.loads(line)
+                except Exception:
+                    print(f"WARNING: corrections line {lineno} is not JSON, skipping")
+                    n_bad += 1
+                    continue
+                cid, text = obj.get("category_id"), (obj.get("text") or "").strip()
+                if cid not in id_to_name or not text:
+                    print(f"WARNING: corrections line {lineno} bad id/text, skipping")
+                    n_bad += 1
+                    continue
+                for _ in range(corrections_repeat):
+                    rows.append({"text": text, "category_id": cid, "category_name": id_to_name[cid]})
+                    n_corr += 1
+    elif corrections_path:
+        print(f"No corrections file at {corrections_path} — skipping")
+
+    random.shuffle(rows)
+    print(f"Built {len(rows)} examples ({n_template} template + {n_natural} natural + "
+          f"{n_corr} corrections, {n_bad} bad) across {len(id_to_name)} categories")
     return rows
 
 
@@ -58,9 +107,17 @@ def main():
     ap.add_argument("--per-category", type=int, default=300)
     ap.add_argument("--model-out", default=os.path.join(os.path.dirname(__file__), "category_classifier.joblib"))
     ap.add_argument("--csv-out", default=os.path.join(os.path.dirname(__file__), "training_data_v2.csv"))
+    ap.add_argument("--natural-repeat", type=int, default=10,
+                    help="repetition weight for NATURAL_TRAIN rows (0 to disable)")
+    ap.add_argument("--corrections", default=os.path.join(os.path.dirname(__file__), "corrections.jsonl"),
+                    help="JSONL of {text, category_id}; missing file is skipped")
+    ap.add_argument("--corrections-repeat", type=int, default=10)
+    ap.add_argument("--no-corrections", action="store_true")
     args = ap.parse_args()
 
-    rows = build_dataset(args.per_category)
+    rows = build_dataset(args.per_category, natural_repeat=args.natural_repeat,
+                         corrections_path=None if args.no_corrections else args.corrections,
+                         corrections_repeat=args.corrections_repeat)
 
     # Save transparent CSV (title+description style, aligned to backend labels)
     with open(args.csv_out, "w", newline="", encoding="utf-8") as f:

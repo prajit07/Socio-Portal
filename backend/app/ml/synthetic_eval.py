@@ -5,8 +5,9 @@ Covers what evaluate_classification.py misses:
   Set B — hand-written natural problems (non-template phrasing) -> local.predict()
   Set C — Set B through full categorize() with per-call path + latency report
 
-Honesty notes: Set A shares templates with training data, so it measures
-template fit, not generalization. Set B is the honest signal.
+Honesty notes: Set A shares templates with training data (template fit only).
+Set B entered training (weighted) — inflated. Set D (held-out, never
+trained) is the honest signal.
 
 Run: python -m app.ml.synthetic_eval [--n 5] [--skip-pipeline]
 """
@@ -25,9 +26,15 @@ from app.services import local_classifier as local
 from app.services.ai_categorization import categorize
 from app.core.config import settings
 
-# Hand-written natural citizen reports: 2 per category, deliberately NOT in
-# generator-template phrasing (mixed Hindi words, specifics, varied structure).
-NATURAL = [
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "Model_Training"))
+from natural_problems import NATURAL_TRAIN, HELD_OUT  # noqa: E402
+
+# Set B alias (report continuity). NOTE: in-train since the diverse retrain.
+NATURAL = NATURAL_TRAIN
+
+# Inline list moved verbatim to Model_Training/natural_problems.py (NATURAL_TRAIN);
+# kept here renamed so the history is visible but nothing trains/evals twice.
+_UNUSED_INLINE = [
     ("water_sanitation", "Handpump water smells of chemicals",
      "Two handpumps in our tola give yellow water that smells of medicine. Children got rashes after bathing. We complained to the panchayat twice."),
     ("water_sanitation", "Drainage overflow outside school gate",
@@ -154,10 +161,13 @@ def main():
     set_a = fresh_template_samples(a.n)
     eval_predict(set_a, "A/fresh-templates")
     set_b = [(c, t, d) for c, t, d in NATURAL]
-    tot_ok, tot_n = eval_predict(set_b, "B/natural")
+    tot_ok, tot_n = eval_predict(set_b, "B/natural-in-train")
+    set_d = [(c, t, d) for c, t, d in HELD_OUT]
+    h_ok, h_n = eval_predict(set_d, "D/held-out (HONEST)")
     if not a.skip_pipeline:
         eval_pipeline(set_b)
-    print(f"\nDone. Set B (honest signal): {tot_ok}/{tot_n}.")
+    print(f"\nDone. Set B (in-train, inflated): {tot_ok}/{tot_n}. "
+          f"Set D (honest signal): {h_ok}/{h_n}.")
 
 
 if __name__ == "__main__":
