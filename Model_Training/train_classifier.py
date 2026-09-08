@@ -40,7 +40,8 @@ import joblib  # noqa: E402
 
 
 def build_dataset(per_category: int, seed: int = 42, natural_repeat: int = 10,
-                   corrections_path: str | None = None, corrections_repeat: int = 10):
+                   corrections_path: str | None = None, corrections_repeat: int = 10,
+                   paraphrases_path: str | None = None, paraphrases_repeat: int = 3):
     random.seed(seed)
     rows = []
     id_to_name = {c["id"]: c["name"] for c in CATEGORIES}
@@ -70,6 +71,31 @@ def build_dataset(per_category: int, seed: int = 42, natural_repeat: int = 10,
             rows.append({"text": text, "category_id": cid, "category_name": id_to_name[cid]})
             n_natural += 1
 
+    # LLM paraphrases of the natural rows — the diversity mass that teaches
+    # generalization instead of memorization (see paraphrase.py).
+    n_para, n_para_bad = 0, 0
+    if paraphrases_path and os.path.exists(paraphrases_path):
+        import json as _json2
+        with open(paraphrases_path, encoding="utf-8") as f:
+            for lineno, line in enumerate(f, 1):
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = _json2.loads(line)
+                except Exception:
+                    n_para_bad += 1
+                    continue
+                cid, text = obj.get("category_id"), (obj.get("text") or "").strip()
+                if cid not in id_to_name or len(text) < 30:
+                    n_para_bad += 1
+                    continue
+                for _ in range(paraphrases_repeat):
+                    rows.append({"text": text, "category_id": cid, "category_name": id_to_name[cid]})
+                    n_para += 1
+    elif paraphrases_path:
+        print(f"No paraphrases file at {paraphrases_path} — skipping (run paraphrase.py)")
+
     # Human corrections (highest value per row — user-verified real reports)
     n_corr, n_bad = 0, 0
     if corrections_path and os.path.exists(corrections_path):
@@ -98,6 +124,7 @@ def build_dataset(per_category: int, seed: int = 42, natural_repeat: int = 10,
 
     random.shuffle(rows)
     print(f"Built {len(rows)} examples ({n_template} template + {n_natural} natural + "
+          f"{n_para} paraphrases + "
           f"{n_corr} corrections, {n_bad} bad) across {len(id_to_name)} categories")
     return rows
 
@@ -113,11 +140,17 @@ def main():
                     help="JSONL of {text, category_id}; missing file is skipped")
     ap.add_argument("--corrections-repeat", type=int, default=10)
     ap.add_argument("--no-corrections", action="store_true")
+    ap.add_argument("--paraphrases", default=os.path.join(os.path.dirname(__file__), "paraphrases.jsonl"),
+                    help="JSONL of {text, category_id, source_idx}; run paraphrase.py first")
+    ap.add_argument("--paraphrases-repeat", type=int, default=3)
+    ap.add_argument("--no-paraphrases", action="store_true")
     args = ap.parse_args()
 
     rows = build_dataset(args.per_category, natural_repeat=args.natural_repeat,
                          corrections_path=None if args.no_corrections else args.corrections,
-                         corrections_repeat=args.corrections_repeat)
+                         corrections_repeat=args.corrections_repeat,
+                         paraphrases_path=None if args.no_paraphrases else args.paraphrases,
+                         paraphrases_repeat=args.paraphrases_repeat)
 
     # Save transparent CSV (title+description style, aligned to backend labels)
     with open(args.csv_out, "w", newline="", encoding="utf-8") as f:
