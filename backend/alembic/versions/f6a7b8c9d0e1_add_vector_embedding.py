@@ -33,6 +33,18 @@ def upgrade() -> None:
         # SQLite does not support pgvector; skip silently.
         return
 
+    available = (
+        op.get_bind()
+        .execute(text("SELECT 1 FROM pg_available_extensions WHERE name = 'vector'"))
+        .first()
+    )
+    if not available:
+        # Hosts without pgvector (e.g. Clever Cloud): skip cleanly. The app
+        # detects the missing column at runtime and falls back to token
+        # overlap for duplicate detection, so nothing else needs to change.
+        print("pgvector extension not available — skipping embedding column.")
+        return
+
     # Ensure pgvector extension is available
     op.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
 
