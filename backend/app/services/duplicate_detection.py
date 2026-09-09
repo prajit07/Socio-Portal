@@ -33,6 +33,40 @@ except ImportError:
     _PGVECTOR_AVAILABLE = False
 
 
+_support_cache: dict[str, bool] = {}
+
+
+def embedding_supported(db: Session) -> bool:
+    """True only if the pgvector package is installed AND the
+    problems.embedding column actually exists on this connection's database.
+
+    Result is cached per database URL (one tiny information_schema query per
+    process). Hosts without the vector extension (e.g. Clever Cloud) or with
+    PGVECTOR_ENABLED=False always get False, routing everything to the
+    Jaccard fallback without wasting an embedding API call.
+    """
+    if not _PGVECTOR_AVAILABLE:
+        return False
+    try:
+        key = str(db.bind.url) if db.bind is not None else "default"
+    except Exception:
+        key = "default"
+    if key not in _support_cache:
+        try:
+            from sqlalchemy import text as _text
+
+            row = db.execute(
+                _text(
+                    "SELECT 1 FROM information_schema.columns "
+                    "WHERE table_name = 'problems' AND column_name = 'embedding'"
+                )
+            ).first()
+            _support_cache[key] = row is not None
+        except Exception:
+            _support_cache[key] = False
+    return _support_cache[key]
+
+
 # ---------------------------------------------------------------------------
 # Token helpers
 # ---------------------------------------------------------------------------
@@ -152,11 +186,13 @@ def find_duplicates(db: Session, problem: Problem, threshold: float = THRESHOLD)
     """
     text_content = f"{problem.title} {problem.description} {problem.evidence_text or ''}"
 
-    # --- Path 1: pgvector embedding search ---
-    embedding = generate_embedding(text_content)
-    pgvector_results = _pgvector_candidates(db, embedding, threshold, problem.id)
-    if pgvector_results:
-        return pgvector_results
+    # --- Path 1: pgvector embedding search. Skipped entirely when unsupported,
+    # saving a wasted embedding API call per submission on such hosts. ---
+    if embedding_supported(db):
+        embedding = generate_embedding(text_content)
+        pgvector_results = _pgvector_candidates(db, embedding, threshold, problem.id)
+        if pgvector_results:
+            return pgvector_results
 
     # --- Path 2: Token-overlap fallback ---
     candidates = (

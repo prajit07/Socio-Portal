@@ -101,3 +101,19 @@ def test_status_endpoint_shape_and_gating(monkeypatch):
     citizen = SimpleNamespace(role=RoleEnum.CITIZEN)
     with pytest.raises(HTTPException):
         get_status(citizen)
+
+
+def test_embedding_supported_false_when_column_missing(monkeypatch):
+    """Column check must fail safe (False), never raise — e.g. Clever Cloud
+    without pgvector, or SQLite in tests. Cached per database."""
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+
+    from app.services import duplicate_detection as dd
+
+    monkeypatch.setattr(dd, "_PGVECTOR_AVAILABLE", True)
+    dd._support_cache.clear()
+    eng = create_engine("sqlite://")
+    with Session(eng) as db:
+        assert dd.embedding_supported(db) is False
+        assert dd.embedding_supported(db) is False  # served from cache

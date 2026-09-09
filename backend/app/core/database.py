@@ -58,4 +58,9 @@ def ensure_pgvector():
             conn.commit()
         logger.info("pgvector extension enabled and embedding column ready.")
     except Exception as e:
-        logger.warning("pgvector setup skipped: %s — duplicate detection will use token overlap.", e)
+        logger.warning(
+            "pgvector setup skipped: %s — duplicate detection will use token "
+            "overlap. (If this host has no vector extension, set "
+            "PGVECTOR_ENABLED=False.)",
+            e,
+        )

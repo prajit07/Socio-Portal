@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     CLOUDFLARE_AI_MODEL: str = "@cf/meta/llama-3.1-8b-instruct"
     DUPLICATE_THRESHOLD: float = 0.6
 
+    # Set False on Postgres hosts without the pgvector extension (e.g. Clever
+    # Cloud) so problems.embedding is not mapped and INSERTs keep working.
+    # Duplicate detection then uses token overlap automatically.
+    PGVECTOR_ENABLED: bool = True
+
     # Phase 2: LoRA fine-tune inference (Cloudflare BYO LoRA or Modal fallback).
     # Disabled unless fully set. Shadow mode runs LoRA alongside the baseline and
     # logs disagreements without changing user-visible results.

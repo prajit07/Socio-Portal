@@ -16,7 +16,6 @@ from app.models.routing import Notification
 from app.models.classification_feedback import ClassificationFeedback
 from app.core.config import settings
 from app.services import ai_categorization, duplicate_detection, routing_engine
-from app.services.duplicate_detection import generate_embedding, _PGVECTOR_AVAILABLE
 
 
 def _log_lora_shadow(db: Session, problem: Problem, result: dict):
@@ -67,11 +66,14 @@ def run_analysis(db: Session, problem: Problem) -> dict:
     problem.ai_tags = [t["id"] for t in result["tags"]]
     problem.ai_priority = result["priority"]
 
-    # Generate and store embedding for pgvector duplicate detection
-    if _PGVECTOR_AVAILABLE:
+    # Generate and store embedding for pgvector duplicate detection.
+    # Skipped entirely when the column is absent (e.g. Clever Cloud with
+    # PGVECTOR_ENABLED=False) — assignment would otherwise poison the later
+    # flush/commit. Also avoids a wasted embedding API call per submission.
+    if duplicate_detection.embedding_supported(db):
         try:
             text_content = f"{problem.title} {problem.description} {problem.evidence_text or ''}"
-            embedding = generate_embedding(text_content)
+            embedding = duplicate_detection.generate_embedding(text_content)
             problem.embedding = embedding
         except Exception:
             pass  # Non-critical: duplicate detection falls back to Jaccard

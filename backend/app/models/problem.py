@@ -13,6 +13,7 @@ except ImportError:
     Vector = None
 
 from app.core.database import Base
+from app.core.config import settings
 from app.models.enums import RoleEnum, ProblemStatusEnum, ProblemPriorityEnum, SolutionStatusEnum
 from app.models.team import Team
 
@@ -99,8 +100,11 @@ class Problem(Base):
     routing_logs: Mapped[list["RoutingLog"]] = relationship(back_populates="problem", cascade="all, delete-orphan")
 
 
-# Add pgvector embedding column if available
-if Vector is not None:
+# Map the pgvector embedding column only when the package is installed AND the
+# deployment targets a Postgres with the vector extension (PGVECTOR_ENABLED).
+# Without this gate, INSERTs would reference a non-existent column on hosts
+# like Clever Cloud and every problem submission would fail.
+if Vector is not None and settings.PGVECTOR_ENABLED:
     Problem.embedding = mapped_column(Vector(384), nullable=True)  # 384-dim for small models
 
 
