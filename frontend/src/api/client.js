@@ -105,6 +105,7 @@ export const notificationsApi = {
 export const universitiesApi = {
   list: (params = {}) => api.get('/universities', { params }),
   mine: () => api.get('/universities/mine'),
+  memberOf: () => api.get('/universities/member-of'),
   create: (data) => api.post('/universities', data),
   get: (id) => api.get(`/universities/${id}`),
   addMember: (id, data) => api.post(`/universities/${id}/members`, data),

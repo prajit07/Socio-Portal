@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import { useAuth } from '../context/AuthContext';
 import { problemsApi, teamsApi, universitiesApi } from '../api/client';
 import { Button, Card, Input, Select, Alert, PageLoader } from '../components/ui';
 
@@ -22,6 +23,7 @@ const isNearby = (problem, uni) => {
 export default function TeamCreate() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [problemId, setProblemId] = useState(params.get('problemId') || '');
   const [name, setName] = useState('');
   const [universityId, setUniversityId] = useState('');
@@ -34,10 +36,10 @@ export default function TeamCreate() {
   useEffect(() => {
     (async () => {
       try {
-        // SPOC rule: a team always belongs to the SPOC's own institute(s),
-        // never to an arbitrary university picked from a global list.
+        // A team belongs to the member's own institute (student/faculty via
+        // membership, SPOC via admin link) — never to an arbitrary university.
         const [u, p] = await Promise.all([
-          universitiesApi.mine(),
+          universitiesApi.memberOf(),
           problemsApi.list({ limit: 500 }),
         ]);
         const mine = asData(u) || [];
@@ -92,12 +94,17 @@ export default function TeamCreate() {
         <h1 className="text-2xl font-extrabold text-primary-navy mt-3">Form a Team</h1>
         <p className="text-ink-soft mt-1 text-sm">Assemble a team from your institute to solve a civic problem. You join as team lead.</p>
         {error && <Alert variant="danger" className="my-4">{error}</Alert>}
-        {unis.length === 0 && (
+        {unis.length === 0 && user?.role === 'university_admin' && (
           <Alert variant="warning" className="my-4">
             No institute is registered to your account yet.{' '}
             <Link to="/university/dashboard" className="font-semibold text-primary hover:underline">
               Register your institute first
             </Link>
+          </Alert>
+        )}
+        {unis.length === 0 && user?.role !== 'university_admin' && (
+          <Alert variant="warning" className="my-4">
+            You aren&apos;t linked to any institute yet. Ask your institute SPOC to add you, or re-register with your institution selected.
           </Alert>
         )}
         {problems.length === 0 && (

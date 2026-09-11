@@ -110,6 +110,26 @@ def my_universities(
     )
 
 
+@router.get("/member-of", response_model=list[dict])
+def my_memberships(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Institutes the current user belongs to in any member role
+    (admin, student, faculty_mentor) — used to scope team formation."""
+    rows = (
+        db.query(University, UniversityMember.member_role)
+        .join(UniversityMember, UniversityMember.university_id == University.id)
+        .filter(UniversityMember.user_id == current_user.id)
+        .order_by(University.name)
+        .all()
+    )
+    return [
+        {**UniversityOut.model_validate(u).model_dump(mode="json"), "member_role": role}
+        for u, role in rows
+    ]
+
+
 @router.get("/{university_id}", response_model=UniversityOut)
 def get_university(university_id: str, db: Session = Depends(get_db)):
     uni = db.get(University, university_id)
