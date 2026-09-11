@@ -14,6 +14,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [step, setStep] = useState('credentials'); // 'credentials' | 'otp'
   const [error, setError] = useState('');
+  const [notRegistered, setNotRegistered] = useState(false);
   const [loading, setLoading] = useState(false);
   const [otp, setOtp] = useState('');
   const [devCode, setDevCode] = useState('');
@@ -26,6 +27,7 @@ export default function Login() {
     if (requestingRef.current) return; // guard against double-submit (stale code)
     requestingRef.current = true;
     setError('');
+    setNotRegistered(false);
     setLoading(true);
     try {
       const res = await authApi.loginRequestCode(email, password);
@@ -33,7 +35,12 @@ export default function Login() {
       setDevCode(res.data.dev_code || '');
       setStep('otp');
     } catch (err) {
-      setError(err.response?.data?.detail || t('Invalid email or password.'));
+      if (err.response?.status === 404) {
+        setNotRegistered(true);
+        setError('');
+      } else {
+        setError(err.response?.data?.detail || t('Invalid email or password.'));
+      }
     } finally {
       setLoading(false);
       requestingRef.current = false;
@@ -96,6 +103,14 @@ export default function Login() {
               </div>
 
               {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
+              {notRegistered && (
+                <Alert variant="warning" className="mb-4">
+                  {t('No account found with this email. Please register first.')}{' '}
+                  <Link to="/register" className="font-semibold text-primary hover:underline">
+                    {t('Create an account')}
+                  </Link>
+                </Alert>
+              )}
 
               <form onSubmit={handleCredentials} className="space-y-4">
                 <Input

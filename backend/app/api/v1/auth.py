@@ -88,7 +88,12 @@ def register(payload: RegisterIn, db: Session = Depends(get_db)):
 @router.post("/login", response_model=TokenOut)
 def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == form.username).first()
-    if not user or not verify_password(form.password, user.password_hash):
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No account found with this email. Please register first.",
+        )
+    if not verify_password(form.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
         )
@@ -126,7 +131,13 @@ def verify_otp(payload: OtpVerify, db: Session = Depends(get_db)):
 def login_request_code(payload: LoginCodeRequest, db: Session = Depends(get_db)):
     """Step 1 of OTP-gated login: verify credentials, then email a login code."""
     user = db.query(User).filter(User.email == payload.email).first()
-    if not user or not verify_password(payload.password, user.password_hash):
+    if not user:
+        logger.warning("login/request-code FAILED (unknown email) email=%s", payload.email)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No account found with this email. Please register first.",
+        )
+    if not verify_password(payload.password, user.password_hash):
         logger.warning("login/request-code FAILED (bad credentials) email=%s", payload.email)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     dev_code = otp_service.request_otp(db, payload.email, "login", channel="email")
