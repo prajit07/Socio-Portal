@@ -92,6 +92,24 @@ def suggest_university(payload: UniversitySuggest, db: Session = Depends(get_db)
     return uni
 
 
+@router.get("/mine", response_model=list[UniversityOut])
+def my_universities(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Institutes where the current user is an admin member (HEI portal scoping)."""
+    return (
+        db.query(University)
+        .join(UniversityMember, UniversityMember.university_id == University.id)
+        .filter(
+            UniversityMember.user_id == current_user.id,
+            UniversityMember.member_role == "admin",
+        )
+        .order_by(University.name)
+        .all()
+    )
+
+
 @router.get("/{university_id}", response_model=UniversityOut)
 def get_university(university_id: str, db: Session = Depends(get_db)):
     uni = db.get(University, university_id)

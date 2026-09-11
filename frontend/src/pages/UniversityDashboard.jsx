@@ -26,6 +26,11 @@ export default function UniversityDashboard() {
   const [sDept, setSDept] = useState('');
   const [sRoll, setSRoll] = useState('');
   const [sPw, setSPw] = useState('');
+  const [uniName, setUniName] = useState('');
+  const [uniRegNo, setUniRegNo] = useState('');
+  const [uniDistrict, setUniDistrict] = useState('');
+  const [uniState, setUniState] = useState('');
+  const [creatingUni, setCreatingUni] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -39,8 +44,8 @@ export default function UniversityDashboard() {
       setTeams(asData(t) || []);
       setProposals(asData(pr) || []);
       if (user?.role === 'university_admin') {
-        const unis = asData(await universitiesApi.list()) || [];
-        const uid = unis[0]?.id;
+        const mine = asData(await universitiesApi.mine()) || [];
+        const uid = mine[0]?.id;
         setUniversityId(uid || null);
         if (uid) setStudents(asData(await universitiesApi.listStudents(uid)) || []);
       }
@@ -96,6 +101,28 @@ export default function UniversityDashboard() {
     }
   };
 
+  const createInstitute = async (e) => {
+    e.preventDefault();
+    if (!uniName.trim()) return;
+    setCreatingUni(true);
+    try {
+      const uni = asData(await universitiesApi.create({
+        name: uniName.trim(),
+        registration_no: uniRegNo.trim() || undefined,
+        district: uniDistrict.trim() || undefined,
+        state: uniState.trim() || undefined,
+      }));
+      setUniName(''); setUniRegNo(''); setUniDistrict(''); setUniState('');
+      setUniversityId(uni.id);
+      setStudents(asData(await universitiesApi.listStudents(uni.id)) || []);
+      setError('');
+    } catch (e2) {
+      setError(e2.response?.data?.detail || 'Failed to create institute.');
+    } finally {
+      setCreatingUni(false);
+    }
+  };
+
   const handleApprove = async (id) => {
     setBusyId(id);
     try {
@@ -109,9 +136,7 @@ export default function UniversityDashboard() {
   };
 
   const handleFormTeam = () => {
-    const firstId = problems[0]?.id;
-    const pid = firstId || window.prompt('Enter a problem ID to form a team for:');
-    navigate(pid ? `/university/teams/new?problemId=${pid}` : '/university/teams/new');
+    navigate('/university/teams/new');
   };
 
   if (authLoading || loading) return <PageLoader />;
@@ -209,7 +234,21 @@ export default function UniversityDashboard() {
           </div>
         ) : tab === 'students' ? (
           <div className="space-y-6">
-            {!universityId && <Card className="text-center py-12 text-ink-soft">No institute found. Create your institute first.</Card>}
+            {!universityId && (
+              <Card>
+                <h2 className="font-bold text-primary-navy mb-1">Create your institute</h2>
+                <p className="text-sm text-ink-soft mb-4">No institute is linked to your account yet. Register it once to start adding students and forming teams.</p>
+                <form onSubmit={createInstitute} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Input label="Institute Name *" value={uniName} onChange={(e) => setUniName(e.target.value)} placeholder="e.g. Jharkhand Technical University" required />
+                  <Input label="Registration No. (optional)" value={uniRegNo} onChange={(e) => setUniRegNo(e.target.value)} />
+                  <Input label="District (optional)" value={uniDistrict} onChange={(e) => setUniDistrict(e.target.value)} />
+                  <Input label="State (optional)" value={uniState} onChange={(e) => setUniState(e.target.value)} />
+                  <div className="flex items-end sm:col-span-2">
+                    <Button type="submit" size="sm" loading={creatingUni}>Create Institute</Button>
+                  </div>
+                </form>
+              </Card>
+            )}
             {universityId && (
               <>
                 <Card>

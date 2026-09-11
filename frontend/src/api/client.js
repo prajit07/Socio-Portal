@@ -104,6 +104,7 @@ export const notificationsApi = {
 // Phase 4 — Universities / HEI
 export const universitiesApi = {
   list: (params = {}) => api.get('/universities', { params }),
+  mine: () => api.get('/universities/mine'),
   create: (data) => api.post('/universities', data),
   get: (id) => api.get(`/universities/${id}`),
   addMember: (id, data) => api.post(`/universities/${id}/members`, data),
