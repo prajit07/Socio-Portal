@@ -52,6 +52,13 @@ class Settings(BaseSettings):
     GMAIL_REFRESH_TOKEN: str = ""
     GMAIL_SENDER: str = ""  # Gmail account that granted consent (mail is sent as this account)
 
+    # Resend HTTP API (preferred on Render — port 443, SMTP is blocked).
+    # Get a key at https://resend.com/api-keys. Without a verified domain,
+    # Resend only delivers to your own account email; verify a domain in the
+    # Resend dashboard for production delivery to all users.
+    RESEND_API_KEY: str = ""
+    RESEND_FROM_EMAIL: str = "onboarding@resend.dev"
+
     # Evidence file storage: "local" writes to backend/uploads/ (served at
     # /uploads/...), "s3" uploads to any S3-compatible bucket — AWS S3,
     # Cloudflare R2, Backblaze B2, Supabase Storage, or self-hosted MinIO.
@@ -78,7 +85,15 @@ class Settings(BaseSettings):
 
     @property
     def email_configured(self) -> bool:
-        return self.gmail_configured or bool(self.EMAIL_USER and self.EMAIL_PASS)
+        return (
+            self.resend_configured
+            or self.gmail_configured
+            or bool(self.EMAIL_USER and self.EMAIL_PASS)
+        )
+
+    @property
+    def resend_configured(self) -> bool:
+        return bool(self.RESEND_API_KEY.strip())
 
     @property
     def gmail_configured(self) -> bool:

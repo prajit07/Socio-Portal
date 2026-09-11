@@ -33,9 +33,48 @@ def _hash(code: str) -> str:
     return hmac.new(settings.JWT_SECRET.encode(), code.encode(), hashlib.sha256).hexdigest()
 
 
+def _send_via_resend(email: str, code: str, purpose: str) -> bool:
+    """Send OTP via Resend HTTP API (port 443 — works on Render)."""
+    if not settings.resend_configured:
+        return False
+    import httpx
+
+    sender = settings.RESEND_FROM_EMAIL.strip() or "onboarding@resend.dev"
+    from_header = f"{settings.EMAIL_FROM_NAME} <{sender}>"
+    body = (
+        f"Your verification code is: {code}\n"
+        f"It expires in {settings.OTP_TTL_SECONDS // 60} minute(s). "
+        f"If you did not request this, you can ignore this email."
+    )
+    try:
+        resp = httpx.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {settings.RESEND_API_KEY.strip()}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "from": from_header,
+                "to": [email],
+                "subject": "Your Socio Connect verification code",
+                "text": body,
+            },
+            timeout=20,
+        )
+        resp.raise_for_status()
+        logger.info("OTP email sent via Resend to %s (%s)", email, purpose)
+        return True
+    except Exception as e:  # noqa: BLE001 - fall through to Gmail/SMTP/dev fallback
+        logger.error("[OTP RESEND FAILED] %s (%s): %s: %s", email, purpose, type(e).__name__, e)
+        return False
+
+
 def _send_email(email: str, code: str, purpose: str) -> bool:
     """Send the OTP email. Returns True on success, False on any failure
     (so the caller can fall back to surfacing the code for local testing)."""
+    # Resend first (HTTPS — only path that works on Render free tier).
+    if _send_via_resend(email, code, purpose):
+        return True
     if not settings.email_configured:
         logger.info("[DEV OTP] %s (%s): %s", email, purpose, code)
         return False

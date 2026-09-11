@@ -58,3 +58,7 @@ services:
         sync: false
       - key: GMAIL_SENDER
         sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        value: onboarding@resend.dev
