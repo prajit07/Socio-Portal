@@ -65,7 +65,15 @@ def _send_via_resend(email: str, code: str, purpose: str) -> bool:
         logger.info("OTP email sent via Resend to %s (%s)", email, purpose)
         return True
     except Exception as e:  # noqa: BLE001 - fall through to Gmail/SMTP/dev fallback
-        logger.error("[OTP RESEND FAILED] %s (%s): %s: %s", email, purpose, type(e).__name__, e)
+        detail = ""
+        try:
+            import httpx as _httpx
+
+            if isinstance(e, _httpx.HTTPStatusError) and e.response is not None:
+                detail = f" body={e.response.text[:500]}"
+        except Exception:
+            pass
+        logger.error("[OTP RESEND FAILED] %s (%s): %s: %s%s", email, purpose, type(e).__name__, e, detail)
         return False
 
 
