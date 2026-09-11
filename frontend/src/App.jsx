@@ -2,6 +2,7 @@ import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 import { PageLoader } from './components/ui';
 
 // Route-level code splitting: each page loads on demand instead of
@@ -35,6 +36,7 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
+        <ErrorBoundary>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
@@ -202,6 +204,7 @@ function App() {
           <Route path="/404" element={<NotFound />} />
           <Route path="*" element={<Navigate to="/404" replace />} />
         </Routes>
+        </ErrorBoundary>
         </Suspense>
       </BrowserRouter>
     </AuthProvider>

@@ -7,7 +7,7 @@ import { problemsApi, aiApi } from '../api/client';
 import { transcribeAudio } from '../lib/puterSpeech';
 import { Button, Input, TextArea, Card, Badge, Alert, PageLoader } from '../components/ui';
 
-const STEPS = ['Describe', 'Evidence', 'Location', 'Review'];
+const STEPS = ['Details', 'Location & Review'];
 
 function VoiceRecorder({ onRecordingReady }) {
   const [recording, setRecording] = useState(false);
@@ -203,7 +203,7 @@ export default function SubmitProblem() {
       for (const f of files) uploads.push(problemsApi.uploadEvidence(problemId, f.file, f.kind, f.transcript || undefined));
       await Promise.allSettled(uploads);
 
-      setStep(4); // success screen
+      setStep(2); // success screen
     } catch (e) {
       setError(e.response?.data?.detail || 'Failed to submit problem.');
     } finally {
@@ -213,8 +213,8 @@ export default function SubmitProblem() {
 
   if (user?.role !== 'citizen') return <PageLoader />;
 
-  // Success screen (Step 4)
-  if (step === 4 && result) {
+  // Success screen
+  if (step === 2 && result) {
     return (
       <div className="min-h-screen bg-bg-soft">
         <Navbar />
@@ -258,7 +258,7 @@ export default function SubmitProblem() {
       <main className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
           <h1 className="text-2xl font-extrabold text-primary-navy">Report a Problem</h1>
-          <p className="text-ink-soft mt-1">Step {step + 1} of 4 — {STEPS[step]}</p>
+          <p className="text-ink-soft mt-1">Step {step + 1} of 2 — {STEPS[step]}</p>
           <div className="mt-4 flex gap-2">
             {STEPS.map((s, i) => (
               <div key={s} className={`flex-1 h-1.5 rounded-full ${i <= step ? 'bg-primary' : 'bg-line'}`} />
@@ -270,103 +270,104 @@ export default function SubmitProblem() {
 
         <Card>
           {step === 0 && (
-            <div className="space-y-4">
-              <Input label="Title *" name="title" value={form.title} onChange={update('title')} placeholder="Brief, descriptive title" required />
-              <TextArea label="Description *" name="description" value={form.description} onChange={update('description')} rows={6} placeholder="What is the issue? Who is affected? How long has it persisted?" required />
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <Input label="Title *" name="title" value={form.title} onChange={update('title')} placeholder="Brief, descriptive title" required />
+                <TextArea label="Description *" name="description" value={form.description} onChange={update('description')} rows={6} placeholder="What is the issue? Who is affected? How long has it persisted?" required />
 
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-semibold text-ink">Tags (optional, comma separated)</label>
-                  <button
-                    type="button"
-                    onClick={handleExtractTags}
-                    disabled={tagExtracting || (!form.title.trim() && !form.description.trim())}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold hover:opacity-90 transition disabled:opacity-50 shadow-sm"
-                  >
-                    {tagExtracting ? (
-                      <>
-                        <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                        </svg>
-                        Extracting…
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                        </svg>
-                        ✨ Extract Tags with AI
-                      </>
-                    )}
-                  </button>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-semibold text-ink">Tags (optional, comma separated)</label>
+                    <button
+                      type="button"
+                      onClick={handleExtractTags}
+                      disabled={tagExtracting || (!form.title.trim() && !form.description.trim())}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold hover:opacity-90 transition disabled:opacity-50 shadow-sm"
+                    >
+                      {tagExtracting ? (
+                        <>
+                          <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                          Extracting…
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                          </svg>
+                          ✨ Extract Tags with AI
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <Input name="tags" value={form.tags} onChange={update('tags')} placeholder="water, sanitation, health" hint="Keywords help AI categorization." />
+
+                  {tagHint && (
+                    <p className="text-xs mt-2 px-3 py-1.5 rounded-lg bg-violet-50 border border-violet-200 text-violet-700 font-medium">
+                      {tagHint}
+                    </p>
+                  )}
                 </div>
-                <Input name="tags" value={form.tags} onChange={update('tags')} placeholder="water, sanitation, health" hint="Keywords help AI categorization." />
-                
-                {tagHint && (
-                  <p className="text-xs mt-2 px-3 py-1.5 rounded-lg bg-violet-50 border border-violet-200 text-violet-700 font-medium">
-                    {tagHint}
-                  </p>
-                )}
+              </div>
+
+              <div className="border-t border-line pt-5 space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">Voice note</label>
+                  <VoiceRecorder onRecordingReady={onVoiceReady} />
+                  <p className="text-xs text-ink-muted mt-2">Speech is transcribed in your browser with Puter (free). You may be asked to sign in to Puter on first use.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">Upload evidence</label>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
+                    onChange={(e) => addFiles(e.target.files, e.target.files[0]?.type.startsWith('image') ? 'image' : e.target.files[0]?.type.startsWith('video') ? 'video' : e.target.files[0]?.type.startsWith('audio') ? 'audio' : 'document')}
+                    className="block w-full text-sm text-ink-soft file:mr-3 file:rounded-btn file:border-0 file:bg-primary file:px-4 file:py-2 file:text-white file:font-semibold"
+                  />
+                  {files.length > 0 && (
+                    <ul className="mt-3 space-y-2">
+                      {files.map((f, i) => (
+                        <li key={i} className="border border-line rounded-card px-3 py-2 text-sm">
+                          <div className="flex items-center justify-between">
+                            <span className="truncate">{f.file.name}</span>
+                            <Badge variant="outline">{f.kind}</Badge>
+                          </div>
+                          {f.kind === 'audio' && f.transcribing && (
+                            <p className="text-xs text-ink-muted mt-1">Transcribing with Puter…</p>
+                          )}
+                          {f.kind === 'audio' && f.transcript && (
+                            <p className="text-xs text-ink-soft mt-1 italic">“{f.transcript}”</p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
             </div>
           )}
 
           {step === 1 && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-ink mb-1.5">Voice note</label>
-                <VoiceRecorder onRecordingReady={onVoiceReady} />
-                <p className="text-xs text-ink-muted mt-2">Speech is transcribed in your browser with Puter (free). You may be asked to sign in to Puter on first use.</p>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-ink mb-1.5">Upload evidence</label>
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
-                  onChange={(e) => addFiles(e.target.files, e.target.files[0]?.type.startsWith('image') ? 'image' : e.target.files[0]?.type.startsWith('video') ? 'video' : e.target.files[0]?.type.startsWith('audio') ? 'audio' : 'document')}
-                  className="block w-full text-sm text-ink-soft file:mr-3 file:rounded-btn file:border-0 file:bg-primary file:px-4 file:py-2 file:text-white file:font-semibold"
-                />
-                {files.length > 0 && (
-                  <ul className="mt-3 space-y-2">
-                    {files.map((f, i) => (
-                      <li key={i} className="border border-line rounded-card px-3 py-2 text-sm">
-                        <div className="flex items-center justify-between">
-                          <span className="truncate">{f.file.name}</span>
-                          <Badge variant="outline">{f.kind}</Badge>
-                        </div>
-                        {f.kind === 'audio' && f.transcribing && (
-                          <p className="text-xs text-ink-muted mt-1">Transcribing with Puter…</p>
-                        )}
-                        {f.kind === 'audio' && f.transcript && (
-                          <p className="text-xs text-ink-soft mt-1 italic">“{f.transcript}”</p>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-          )}
+            <div className="space-y-6">
+              <LocationPicker
+                position={position}
+                setPosition={(p) => { setPosition(p); setForm((f) => ({ ...f, latitude: p[0], longitude: p[1] })); }}
+                address={form.address}
+                setAddress={(v) => setForm((f) => ({ ...f, address: v }))}
+              />
 
-          {step === 2 && (
-            <LocationPicker
-              position={position}
-              setPosition={(p) => { setPosition(p); setForm((f) => ({ ...f, latitude: p[0], longitude: p[1] })); }}
-              address={form.address}
-              setAddress={(v) => setForm((f) => ({ ...f, address: v }))}
-            />
-          )}
-
-          {step === 3 && (
-            <div className="space-y-3 text-sm">
-              <div><span className="font-semibold text-primary-navy">Title:</span> {form.title}</div>
-              <div><span className="font-semibold text-primary-navy">Description:</span> <span className="text-ink-soft">{form.description}</span></div>
-              <div><span className="font-semibold text-primary-navy">Tags:</span> {form.tags || '—'}</div>
-              <div><span className="font-semibold text-primary-navy">Evidence:</span> {files.length + (voiceBlob ? 1 : 0)} file(s)</div>
-              <div><span className="font-semibold text-primary-navy">Location:</span> {form.address || (position ? `${position[0].toFixed(4)}, ${position[1].toFixed(4)}` : '—')}</div>
-              <Alert variant="info">On submit, our AI will categorize, score priority, check for duplicates and route your problem to relevant universities & industry partners.</Alert>
+              <div className="border-t border-line pt-5 space-y-3 text-sm">
+                <div className="text-sm font-semibold text-ink">Review your report</div>
+                <div><span className="font-semibold text-primary-navy">Title:</span> {form.title}</div>
+                <div><span className="font-semibold text-primary-navy">Description:</span> <span className="text-ink-soft">{form.description}</span></div>
+                <div><span className="font-semibold text-primary-navy">Tags:</span> {form.tags || '—'}</div>
+                <div><span className="font-semibold text-primary-navy">Evidence:</span> {files.length + (voiceBlob ? 1 : 0)} file(s)</div>
+                <div><span className="font-semibold text-primary-navy">Location:</span> {form.address || (position ? `${position[0].toFixed(4)}, ${position[1].toFixed(4)}` : '—')}</div>
+                <Alert variant="info">On submit, our AI will categorize, score priority, check for duplicates and route your problem to relevant universities & industry partners.</Alert>
+              </div>
             </div>
           )}
 
@@ -374,8 +375,8 @@ export default function SubmitProblem() {
             <Button variant="ghost" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
               Back
             </Button>
-            {step < 3 ? (
-              <Button onClick={() => setStep((s) => s + 1)} disabled={step === 0 && (!form.title || !form.description)}>
+            {step < 1 ? (
+              <Button onClick={() => setStep((s) => s + 1)} disabled={!form.title || !form.description}>
                 Next
               </Button>
             ) : (

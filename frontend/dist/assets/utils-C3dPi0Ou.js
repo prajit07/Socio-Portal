@@ -1,0 +1,1 @@
+var e=e=>e&&e.data!==void 0?e.data:e;export{e as t};

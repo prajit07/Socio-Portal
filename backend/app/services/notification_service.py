@@ -39,6 +39,23 @@ def _send_email_async(to_email: str, subject: str, body: str) -> None:
         if not settings.email_configured:
             logger.info("[DEV NOTIFY] To: %s | %s | %s", to_email, subject, body)
             return
+        # SMTP is the primary path; Gmail API used only if SMTP fails
+        if settings.EMAIL_USER and settings.EMAIL_PASS:
+            try:
+                msg = EmailMessage()
+                msg["Subject"] = subject
+                msg["From"] = f"{settings.EMAIL_FROM_NAME} <{settings.EMAIL_USER}>"
+                msg["To"] = to_email
+                msg.set_content(body)
+                with smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT, timeout=20) as server:
+                    server.starttls(context=ssl.create_default_context())
+                    server.login(settings.EMAIL_USER, settings.EMAIL_PASS)
+                    server.send_message(msg)
+                logger.info("Notification email sent via SMTP to %s", to_email)
+                return
+            except Exception as exc:
+                logger.error("Notification email failed to %s via SMTP: %s", to_email, exc)
+        # Fallback: Gmail API (OAuth2) if SMTP completely unavailable
         if settings.gmail_configured:
             try:
                 from app.services.gmail_api import send_gmail
@@ -47,23 +64,8 @@ def _send_email_async(to_email: str, subject: str, body: str) -> None:
                 logger.info("Notification email sent via Gmail API to %s", to_email)
                 return
             except Exception as exc:
-                logger.error("Gmail API notification email failed to %s: %s", to_email, exc)
-        if not (settings.EMAIL_USER and settings.EMAIL_PASS):
-            logger.info("[DEV NOTIFY] To: %s | %s | %s", to_email, subject, body)
-            return
-        try:
-            msg = EmailMessage()
-            msg["Subject"] = subject
-            msg["From"] = f"{settings.EMAIL_FROM_NAME} <{settings.EMAIL_USER}>"
-            msg["To"] = to_email
-            msg.set_content(body)
-            with smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT, timeout=20) as server:
-                server.starttls(context=ssl.create_default_context())
-                server.login(settings.EMAIL_USER, settings.EMAIL_PASS)
-                server.send_message(msg)
-            logger.info("Notification email sent via SMTP to %s", to_email)
-        except Exception as exc:
-            logger.error("Notification email failed to %s: %s", to_email, exc)
+                logger.error("Notification email failed to %s via Gmail API: %s", to_email, exc)
+        logger.info("[DEV NOTIFY] To: %s | %s | %s", to_email, subject, body)
 
     t = threading.Thread(target=_do_send, daemon=True)
     t.start()
