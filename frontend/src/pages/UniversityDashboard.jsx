@@ -169,6 +169,15 @@ export default function UniversityDashboard() {
 
         {error && <Alert variant="danger" className="mb-6">{error}</Alert>}
 
+        {user?.role === 'university_admin' && !universityId && (
+          <Alert variant="warning" className="mb-6">
+            <span className="font-semibold">Complete your workspace setup:</span> register your institute to unlock teams, students and proposals.{' '}
+            <button type="button" onClick={() => setTab('problems')} className="font-semibold text-primary hover:underline">
+              Set up now →
+            </button>
+          </Alert>
+        )}
+
         <div className="flex flex-wrap gap-2 mb-6">
           {tabs.map((t) => (
             <button
@@ -187,7 +196,23 @@ export default function UniversityDashboard() {
         {loading ? (
           <PageLoader />
         ) : tab === 'problems' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <>
+            {user?.role === 'university_admin' && !universityId && (
+              <Card className="mb-6">
+                <h2 className="font-bold text-primary-navy mb-1">Create your institute</h2>
+                <p className="text-sm text-ink-soft mb-4">As SPOC, register your institution once to start adding students, forming teams and submitting proposals.</p>
+                <form onSubmit={createInstitute} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Input label="Institute Name *" value={uniName} onChange={(e) => setUniName(e.target.value)} placeholder="e.g. Jharkhand Technical University" required />
+                  <Input label="Registration No. (optional)" value={uniRegNo} onChange={(e) => setUniRegNo(e.target.value)} />
+                  <Input label="District (optional)" value={uniDistrict} onChange={(e) => setUniDistrict(e.target.value)} placeholder="Used to surface nearby problems" />
+                  <Input label="State (optional)" value={uniState} onChange={(e) => setUniState(e.target.value)} />
+                  <div className="flex items-end sm:col-span-2">
+                    <Button type="submit" size="sm" loading={creatingUni}>Create Institute</Button>
+                  </div>
+                </form>
+              </Card>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {problems.map((p) => (
               <Link key={p.id} to={`/problems/${p.id}`}>
                 <Card hover>
@@ -204,7 +229,8 @@ export default function UniversityDashboard() {
                 </Card>
               </Link>
             ))}
-          </div>
+            </div>
+          </>
         ) : tab === 'teams' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {teams.map((t) => (
@@ -235,18 +261,9 @@ export default function UniversityDashboard() {
         ) : tab === 'students' ? (
           <div className="space-y-6">
             {!universityId && (
-              <Card>
-                <h2 className="font-bold text-primary-navy mb-1">Create your institute</h2>
-                <p className="text-sm text-ink-soft mb-4">No institute is linked to your account yet. Register it once to start adding students and forming teams.</p>
-                <form onSubmit={createInstitute} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Input label="Institute Name *" value={uniName} onChange={(e) => setUniName(e.target.value)} placeholder="e.g. Jharkhand Technical University" required />
-                  <Input label="Registration No. (optional)" value={uniRegNo} onChange={(e) => setUniRegNo(e.target.value)} />
-                  <Input label="District (optional)" value={uniDistrict} onChange={(e) => setUniDistrict(e.target.value)} />
-                  <Input label="State (optional)" value={uniState} onChange={(e) => setUniState(e.target.value)} />
-                  <div className="flex items-end sm:col-span-2">
-                    <Button type="submit" size="sm" loading={creatingUni}>Create Institute</Button>
-                  </div>
-                </form>
+              <Card className="text-center py-12">
+                <p className="text-ink-soft">Register your institute to start managing students.</p>
+                <Button size="sm" className="mt-4" onClick={() => setTab('problems')}>Complete workspace setup</Button>
               </Card>
             )}
             {universityId && (

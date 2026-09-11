@@ -1,10 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { problemsApi, teamsApi, universitiesApi } from '../api/client';
 import { Button, Card, Input, Select, Alert, PageLoader } from '../components/ui';
 
 const asData = (r) => (r && r.data !== undefined ? r.data : r);
+const trunc = (s, n = 60) => (s && s.length > n ? `${s.slice(0, n - 1)}…` : s || '');
+
+// Text-based proximity: the institute has district/state (no coordinates),
+// problems carry a free-text address — a shared token means "nearby".
+const isNearby = (problem, uni) => {
+  if (!uni) return false;
+  const addr = (problem.address || '').toLowerCase();
+  if (!addr) return false;
+  return [uni.district, uni.state]
+    .map((x) => (x || '').trim().toLowerCase())
+    .filter((x) => x.length > 1)
+    .some((x) => addr.includes(x) || x.includes(addr.split(',')[0].trim()));
+};
 
 export default function TeamCreate() {
   const [params] = useSearchParams();
@@ -25,7 +38,7 @@ export default function TeamCreate() {
         // never to an arbitrary university picked from a global list.
         const [u, p] = await Promise.all([
           universitiesApi.mine(),
-          problemsApi.list(),
+          problemsApi.list({ limit: 500 }),
         ]);
         const mine = asData(u) || [];
         setUnis(mine);
@@ -42,6 +55,16 @@ export default function TeamCreate() {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time form bootstrap
   }, []);
+
+  const myUni = unis.find((u) => u.id === universityId) || unis[0] || null;
+
+  const sortedProblems = useMemo(() => {
+    const withFlag = problems.map((p) => ({ p, near: isNearby(p, myUni) }));
+    withFlag.sort((a, b) => Number(b.near) - Number(a.near));
+    return withFlag;
+  }, [problems, myUni]);
+
+  const selected = problems.find((p) => p.id === problemId) || null;
 
   const submit = async (e) => {
     e.preventDefault();
@@ -86,9 +109,26 @@ export default function TeamCreate() {
               label="Problem *"
               value={problemId}
               onChange={(e) => setProblemId(e.target.value)}
-              options={[{ value: '', label: 'Select a problem to solve' }, ...problems.map((p) => ({ value: p.id, label: `${p.title || p.id} (${p.id})` }))]}
+              options={[
+                { value: '', label: 'Select a problem to solve' },
+                ...sortedProblems.map(({ p, near }) => ({
+                  value: p.id,
+                  label: `${p.title || p.id}${p.address ? ` — ${trunc(p.address)}` : ''}${near ? ' · Nearby' : ''}`,
+                })),
+              ]}
+              hint={myUni?.district || myUni?.state ? `Showing problems near ${[myUni.district, myUni.state].filter(Boolean).join(', ')} first.` : undefined}
               required
             />
+            {selected && (selected.address || selected.latitude != null) && (
+              <div className="rounded-card border border-line bg-bg-soft px-4 py-3 text-sm">
+                <div className="font-semibold text-primary-navy">Problem location</div>
+                {selected.address && <p className="text-ink-soft mt-1">{selected.address}</p>}
+                {selected.latitude != null && selected.longitude != null && (
+                  <p className="text-xs text-ink-muted mt-1 font-mono">{selected.latitude.toFixed(4)}, {selected.longitude.toFixed(4)}</p>
+                )}
+                <Link to="/problems/map" className="text-xs font-semibold text-primary hover:underline">View on public map →</Link>
+              </div>
+            )}
             <Input label="Team Name *" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Innovators Club" required />
             {unis.length === 1 ? (
               <div>
