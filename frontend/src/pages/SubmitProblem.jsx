@@ -85,14 +85,14 @@ function VoiceRecorder({ onRecordingReady }) {
         {audioUrl && <audio controls src={audioUrl} className="h-8" />}
       </div>
       {transcribing && <p className="text-xs text-ink-muted mt-2">Transcribing with Puter…</p>}
-      
+
       {transcript && (
         <div className="mt-3 rounded-card border border-line bg-white p-3 text-sm text-ink-soft">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-ink uppercase tracking-wide">Transcript</span>
             <div className="flex items-center gap-2">
-              <select 
-                value={targetLang} 
+              <select
+                value={targetLang}
                 onChange={(e) => setTargetLang(e.target.value)}
                 className="text-xs border border-line rounded px-1.5 py-1 bg-bg-soft"
               >
@@ -139,14 +139,14 @@ export default function SubmitProblem() {
     try {
       const res = await aiApi.extractTags(form.title, form.description, voiceTranscript);
       const rawTags = res.data?.tags || [];
-      
+
       setForm((f) => {
         const existing = f.tags ? f.tags.split(',').map(s => s.trim()).filter(Boolean) : [];
         const extracted = rawTags.map((t) => t.name);
         const combined = [...new Set([...existing, ...extracted])];
         return { ...f, tags: combined.join(', ') };
       });
-      
+
       setTagHint(`AI suggested ${rawTags.length} tag${rawTags.length !== 1 ? 's' : ''} · ${res.data?.category || ''} · Priority: ${res.data?.priority || ''}`);
     } catch {
       setTagHint('Tag extraction failed. You can still type tags manually.');
@@ -316,7 +316,6 @@ export default function SubmitProblem() {
                 <div>
                   <label className="block text-sm font-semibold text-ink mb-1.5">Voice note</label>
                   <VoiceRecorder onRecordingReady={onVoiceReady} />
-                  <p className="text-xs text-ink-muted mt-2">Speech is transcribed in your browser with Puter (free). You may be asked to sign in to Puter on first use.</p>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-ink mb-1.5">Upload evidence</label>
