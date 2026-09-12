@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { homeForRole } from '../lib/routes';
@@ -39,6 +39,8 @@ export default function Register() {
   const [devCode, setDevCode] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpError, setOtpError] = useState('');
+  const [emailExists, setEmailExists] = useState(false);
+  const submittingRef = useRef(false);
 
   const update = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
@@ -55,7 +57,10 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submittingRef.current) return; // guard against double-submit (second POST would 409)
+    submittingRef.current = true;
     setError('');
+    setEmailExists(false);
     setLoading(true);
     try {
       const payload = {
@@ -77,9 +82,23 @@ export default function Register() {
       console.log('[OTP DEBUG] request-code ->', rc);
       setStep('otp');
     } catch (err) {
-      setError(err.response?.data?.detail || t('Registration failed. Email may already be used.'));
+      if (err.response?.status === 409) {
+        setEmailExists(true);
+      } else if (!err.response) {
+        // No response at all (server asleep/restarting, CORS, offline) —
+        // never blame the email for a transport failure.
+        setError(t('Cannot reach the server. Is the backend running on :8000? Check the Network tab for a CORS/connection error.'));
+      } else {
+        const detail = err.response.data?.detail;
+        setError(
+          Array.isArray(detail)
+            ? detail.map((d) => d.msg || JSON.stringify(d)).join(' ')
+            : detail || t('Registration failed. Email may already be used.')
+        );
+      }
     } finally {
       setLoading(false);
+      submittingRef.current = false;
     }
   };
 
@@ -137,6 +156,14 @@ export default function Register() {
               </div>
 
               {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
+              {emailExists && (
+                <Alert variant="warning" className="mb-4">
+                  {t('This email is already registered.')}{' '}
+                  <Link to="/login" className="font-semibold text-primary hover:underline">
+                    {t('Sign In')}
+                  </Link>
+                </Alert>
+              )}
 
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>

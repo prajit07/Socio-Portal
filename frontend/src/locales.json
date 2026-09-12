@@ -107,7 +107,8 @@
       "Discover & fund solutions.": "Discover & fund solutions.",
       "Oversee impact & analytics.": "Oversee impact & analytics.",
       "Industry / Startup": "Industry / Startup",
-      "No account found with this email. Please register first.": "No account found with this email. Please register first."
+      "No account found with this email. Please register first.": "No account found with this email. Please register first.",
+      "This email is already registered.": "This email is already registered."
     }
   },
   "hi": {
@@ -218,7 +219,8 @@
       "University teams draft proposals; industry funds and co-develops through prototype, pilot and implementation.": "विश्वविद्यालय टीमें प्रस्ताव तैयार करती हैं; उद्योग प्रोटोटाइप, पायलट और कार्यान्वयन के माध्यम से फंड और सह-विकास करता है।",
       "Upload photos, video, voice or text with a location. No expertise needed — just describe what is wrong.": "स्थान के साथ फोटो, वीडियो, वॉयस या टेक्स्ट अपलोड करें। किसी विशेषज्ञता की जरूरत नहीं — बस बताएं कि क्या गलत है।",
       "Our pipeline categorizes, scores priority, detects duplicates and routes the problem to the right universities and industry partners.": "हमारी पाइपलाइन वर्गीकृत करती है, प्राथमिकता तय करती है, डुप्लिकेट पहचानती है और समस्या को सही विश्वविद्यालयों और उद्योग भागीदारों तक भेजती है।",
-      "No account found with this email. Please register first.": "इस ईमेल से कोई खाता नहीं मिला। कृपया पहले पंजीकरण करें।"
+      "No account found with this email. Please register first.": "इस ईमेल से कोई खाता नहीं मिला। कृपया पहले पंजीकरण करें।",
+      "This email is already registered.": "यह ईमेल पहले से पंजीकृत है।"
     }
   },
   "ta": {
