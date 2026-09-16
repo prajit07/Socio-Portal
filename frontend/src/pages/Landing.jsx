@@ -1,10 +1,12 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Hero from '../components/ui/Hero';
-import { Card, Button, Badge } from '../components/ui';
+import { Card, Button, Badge, StatusBadge } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { homeForRole } from '../lib/routes';
+import { problemsApi } from '../api/client';
 
 const steps = [
   {
@@ -39,7 +41,25 @@ const features = [
 export default function Landing() {
   const { user } = useAuth();
   const { t } = useTranslation();
-  
+  const [publicProblems, setPublicProblems] = useState([]);
+  const [publicLoading, setPublicLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        // Public endpoint — works for guests, no login required.
+        const res = await problemsApi.list({ limit: 12 });
+        if (!cancelled) setPublicProblems(Array.isArray(res.data) ? res.data : []);
+      } catch {
+        if (!cancelled) setPublicProblems([]);
+      } finally {
+        if (!cancelled) setPublicLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const primary = user
     ? { to: homeForRole(user.role), label: t('Go to Dashboard') }
     : { to: '/register', label: t('Get Started') };
@@ -96,6 +116,50 @@ export default function Landing() {
             ))}
           </div>
         </div>
+      </section>
+
+      {/* Live public problems — visible to guests, no login required */}
+      <section className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8 py-20">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
+          <div>
+            <h2 className="text-3xl font-extrabold text-primary-navy sm:text-4xl">{t('Live public problem map')}</h2>
+            <p className="mt-3 text-ink-soft max-w-2xl">
+              {t('Every report from every citizen — open for guests to explore. No account needed to see what needs fixing.')}
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <Link to="/problems/map">
+              <Button size="lg">{t('Open full map')}</Button>
+            </Link>
+            <Link to="/problems">
+              <Button size="lg" variant="secondary">{t('Browse Problems')}</Button>
+            </Link>
+          </div>
+        </div>
+        {publicLoading ? (
+          <p className="text-ink-muted text-sm">{t('Loading public problems…')}</p>
+        ) : publicProblems.length === 0 ? (
+          <Card className="text-center py-10 text-ink-soft">
+            {t('No public problems yet — be the first to report one.')}
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {publicProblems.slice(0, 6).map((p) => (
+              <Link key={p.id} to={`/problems/${p.id}`}>
+                <Card hover>
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-bold text-primary-navy line-clamp-2">{p.title}</h3>
+                    <StatusBadge status={p.status} size="sm" />
+                  </div>
+                  <p className="text-sm text-ink-soft mt-2 line-clamp-3">{p.description}</p>
+                  <div className="mt-3 text-xs text-ink-muted">
+                    {[p.address, p.ai_category].filter(Boolean).join(' · ') || new Date(p.created_at).toLocaleDateString()}
+                  </div>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* CTA */}

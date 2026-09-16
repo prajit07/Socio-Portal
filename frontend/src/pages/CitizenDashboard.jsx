@@ -30,7 +30,8 @@ export default function CitizenDashboard() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await problemsApi.list({ limit: 50 });
+      // "My Problems" view — scope to this citizen's own reports only.
+      const res = await problemsApi.list({ limit: 50, mine_only: true });
       setProblems(res.data);
     } catch (e) {
       setError(e.response?.data?.detail || 'Failed to load your problems.');

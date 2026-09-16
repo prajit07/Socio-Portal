@@ -17,6 +17,8 @@ const navItems = {
   citizen: [
     { path: '/citizen/dashboard', label: 'My Problems' },
     { path: '/citizen/submit-problem', label: 'Report Problem' },
+    { path: '/problems', label: 'Explore' },
+    { path: '/problems/map', label: 'Map' },
   ],
   student: [
     { path: '/university/dashboard', label: 'Workspace' },
@@ -45,6 +47,11 @@ const navItems = {
   admin: [{ path: '/admin', label: 'Admin' }],
 };
 
+const publicNavItems = [
+  { path: '/problems', label: 'Explore Problems' },
+  { path: '/problems/map', label: 'Problem Map' },
+];
+
 function Logo() {
   return (
     <Link to="/" className="flex items-center gap-2">
@@ -65,7 +72,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { t, i18n } = useTranslation();
 
-  const items = user ? navItems[user.role] || [] : [];
+  const items = user ? navItems[user.role] || [] : publicNavItems;
 
   const languages = [
     { code: 'en', name: 'English' },
@@ -93,24 +100,22 @@ export default function Navbar() {
       <div className="mx-auto flex h-full max-w-[1280px] items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-8">
           <Logo />
-          {user && (
-            <div className="hidden md:flex items-center gap-1">
-              {items.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`relative px-3 py-2 text-sm font-semibold transition-colors ${
-                    isActive(item.path) ? 'text-primary' : 'text-ink-soft hover:text-primary-navy'
-                  }`}
-                >
-                  {t(item.label)}
-                  {isActive(item.path) && (
-                    <span className="absolute -bottom-[1px] left-3 right-3 h-0.5 rounded bg-primary" />
-                  )}
-                </Link>
-              ))}
-            </div>
-          )}
+          <div className="hidden md:flex items-center gap-1">
+            {items.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`relative px-3 py-2 text-sm font-semibold transition-colors ${
+                  isActive(item.path) ? 'text-primary' : 'text-ink-soft hover:text-primary-navy'
+                }`}
+              >
+                {t(item.label)}
+                {isActive(item.path) && (
+                  <span className="absolute -bottom-[1px] left-3 right-3 h-0.5 rounded bg-primary" />
+                )}
+              </Link>
+            ))}
+          </div>
         </div>
 
         <div className="hidden md:flex items-center gap-3">

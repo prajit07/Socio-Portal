@@ -6,11 +6,33 @@ from app.core.database import get_db
 from app.core.security import decode_token
 from app.models.user import User
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
+oauth2_scheme_required = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+
+
+def get_optional_user(
+    token: str | None = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> User | None:
+    """Return the current user if a valid Bearer token is supplied, else None.
+
+    Used by public endpoints (problem map / explorer) so guests can browse
+    public problems without logging in.
+    """
+    if not token:
+        return None
+    try:
+        payload = decode_token(token)
+        user_id = payload.get("sub")
+        if not user_id:
+            return None
+    except ValueError:
+        return None
+    return db.get(User, user_id)
 
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    token: str = Depends(oauth2_scheme_required),
     db: Session = Depends(get_db),
 ) -> User:
     creds_exc = HTTPException(

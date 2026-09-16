@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { problemsApi } from '../api/client';
-import { Input, Select, Card, StatusBadge, PriorityBadge, Alert, ListSkeleton } from '../components/ui';
+import { Input, Select, Card, Button, StatusBadge, PriorityBadge, Alert, ListSkeleton } from '../components/ui';
 
 const STATUS_OPTIONS = [
   { value: '', label: 'All Statuses' },
@@ -25,6 +25,9 @@ export default function ProblemsList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filters, setFilters] = useState({ status: '', ai_category: '', ai_priority: '' });
+  // Citizens previously saw only their own reports here; the public explorer
+  // must show everything, so default to all with an opt-in "Mine only" toggle.
+  const [mineOnly, setMineOnly] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -33,6 +36,7 @@ export default function ProblemsList() {
       if (filters.status) params.status = filters.status;
       if (filters.ai_category) params.ai_category = filters.ai_category;
       if (filters.ai_priority) params.ai_priority = filters.ai_priority;
+      if (user?.role === 'citizen' && mineOnly) params.mine_only = true;
       const res = await problemsApi.list(params);
       setProblems(res.data);
     } catch (e) {
@@ -40,7 +44,7 @@ export default function ProblemsList() {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, mineOnly, user?.role]);
 
   // eslint-disable-next-line react/set-state-in-effect -- refetch from server when filters change
   useEffect(() => { fetchData(); }, [fetchData]);
@@ -53,15 +57,35 @@ export default function ProblemsList() {
     <div className="min-h-screen bg-bg-soft">
       <Navbar />
       <main className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-extrabold text-primary-navy">
-            {user?.role === 'citizen' ? 'My Problems' : 'Problem Explorer'}
-          </h1>
-          <p className="text-ink-soft mt-1">
-            {isIndustry
-              ? 'Problems matched to your domain tags.'
-              : 'Browse and discover problems across communities.'}
-          </p>
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-extrabold text-primary-navy">
+              Problem Explorer
+            </h1>
+            <p className="text-ink-soft mt-1">
+              {isIndustry
+                ? 'Problems matched to your domain tags.'
+                : 'Browse and discover problems across communities. Public — no login required to view.'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {user?.role === 'citizen' && (
+              <label className="flex items-center gap-2 text-sm font-semibold text-ink-soft cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={mineOnly}
+                  onChange={(e) => setMineOnly(e.target.checked)}
+                  className="h-4 w-4 accent-primary"
+                />
+                Mine only
+              </label>
+            )}
+            {!user && (
+              <Link to="/problems/map">
+                <Button variant="secondary" size="sm">View map</Button>
+              </Link>
+            )}
+          </div>
         </div>
 
         {error && <Alert variant="danger" className="mb-6">{error}</Alert>}

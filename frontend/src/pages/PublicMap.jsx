@@ -56,10 +56,16 @@ export default function PublicMap() {
   // eslint-disable-next-line react/set-state-in-effect -- initial server data fetch on mount
   useEffect(() => { load(); }, [load]);
 
-  // Only keep problems where lat/lng are actual numbers
-  const located = problems.filter(
-    (p) => typeof p.latitude === 'number' && typeof p.longitude === 'number'
-  );
+  // Only keep problems where lat/lng are actual numbers (API may return strings)
+  const located = problems
+    .map((p) => ({
+      ...p,
+      latitude: typeof p.latitude === 'string' ? parseFloat(p.latitude) : p.latitude,
+      longitude: typeof p.longitude === 'string' ? parseFloat(p.longitude) : p.longitude,
+    }))
+    .filter(
+      (p) => Number.isFinite(p.latitude) && Number.isFinite(p.longitude)
+    );
   // Haversine formula to calculate distance in km
   const getDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371; // Radius of the earth in km
@@ -264,15 +270,9 @@ export default function PublicMap() {
                         {active.address && (
                           <p className="text-xs text-gray-500">{active.address}</p>
                         )}
-                        {user ? (
-                          <Link to={`/problems/${active.id}`} className="text-primary text-xs font-semibold block mt-1">
-                            View details →
-                          </Link>
-                        ) : (
-                          <Link to={`/login`} className="text-primary text-xs font-semibold block mt-1">
-                            Sign in to view details →
-                          </Link>
-                        )}
+                        <Link to={`/problems/${active.id}`} className="text-primary text-xs font-semibold block mt-1">
+                          View details →
+                        </Link>
                       </div>
                     </InfoWindow>
                   )}

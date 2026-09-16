@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, require_role
+from app.core.dependencies import get_current_user, get_optional_user, require_role
 from app.models.enums import RoleEnum, ProblemStatusEnum, ProblemPriorityEnum, SolutionStatusEnum
 from app.models.problem import Problem, Solution
 from app.models.user import User
@@ -60,18 +60,32 @@ def list_problems(
     ai_priority: Optional[ProblemPriorityEnum] = None,
     submitter_id: Optional[str] = None,
     assigned_to_id: Optional[str] = None,
+    mine_only: bool = Query(False, description="Citizens: only return my own reports"),
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=500),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_user),
 ):
-    """List problems with filters. Access depends on role."""
+    """List problems with filters. Public — guests see all public problems.
+
+    - Guests (no token): all non-deleted problems (for public map / homepage).
+    - Citizens: all non-deleted by default; pass mine_only=true (or
+      submitter_id=<own id>) to scope to just their own reports.
+    - Industry: tag-matched subset (existing behaviour).
+    - HEI / Gov / Admin: all.
+    """
     query = db.query(Problem).filter(Problem.deleted_at.is_(None))
-    
-    # Role-based filtering
-    if current_user.role == RoleEnum.CITIZEN:
-        # Citizens see only their own problems
-        query = query.filter(Problem.submitter_id == current_user.id)
+
+    if current_user is None:
+        # Public / guest access — no role filtering, just the explicit filters.
+        pass
+    elif current_user.role == RoleEnum.CITIZEN:
+        # Citizens see the public feed by default (map / explorer).
+        # Dashboard passes mine_only=true to keep the "My Problems" view.
+        if mine_only:
+            query = query.filter(Problem.submitter_id == current_user.id)
+        elif submitter_id and submitter_id == current_user.id:
+            query = query.filter(Problem.submitter_id == current_user.id)
     elif current_user.role in [RoleEnum.STUDENT, RoleEnum.FACULTY, RoleEnum.UNIVERSITY_ADMIN, RoleEnum.GOVERNMENT, RoleEnum.ADMIN]:
         # HEI / Gov / Admin see all problems (for browsing / oversight)
         pass
@@ -95,7 +109,7 @@ def list_problems(
     problems = query.order_by(Problem.created_at.desc()).offset(skip).limit(limit).all()
 
     # Industry: surface only problems whose AI tags match the industry's domain tags
-    if current_user.role == RoleEnum.INDUSTRY:
+    if current_user is not None and current_user.role == RoleEnum.INDUSTRY:
         user_tags = set(current_user.domain_tags or [])
         if user_tags:
             problems = [p for p in problems if set(p.ai_tags or []) & user_tags]
@@ -106,20 +120,16 @@ def list_problems(
 def get_problem(
     problem_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_user),
 ):
-    """Get a specific problem by ID."""
+    """Get a specific problem by ID. Public so guests can open map pins."""
     problem = db.query(Problem).filter(Problem.id == problem_id).first()
     if not problem:
         raise HTTPException(status_code=404, detail="Problem not found")
-    
-    # Check access permissions
-    if current_user.role == RoleEnum.CITIZEN and problem.submitter_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to view this problem")
-    
+
     if problem.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Problem not found")
-    
+
     return problem
 
 
