@@ -3,7 +3,7 @@ import string
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import String, DateTime, ForeignKey, Text, Integer, func, Float
+from sqlalchemy import String, DateTime, ForeignKey, Text, Integer, func, Float, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -23,6 +23,14 @@ class Collaboration(Base):
     proposal_id: Mapped[str] = mapped_column(String(20), ForeignKey("solutions.id"), nullable=False)
     industry_id: Mapped[str] = mapped_column(String(20), ForeignKey("industries.id"), nullable=False)
     stage: Mapped[str] = mapped_column(String(20), default="interested", nullable=False)
+    # How the industry is engaging: express_interest|fund|co_develop
+    engagement_type: Mapped[str] = mapped_column(String(20), default="express_interest", nullable=False)
+    # Explicit funding commitment tracking: none|committed|disbursed
+    funding_status: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    # Test/site-trial outcomes written at pilot→implementation transitions.
+    testing_outcomes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # Whether this collaboration spun out a startup (gov innovation-outcomes KPI).
+    startup_created: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -75,6 +83,7 @@ class IPRecord(Base):
     type: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)  # patent|copyright|trademark|trade_secret
     status: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)  # filed|granted|pending
     reference_no: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    file_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)  # IP document (filing/application)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     collaboration: Mapped["Collaboration"] = relationship(back_populates="ip_records")

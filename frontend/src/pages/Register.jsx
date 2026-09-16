@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { homeForRole } from '../lib/routes';
@@ -40,14 +40,23 @@ export default function Register() {
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpError, setOtpError] = useState('');
   const [emailExists, setEmailExists] = useState(false);
+  const [resendIn, setResendIn] = useState(0);
   const submittingRef = useRef(false);
+
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const t = setTimeout(() => setResendIn((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendIn]);
 
   const update = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   const requestCode = async (email, purpose = 'register') => {
+    if (resendIn > 0) return null;
     try {
       const res = await authApi.requestOtp(email, purpose);
       setDevCode(res.data.dev_code || '');
+      setResendIn(30);
       return res.data;
     } catch {
       // non-fatal; user will still get the email if SMTP is configured
@@ -78,8 +87,7 @@ export default function Register() {
             : undefined,
       };
       await authApi.register(payload);
-      const rc = await requestCode(form.email, 'register');
-      console.log('[OTP DEBUG] request-code ->', rc);
+      await requestCode(form.email, 'register');
       setStep('otp');
     } catch (err) {
       if (err.response?.status === 409) {
@@ -106,7 +114,6 @@ export default function Register() {
     e.preventDefault();
     setOtpError('');
     setOtpLoading(true);
-    console.log('[OTP DEBUG] verify submit ->', { email: form.email, code: otp });
     try {
       await authApi.verifyOtp(form.email, otp, 'register');
       await login(form.email, form.password);
@@ -123,7 +130,6 @@ export default function Register() {
       }
       navigate(homeForRole(role));
     } catch (err) {
-      console.warn('[OTP DEBUG] verify failed ->', err.response?.data);
       setOtpError(err.response?.data?.detail || t('Invalid or expired code.'));
     } finally {
       setOtpLoading(false);
@@ -252,11 +258,10 @@ export default function Register() {
                 {role === 'student' && (
                   <div className="space-y-4">
                     <InstitutionSelect
-                      label={t("Institution")}
-                      required
-                      value={{ id: form.university_id, label: form.university_label }}
-                      onChange={(val) => setForm({ ...form, university_id: val?.id || '', university_label: val?.label || '' })}
-                      placeholder={t("Select Institution")}
+                      value={form.university_id}
+                      label={form.university_label}
+                      onChange={(id, name) => setForm({ ...form, university_id: id || '', university_label: name || '' })}
+                      error={undefined}
                     />
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <Input label={t("Department")} name="department" value={form.department} onChange={update('department')} placeholder={t("e.g. Computer Science")} required />
@@ -312,12 +317,13 @@ export default function Register() {
                 <span className="text-ink-soft">{t("Didn't receive a code?")} </span>
                 <button
                   type="button"
-                  className="font-semibold text-primary hover:underline"
+                  className="font-semibold text-primary hover:underline disabled:opacity-50"
+                  disabled={resendIn > 0}
                   onClick={async () => {
                     await requestCode(form.email, 'register');
                   }}
                 >
-                  {t('Resend')}
+                  {resendIn > 0 ? `Resend in ${resendIn}s` : t('Resend')}
                 </button>
               </div>
 

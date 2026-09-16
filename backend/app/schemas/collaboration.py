@@ -9,11 +9,17 @@ class CollaborationCreate(BaseModel):
     industry_id: str
     notes: Optional[str] = None
     stage: str = "interested"  # interested|funding|prototype|pilot|implementation|impact_logged
+    engagement_type: str = "express_interest"  # express_interest|fund|co_develop
+    funding_status: Optional[str] = None  # none|committed|disbursed
 
 
 class CollaborationUpdate(BaseModel):
     stage: Optional[str] = None
     notes: Optional[str] = None
+    engagement_type: Optional[str] = None  # express_interest|fund|co_develop
+    funding_status: Optional[str] = None  # none|committed|disbursed
+    testing_outcomes: Optional[str] = None
+    startup_created: Optional[bool] = None
 
 
 class CollaborationOut(BaseModel):
@@ -23,6 +29,10 @@ class CollaborationOut(BaseModel):
     proposal_id: str
     industry_id: str
     stage: str
+    engagement_type: str
+    funding_status: Optional[str] = None
+    testing_outcomes: Optional[str] = None
+    startup_created: bool = False
     notes: Optional[str] = None
     started_at: datetime
     updated_at: datetime
@@ -75,6 +85,7 @@ class IPRecordIn(BaseModel):
     type: Optional[str] = None
     status: Optional[str] = None
     reference_no: Optional[str] = None
+    file_url: Optional[str] = None
 
 
 class IPRecordOut(BaseModel):
@@ -85,6 +96,7 @@ class IPRecordOut(BaseModel):
     type: Optional[str] = None
     status: Optional[str] = None
     reference_no: Optional[str] = None
+    file_url: Optional[str] = None
     created_at: datetime
 
 

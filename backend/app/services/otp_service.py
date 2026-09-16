@@ -127,8 +127,32 @@ def _send_email(email: str, code: str, purpose: str) -> bool:
     return False
 
 
-def request_otp(db: Session, identifier: str, purpose: str, channel: str = "email") -> Optional[str]:
-    """Create a fresh OTP, invalidating any previous one for (identifier, purpose)."""
+OTP_RESEND_COOLDOWN_SECONDS = 30
+
+
+def _latest_otp(db: Session, identifier: str, purpose: str):
+    return (
+        db.query(OTP)
+        .filter(OTP.identifier == identifier, OTP.purpose == purpose)
+        .order_by(OTP.created_at.desc())
+        .first()
+    )
+
+
+def check_cooldown(db: Session, identifier: str, purpose: str) -> int:
+    """Seconds remaining before a new OTP may be requested (0 = allowed)."""
+    latest = _latest_otp(db, identifier, purpose)
+    if not latest or not latest.created_at:
+        return 0
+    created = latest.created_at
+    if created.tzinfo is None:
+        created = created.replace(tzinfo=timezone.utc)
+    elapsed = (datetime.now(timezone.utc) - created).total_seconds()
+    return max(0, int(OTP_RESEND_COOLDOWN_SECONDS - elapsed))
+
+
+def create_otp_row(db: Session, identifier: str, purpose: str) -> str:
+    """Insert a fresh OTP row (fast, no network). Returns plaintext code."""
     db.query(OTP).filter(OTP.identifier == identifier, OTP.purpose == purpose).delete()
     code = generate_code()
     otp = OTP(
@@ -141,6 +165,37 @@ def request_otp(db: Session, identifier: str, purpose: str, channel: str = "emai
     db.add(otp)
     db.commit()
     db.refresh(otp)
+    return code
+
+
+def send_otp_email(identifier: str, code: str, purpose: str) -> bool:
+    """Blocking SMTP/HTTP send — call from BackgroundTasks, never inline."""
+    try:
+        return _send_email(identifier, code, purpose)
+    except Exception as e:  # noqa: BLE001 - background send must never crash worker
+        logger.error("[OTP SEND FAILED] %s (%s): %s: %s", identifier, purpose, type(e).__name__, e)
+        return False
+
+
+def prune_expired(db: Session, batch: int = 500) -> int:
+    """Delete expired OTP rows so the table stays small and indexed lookups fast."""
+    try:
+        now = datetime.now(timezone.utc)
+        n = (
+            db.query(OTP)
+            .filter(OTP.expires_at < now)
+            .limit(batch)
+            .delete(synchronize_session=False)
+        )
+        if n:
+            db.commit()
+        return n or 0
+    except Exception:
+        db.rollback()
+        return 0
+def request_otp(db: Session, identifier: str, purpose: str, channel: str = "email") -> Optional[str]:
+    """Create a fresh OTP, invalidating any previous one for (identifier, purpose)."""
+    code = create_otp_row(db, identifier, purpose)
     sent = False
     if channel == "email":
         sent = _send_email(identifier, code, purpose)

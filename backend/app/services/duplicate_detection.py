@@ -60,7 +60,7 @@ def _cloudflare_embed(text: str) -> Optional[list[float]]:
         result = _post(
             "@cf/baai/bge-small-en-v1.5",
             {"input": text},
-            timeout=30,
+            timeout=12,
         )
         if result and "data" in result and len(result["data"]) > 0:
             return result["data"][0].get("embedding")
@@ -102,21 +102,22 @@ def _pgvector_candidates(db: Session, embedding: list[float], threshold: float, 
     if not _PGVECTOR_AVAILABLE:
         return []
     try:
-        # Check if the embedding column exists and has data
-        embed_str = json.dumps(embedding)
-        # pgvector cosine distance: embedding <=> query < threshold means similarity > (1 - threshold)
-        # We use 1 - threshold as the distance cutoff
+        # Parameterized query: avoids building a ~3KB SQL string per request,
+        # lets Postgres reuse the plan + IVFFlat index, and closes SQL-injection.
         distance_cutoff = 1.0 - threshold
         rows = (
             db.query(
                 Problem.id,
                 Problem.title,
                 Problem.address,
-                text(f"embedding <=> '{embed_str}'::vector AS distance"),
+                text("embedding <=> :emb ::vector AS distance").bindparams(emb=json.dumps(embedding)),
             )
             .filter(Problem.id != exclude_id)
+            .filter(Problem.embedding.isnot(None))
             .filter(Problem.status.in_([ProblemStatusEnum.OPEN, ProblemStatusEnum.VALIDATED]))
-            .order_by(text(f"embedding <=> '{embed_str}'::vector"))
+            .filter(text("embedding <=> :emb2 ::vector < :cutoff").bindparams(
+                emb2=json.dumps(embedding), cutoff=distance_cutoff))
+            .order_by(text("embedding <=> :emb3 ::vector").bindparams(emb3=json.dumps(embedding)))
             .limit(20)
             .all()
         )
@@ -159,26 +160,31 @@ def find_duplicates(db: Session, problem: Problem, threshold: float = THRESHOLD)
         return pgvector_results
 
     # --- Path 2: Token-overlap fallback ---
+    # Bounded scan: full-table .all() loads every row + embedding into memory
+    # and turns O(1) submit into O(N). Cap to 500 recent open/validated rows
+    # and select only text columns needed for Jaccard.
     candidates = (
-        db.query(Problem)
+        db.query(Problem.id, Problem.title, Problem.description, Problem.address)
         .filter(Problem.status.in_([ProblemStatusEnum.OPEN, ProblemStatusEnum.VALIDATED]))
         .filter(Problem.id != problem.id)
+        .order_by(Problem.created_at.desc())
+        .limit(500)
         .all()
     )
     results = []
-    for cand in candidates:
-        cand_text = f"{cand.title} {cand.description}"
+    for cand_id, cand_title, cand_desc, cand_addr in candidates:
+        cand_text = f"{cand_title} {cand_desc}"
         sim = _token_overlap(text_content, cand_text)
         same_district = bool(
             problem.address
-            and cand.address
-            and problem.address.strip().lower() == cand.address.strip().lower()
+            and cand_addr
+            and problem.address.strip().lower() == cand_addr.strip().lower()
         )
         effective_threshold = threshold - (0.15 if same_district else 0.0)
         if sim >= effective_threshold:
             results.append({
-                "problem_id": cand.id,
-                "title": cand.title,
+                "problem_id": cand_id,
+                "title": cand_title,
                 "similarity": round(sim, 4),
                 "method": "jaccard_token",
             })

@@ -25,17 +25,23 @@ export default function ProblemsList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filters, setFilters] = useState({ status: '', ai_category: '', ai_priority: '' });
-  // Citizens previously saw only their own reports here; the public explorer
+// Citizens previously saw only their own reports here; the public explorer
   // must show everything, so default to all with an opt-in "Mine only" toggle.
   const [mineOnly, setMineOnly] = useState(false);
+  // Debounce text input: without this every keystroke fires GET /problems.
+  const [debounced, setDebounced] = useState(filters);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(filters), 400);
+    return () => clearTimeout(t);
+  }, [filters]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const params = { limit: 50 };
-      if (filters.status) params.status = filters.status;
-      if (filters.ai_category) params.ai_category = filters.ai_category;
-      if (filters.ai_priority) params.ai_priority = filters.ai_priority;
+      if (debounced.status) params.status = debounced.status;
+      if (debounced.ai_category.trim()) params.ai_category = debounced.ai_category.trim();
+      if (debounced.ai_priority) params.ai_priority = debounced.ai_priority;
       if (user?.role === 'citizen' && mineOnly) params.mine_only = true;
       const res = await problemsApi.list(params);
       setProblems(res.data);
@@ -44,7 +50,7 @@ export default function ProblemsList() {
     } finally {
       setLoading(false);
     }
-  }, [filters, mineOnly, user?.role]);
+  }, [debounced, mineOnly, user?.role]);
 
   // eslint-disable-next-line react/set-state-in-effect -- refetch from server when filters change
   useEffect(() => { fetchData(); }, [fetchData]);

@@ -21,15 +21,15 @@ def route_problem(db: Session, problem, ai_tag_ids: Optional[list[str]] = None) 
     routed = 0
     seen = set()
 
-    def notify(user, rtype: RoutingTypeEnum, reason: str):
+    def notify(user_id: str, rtype: RoutingTypeEnum, reason: str):
         nonlocal routed
-        if user.id in seen:
+        if user_id in seen:
             return
-        seen.add(user.id)
-        db.add(RoutingLog(problem_id=problem.id, routed_to_type=rtype, routed_to_id=user.id, reason=reason))
+        seen.add(user_id)
+        db.add(RoutingLog(problem_id=problem.id, routed_to_type=rtype, routed_to_id=user_id, reason=reason))
         db.add(
             Notification(
-                user_id=user.id,
+                user_id=user_id,
                 type=NotificationTypeEnum.PROBLEM_ROUTED,
                 message=f"New problem routed to you: '{problem.title}'",
                 reference_id=problem.id,
@@ -37,17 +37,22 @@ def route_problem(db: Session, problem, ai_tag_ids: Optional[list[str]] = None) 
         )
         routed += 1
 
-    # 1. All universities see everything
-    universities = db.query(User).filter(User.role == RoleEnum.UNIVERSITY_ADMIN).all()
-    for u in universities:
-        notify(u, RoutingTypeEnum.UNIVERSITY, "HEI receives all problems")
+    # 1. All universities see everything — select ids only, not full User rows.
+    universities = db.query(User.id).filter(User.role == RoleEnum.UNIVERSITY_ADMIN).limit(2000).all()
+    for (uid,) in universities:
+        notify(uid, RoutingTypeEnum.UNIVERSITY, "HEI receives all problems")
 
-    # 2. Tag-matched industries
-    industries = db.query(User).filter(User.role == RoleEnum.INDUSTRY).all()
-    for u in industries:
-        tags = set(u.domain_tags or [])
+    # 2. Tag-matched industries — fetch only id + domain_tags.
+    industries = (
+        db.query(User.id, User.domain_tags)
+        .filter(User.role == RoleEnum.INDUSTRY)
+        .limit(2000)
+        .all()
+    )
+    for uid, dtags in industries:
+        tags = set(dtags or [])
         if not tags or (tags & ai_tags):
-            notify(u, RoutingTypeEnum.INDUSTRY, "Domain tags matched problem AI tags")
+            notify(uid, RoutingTypeEnum.INDUSTRY, "Domain tags matched problem AI tags")
 
     db.flush()
     return routed

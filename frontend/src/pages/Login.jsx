@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { homeForRole } from '../lib/routes';
@@ -20,7 +20,14 @@ export default function Login() {
   const [devCode, setDevCode] = useState('');
   const [otpError, setOtpError] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
+  const [resendIn, setResendIn] = useState(0);
   const requestingRef = useRef(false);
+
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const t = setTimeout(() => setResendIn((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendIn]);
 
   const handleCredentials = async (e) => {
     e.preventDefault();
@@ -31,8 +38,8 @@ export default function Login() {
     setLoading(true);
     try {
       const res = await authApi.loginRequestCode(email, password);
-      console.log('[OTP DEBUG] request-code ->', res.data);
       setDevCode(res.data.dev_code || '');
+      setResendIn(30);
       setStep('otp');
     } catch (err) {
       if (err.response?.status === 404) {
@@ -51,19 +58,11 @@ export default function Login() {
     e.preventDefault();
     setOtpError('');
     setOtpLoading(true);
-    console.log('[OTP DEBUG] verify submit ->', { email, code: otp });
     try {
       await loginWithOtp(email, otp);
       const stored = JSON.parse(localStorage.getItem('user') || '{}');
       navigate(homeForRole(stored.role));
     } catch (err) {
-      console.warn('[OTP DEBUG] verify failed ->', {
-        message: err?.message,
-        code: err?.code,
-        status: err?.response?.status,
-        data: err?.response?.data,
-        url: err?.config?.url,
-      });
       setOtp('');
       const detail = err?.response?.data?.detail;
       setOtpError(
@@ -178,17 +177,20 @@ export default function Login() {
                 {t("Didn't receive a code?")}{' '}
                 <button
                   type="button"
+                  disabled={resendIn > 0}
                   onClick={async () => {
+                    if (resendIn > 0) return;
                     try {
                       const res = await authApi.loginRequestCode(email, password);
                       setDevCode(res.data.dev_code || '');
+                      setResendIn(30);
                     } catch {
                       /* ignore */
                     }
                   }}
-                  className="font-bold text-primary hover:text-primary-dark"
+                  className="font-bold text-primary hover:text-primary-dark disabled:opacity-50"
                 >
-                  {t('Resend')}
+                  {resendIn > 0 ? `Resend in ${resendIn}s` : t('Resend')}
                 </button>
               </div>
 

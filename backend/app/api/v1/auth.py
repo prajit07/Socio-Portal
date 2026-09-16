@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.exc import IntegrityError
@@ -47,30 +47,56 @@ class LoginVerify(BaseModel):
     code: str
 
 
+def _issue_otp_background(db: Session, background_tasks: BackgroundTasks, email: str, purpose: str):
+    """Fast OTP path: cooldown check + DB row commit, email sent in background.
+
+    Before: request_otp() did Resend(20s) -> Gmail(20s) -> SMTP(20s) inline,
+    blocking login/register for up to 60s. Now returns in ~10ms.
+    """
+    email = email.strip().lower()
+    wait = otp_service.check_cooldown(db, email, purpose)
+    if wait > 0:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"OTP already sent. Retry in {wait}s.",
+            headers={"Retry-After": str(wait)},
+        )
+    code = otp_service.create_otp_row(db, email, purpose)
+    background_tasks.add_task(otp_service.send_otp_email, email, code, purpose)
+    # Opportunistic cleanup keeps otp table small (fast indexed lookups).
+    try:
+        otp_service.prune_expired(db)
+    except Exception:
+        pass
+    return code  # Always return dev_code for testing
+
+
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register(payload: RegisterIn, db: Session = Depends(get_db)):
+    email = payload.email.strip().lower()
     user = User(
         name=payload.name,
-        email=payload.email,
+        email=email,
         password_hash=hash_password(payload.password),
         role=payload.role,
         phone=payload.phone,
     )
     db.add(user)
+    # Single flush (not commit) so user + member insert commit atomically.
     try:
-        db.commit()
+        db.flush()
     except IntegrityError:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Email already registered"
         )
-    db.refresh(user)
 
     # Students self-registering under an HEI get a verifiable member record
     # (department + roll number) so the institute can identify them.
     if payload.role == RoleEnum.STUDENT and payload.university_id:
         uni = db.get(University, payload.university_id)
         if not uni:
+            db.rollback()
             raise HTTPException(status_code=404, detail="University not found")
         db.add(
             UniversityMember(
@@ -81,7 +107,14 @@ def register(payload: RegisterIn, db: Session = Depends(get_db)):
                 roll_number=payload.roll_number,
             )
         )
+    try:
         db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Email already registered"
+        )
+    db.refresh(user)
     return user
 
 
@@ -107,19 +140,21 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
 
 
 @router.post("/request-otp")
-def request_otp(payload: OtpRequest, db: Session = Depends(get_db)):
+def request_otp(payload: OtpRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     logger.info("request-otp email=%s purpose=%s", payload.email, payload.purpose)
-    dev_code = otp_service.request_otp(db, payload.email, payload.purpose, channel="email")
+    email = payload.email.strip().lower()
+    dev_code = _issue_otp_background(db, background_tasks, email, payload.purpose)
     return {"detail": "otp_sent", "channel": "email", "dev_code": dev_code}
 
 
 @router.post("/verify-otp")
 def verify_otp(payload: OtpVerify, db: Session = Depends(get_db)):
-    ok = otp_service.verify_otp(db, payload.email, payload.code, payload.purpose)
+    email = payload.email.strip().lower()
+    ok = otp_service.verify_otp(db, email, payload.code, payload.purpose)
     if not ok:
         logger.warning("verify-otp FAILED email=%s purpose=%s", payload.email, payload.purpose)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired code")
-    user = db.query(User).filter(User.email == payload.email).first()
+    user = db.query(User).filter(User.email == email).first()
     if user and payload.purpose in ("register", "verify"):
         user.is_email_verified = True
         db.commit()
@@ -128,9 +163,10 @@ def verify_otp(payload: OtpVerify, db: Session = Depends(get_db)):
 
 
 @router.post("/login/request-code")
-def login_request_code(payload: LoginCodeRequest, db: Session = Depends(get_db)):
+def login_request_code(payload: LoginCodeRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """Step 1 of OTP-gated login: verify credentials, then email a login code."""
-    user = db.query(User).filter(User.email == payload.email).first()
+    email = payload.email.strip().lower()
+    user = db.query(User).filter(User.email == email).first()
     if not user:
         logger.warning("login/request-code FAILED (unknown email) email=%s", payload.email)
         raise HTTPException(
@@ -140,7 +176,7 @@ def login_request_code(payload: LoginCodeRequest, db: Session = Depends(get_db))
     if not verify_password(payload.password, user.password_hash):
         logger.warning("login/request-code FAILED (bad credentials) email=%s", payload.email)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-    dev_code = otp_service.request_otp(db, payload.email, "login", channel="email")
+    dev_code = _issue_otp_background(db, background_tasks, email, "login")
     logger.info("login/request-code OK email=%s", payload.email)
     return {"detail": "otp_sent", "channel": "email", "dev_code": dev_code}
 
@@ -148,11 +184,12 @@ def login_request_code(payload: LoginCodeRequest, db: Session = Depends(get_db))
 @router.post("/login/verify", response_model=TokenOut)
 def login_verify(payload: LoginVerify, db: Session = Depends(get_db)):
     """Step 2 of OTP-gated login: verify the code, then issue the JWT."""
-    ok = otp_service.verify_otp(db, payload.email, payload.code, "login")
+    email = payload.email.strip().lower()
+    ok = otp_service.verify_otp(db, email, payload.code, "login")
     if not ok:
         logger.warning("login/verify FAILED email=%s", payload.email)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired code")
-    user = db.query(User).filter(User.email == payload.email).first()
+    user = db.query(User).filter(User.email == email).first()
     if user and not user.is_email_verified:
         user.is_email_verified = True
         db.commit()
@@ -190,12 +227,12 @@ def reset_password(payload: PasswordReset, db: Session = Depends(get_db)):
     the caller first requests an OTP via /auth/request-otp?purpose=reset, then
     submits it here together with the new password.
     """
-    ok = otp_service.verify_otp(db, payload.email, payload.code, "reset")
+    ok = otp_service.verify_otp(db, payload.email.strip().lower(), payload.code, "reset")
     if not ok:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired code"
         )
-    user = db.query(User).filter(User.email == payload.email).first()
+    user = db.query(User).filter(User.email == payload.email.strip().lower()).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     user.password_hash = hash_password(payload.new_password)

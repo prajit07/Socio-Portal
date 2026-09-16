@@ -157,6 +157,7 @@ app.add_middleware(
 | `JWT_ALGORITHM` | No | Default: `HS256` |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | No | Default: `60` |
 | `CORS_ORIGINS` | Yes | Comma-separated list of allowed frontend origins |
+| `PUBLIC_BASE_URL` | No | Frontend origin used for links in notification emails (default `http://localhost:5173`) |
 | `CLOUDFLARE_ACCOUNT_ID` | No | For AI categorization/transcription |
 | `CLOUDFLARE_AI_API_KEY` | No | For AI categorization/transcription |
 | `CLOUDFLARE_AI_MODEL` | No | Default: `@cf/moonshotai/kimi-k2.7-code` |

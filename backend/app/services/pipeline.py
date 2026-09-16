@@ -86,16 +86,19 @@ def run_analysis(db: Session, problem: Problem) -> dict:
         if tid not in seen_tag_ids or (t.get("confidence") or 0) > (seen_tag_ids[tid].get("confidence") or 0):
             seen_tag_ids[tid] = t
 
-    # Persist AI tags with confidence
+    # Persist AI tags with confidence — batched lookup (was N queries in a loop).
     inserted_tag_ids = set()
+    tag_ids = [t["id"] for t in seen_tag_ids.values()]
+    tag_names = [t["name"] for t in seen_tag_ids.values()]
+    existing_by_id = {t.id: t for t in db.query(Tag).filter(Tag.id.in_(tag_ids)).all()} if tag_ids else {}
+    existing_by_name = {t.name: t for t in db.query(Tag).filter(Tag.name.in_(tag_names)).all()} if tag_names else {}
     for t in seen_tag_ids.values():
-        tag = db.query(Tag).filter(Tag.id == t["id"]).first()
-        if not tag:
-            tag = db.query(Tag).filter(Tag.name == t["name"]).first()
+        tag = existing_by_id.get(t["id"]) or existing_by_name.get(t["name"])
         if not tag:
             tag = Tag(id=t["id"], name=t["name"])
             db.add(tag)
             db.flush()
+            existing_by_id[tag.id] = tag
             
         if tag.id not in inserted_tag_ids:
             db.add(ProblemTag(problem_id=problem.id, tag_id=tag.id, confidence=t.get("confidence")))
@@ -108,16 +111,16 @@ def run_analysis(db: Session, problem: Problem) -> dict:
         problem.ai_duplicate_check = True
         problem.ai_duplicate_of = best["problem_id"]
         problem.status = ProblemStatusEnum.DUPLICATE
-        sub = db.query(Problem).filter(Problem.id == problem.submitter_id).first()
-        if sub:
-            db.add(
-                Notification(
-                    user_id=problem.submitter_id,
-                    type=NotificationTypeEnum.DUPLICATE_FLAGGED,
-                    message=f"Your problem may be a duplicate of '{best['title']}'.",
-                    reference_id=problem.id,
-                )
+        # Submitter exists (authenticated) — no extra SELECT needed.
+        # Previous code queried Problem by submitter_id (always None + wrong table).
+        db.add(
+            Notification(
+                user_id=problem.submitter_id,
+                type=NotificationTypeEnum.DUPLICATE_FLAGGED,
+                message=f"Your problem may be a duplicate of '{best['title']}'.",
+                reference_id=problem.id,
             )
+        )
     else:
         problem.ai_duplicate_check = False
         problem.status = ProblemStatusEnum.OPEN  # validated + opened

@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -9,6 +11,7 @@ from app.models.problem import Solution, Problem
 from app.models.org import Industry
 from app.models.enums import ProblemStatusEnum, NotificationTypeEnum
 from app.services.notification_service import create_notification
+from app.services.storage_service import save_file
 from app.schemas.collaboration import (
     CollaborationCreate,
     CollaborationUpdate,
@@ -58,6 +61,8 @@ def express_interest(
         proposal_id=payload.proposal_id,
         industry_id=payload.industry_id,
         stage=payload.stage,
+        engagement_type=payload.engagement_type or "express_interest",
+        funding_status=payload.funding_status,
         notes=payload.notes,
     )
     db.add(collab)
@@ -65,7 +70,12 @@ def express_interest(
     problem = db.get(Problem, proposal.problem_id)
     if problem:
         problem.status = ProblemStatusEnum.IN_COLLABORATION
-    _notify(db, proposal.author_id, f"Industry '{ind.name}' expressed interest in your proposal '{proposal.title}'.", proposal.id)
+    action_label = {
+        "express_interest": "expressed interest in",
+        "fund": "committed funding for",
+        "co_develop": "is co-developing",
+    }.get(collab.engagement_type, "expressed interest in")
+    _notify(db, proposal.author_id, f"Industry '{ind.name}' {action_label} your proposal '{proposal.title}'.", proposal.id)
     db.commit()
     db.refresh(collab)
     return collab
@@ -97,6 +107,10 @@ def get_collaboration(collaboration_id: str, db: Session = Depends(get_db), curr
         "proposal_id": c.proposal_id,
         "industry_id": c.industry_id,
         "stage": c.stage,
+        "engagement_type": c.engagement_type,
+        "funding_status": c.funding_status,
+        "testing_outcomes": c.testing_outcomes,
+        "startup_created": c.startup_created,
         "notes": c.notes,
         "started_at": c.started_at,
         "updated_at": c.updated_at,
@@ -104,7 +118,7 @@ def get_collaboration(collaboration_id: str, db: Session = Depends(get_db), curr
             {"id": m.id, "title": m.title, "status": m.status, "due_date": m.due_date, "completed_at": m.completed_at, "description": m.description}
             for m in c.milestones
         ],
-        "ip_records": [{"id": i.id, "type": i.type, "status": i.status, "reference_no": i.reference_no} for i in c.ip_records],
+        "ip_records": [{"id": i.id, "type": i.type, "status": i.status, "reference_no": i.reference_no, "file_url": i.file_url} for i in c.ip_records],
         "impact_reports": [
             {"id": r.id, "beneficiaries_count": r.beneficiaries_count, "impact_summary": r.impact_summary, "district": r.district, "state": r.state}
             for r in c.impact_reports
@@ -132,6 +146,15 @@ def update_collaboration(
             problem.status = STAGE_TO_STATUS[data["stage"]]
     if data.get("notes") is not None:
         c.notes = data["notes"]
+    # Explicit engagement actions: Fund / Co-Develop (PS 26043 industry module).
+    if data.get("engagement_type") is not None:
+        c.engagement_type = data["engagement_type"]
+    if data.get("funding_status") is not None:
+        c.funding_status = data["funding_status"]
+    if data.get("testing_outcomes") is not None:
+        c.testing_outcomes = data["testing_outcomes"]
+    if data.get("startup_created") is not None:
+        c.startup_created = bool(data["startup_created"])
     db.commit()
     db.refresh(c)
     return c
@@ -179,6 +202,35 @@ def add_ip(collaboration_id: str, payload: IPRecordIn, db: Session = Depends(get
     if not c:
         raise HTTPException(status_code=404, detail="Collaboration not found")
     ip = IPRecord(collaboration_id=collaboration_id, **payload.model_dump())
+    db.add(ip)
+    db.commit()
+    db.refresh(ip)
+    return ip
+
+
+@router.post("/{collaboration_id}/ip/upload", response_model=IPRecordOut, status_code=status.HTTP_201_CREATED)
+def upload_ip_document(
+    collaboration_id: str,
+    file: UploadFile = File(...),
+    type: str = Form("patent"),
+    status: str = Form("filed"),
+    reference_no: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Attach an actual IP document (patent/copyright application) to the record."""
+    c = db.get(Collaboration, collaboration_id)
+    if not c:
+        raise HTTPException(status_code=404, detail="Collaboration not found")
+    content = file.file.read()
+    file_url = save_file(content, file.filename or "ip-document.pdf")
+    ip = IPRecord(
+        collaboration_id=collaboration_id,
+        type=type,
+        status=status,
+        reference_no=reference_no,
+        file_url=file_url,
+    )
     db.add(ip)
     db.commit()
     db.refresh(ip)

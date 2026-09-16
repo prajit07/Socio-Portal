@@ -11,7 +11,7 @@ from app.core.dependencies import get_current_user
 from app.models.user import User
 from app.models.problem import Problem, Solution
 from app.models.org import University, Industry, UniversityMember
-from app.models.collaboration import Collaboration, SocialImpactReport
+from app.models.collaboration import Collaboration, SocialImpactReport, IPRecord
 from app.models.evidence import Evidence
 from app.models.routing import RoutingLog
 
@@ -184,6 +184,33 @@ def _compute_analytics(db: Session) -> dict:
     total_beneficiaries = db.query(func.coalesce(func.sum(SocialImpactReport.beneficiaries_count), 0)).scalar()
     impact_count = db.query(func.count(SocialImpactReport.id)).scalar() or 0
 
+    # ---- Innovation outcomes (PS 26043: "patents, startups created") ----
+    patents = (
+        db.query(func.count(IPRecord.id))
+        .filter(IPRecord.type == "patent")
+        .scalar()
+        or 0
+    )
+    ip_total = db.query(func.count(IPRecord.id)).scalar() or 0
+    # "Startups created" — collaborations explicitly flagged as having spun out a
+    # startup (column added in the collaboration-outcomes migration). Fall back to
+    # the count of registered startup-type industries if the column isn't applied yet.
+    startups_created = None
+    try:
+        startups_created = (
+            db.query(func.count(Collaboration.id))
+            .filter(Collaboration.startup_created.is_(True))
+            .scalar()
+            or 0
+        )
+    except Exception:
+        startups_created = (
+            db.query(func.count(Industry.id))
+            .filter(Industry.type == "startup")
+            .scalar()
+            or 0
+        )
+
     # ---- Active collaboration stages ----
     collab_stages = (
         db.query(Collaboration.stage, func.count(Collaboration.id))
@@ -206,6 +233,9 @@ def _compute_analytics(db: Session) -> dict:
             "completion_rate": completion_rate,
             "total_beneficiaries": total_beneficiaries,
             "impact_reports": impact_count,
+            "patents": patents,
+            "ip_records": ip_total,
+            "startups_created": startups_created,
         },
         "by_status": [{"status": s.value, "count": c} for s, c in by_status],
         "by_category": [{"category": cat, "count": c} for cat, c in by_category],

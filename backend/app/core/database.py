@@ -1,6 +1,7 @@
 import logging
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 
@@ -17,12 +18,12 @@ def _build_engine():
     if url.startswith("postgresql") and "sslmode=" not in url:
         url = url + ("&" if "?" in url else "?") + "sslmode=require"
 
+    # Use NullPool: no persistent connections are kept open.  Each request
+    # opens a fresh connection and returns it to the server on close.  This
+    # avoids "too many connections" on free-tier hosts like Clever Cloud.
     return create_engine(
         url,
-        pool_pre_ping=True,
-        pool_size=5,
-        max_overflow=10,
-        connect_args=connect_args or {},
+        poolclass=NullPool,
         future=True,
     )
 

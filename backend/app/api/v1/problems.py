@@ -1,6 +1,6 @@
 from typing import Optional, List
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -28,6 +28,7 @@ router = APIRouter(prefix="/problems", tags=["problems"])
 @router.post("", response_model=ProblemOut, status_code=status.HTTP_201_CREATED)
 def create_problem(
     problem_in: ProblemCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -37,8 +38,6 @@ def create_problem(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only citizens can submit problems"
         )
-    
-    from app.services.pipeline import run_analysis
 
     problem = Problem(
         **problem_in.model_dump(),
@@ -46,10 +45,28 @@ def create_problem(
         status=ProblemStatusEnum.PENDING_VALIDATION,
     )
     db.add(problem)
-    db.flush()
-    # Run AI pipeline: categorize -> prioritize -> dedupe -> route
-    run_analysis(db, problem)
+    db.commit()
     db.refresh(problem)
+    problem_id = problem.id
+
+    def _run_in_background(pid: str):
+        # Fresh session: request-scoped db is closed by the time this runs.
+        from app.core.database import SessionLocal
+        from app.models.problem import Problem as ProblemModel
+        bg = SessionLocal()
+        try:
+            obj = bg.query(ProblemModel).filter(ProblemModel.id == pid).first()
+            if obj is None:
+                return
+            from app.services.pipeline import run_analysis
+            run_analysis(bg, obj)
+        except Exception:
+            bg.rollback()
+        finally:
+            bg.close()
+
+    # AI pipeline (LLM + embedding + routing) takes seconds — don't block POST.
+    background_tasks.add_task(_run_in_background, problem_id)
     return problem
 
 
@@ -74,7 +91,15 @@ def list_problems(
     - Industry: tag-matched subset (existing behaviour).
     - HEI / Gov / Admin: all.
     """
+    from sqlalchemy.orm import defer
+
     query = db.query(Problem).filter(Problem.deleted_at.is_(None))
+    # Don't pull the 384-dim pgvector per row for list views.
+    if hasattr(Problem, "embedding") and Problem.embedding is not None:
+        try:
+            query = query.options(defer(Problem.embedding))
+        except Exception:
+            pass
 
     if current_user is None:
         # Public / guest access — no role filtering, just the explicit filters.
@@ -106,13 +131,24 @@ def list_problems(
     if assigned_to_id:
         query = query.filter(Problem.assigned_to_id == assigned_to_id)
     
+    is_industry_filtered = (
+        current_user is not None
+        and current_user.role == RoleEnum.INDUSTRY
+        and bool(set(current_user.domain_tags or []))
+    )
+    if is_industry_filtered and skip == 0:
+        # Over-fetch a bounded pool, filter in Python (ai_tags is JSON),
+        # then slice to the requested page size.
+        pool = query.order_by(Problem.created_at.desc()).offset(0).limit(min(limit * 5, 500)).all()
+        user_tags = set(current_user.domain_tags or [])
+        return [p for p in pool if set(p.ai_tags or []) & user_tags][:limit]
+
     problems = query.order_by(Problem.created_at.desc()).offset(skip).limit(limit).all()
 
-    # Industry: surface only problems whose AI tags match the industry's domain tags
-    if current_user is not None and current_user.role == RoleEnum.INDUSTRY:
+    # Industry with offset: filter the fetched page (best-effort).
+    if is_industry_filtered:
         user_tags = set(current_user.domain_tags or [])
-        if user_tags:
-            problems = [p for p in problems if set(p.ai_tags or []) & user_tags]
+        problems = [p for p in problems if set(p.ai_tags or []) & user_tags]
     return problems
 
 

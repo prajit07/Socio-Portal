@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { APIProvider, Map, Marker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
 import Navbar from '../components/Navbar';
@@ -41,7 +41,8 @@ export default function PublicMap() {
     setLoading(true);
     try {
       // Try fetching as authenticated; fall back to empty on 401
-      const res = await api.get('/problems', { params: { limit: 500 } }).catch(() => null);
+      // Bounded to 200 rows — 500 full descriptions + markers is slow on mobile.
+      const res = await api.get('/problems', { params: { limit: 200 } }).catch(() => null);
       const data = Array.isArray(res?.data)
         ? res.data
         : res?.data?.items ?? res?.data?.results ?? [];
@@ -56,16 +57,18 @@ export default function PublicMap() {
   // eslint-disable-next-line react/set-state-in-effect -- initial server data fetch on mount
   useEffect(() => { load(); }, [load]);
 
-  // Only keep problems where lat/lng are actual numbers (API may return strings)
-  const located = problems
-    .map((p) => ({
-      ...p,
-      latitude: typeof p.latitude === 'string' ? parseFloat(p.latitude) : p.latitude,
-      longitude: typeof p.longitude === 'string' ? parseFloat(p.longitude) : p.longitude,
-    }))
-    .filter(
-      (p) => Number.isFinite(p.latitude) && Number.isFinite(p.longitude)
-    );
+// Only keep problems where lat/lng are actual numbers (API may return strings)
+  const located = useMemo(
+    () =>
+      problems
+        .map((p) => ({
+          ...p,
+          latitude: typeof p.latitude === 'string' ? parseFloat(p.latitude) : p.latitude,
+          longitude: typeof p.longitude === 'string' ? parseFloat(p.longitude) : p.longitude,
+        }))
+        .filter((p) => Number.isFinite(p.latitude) && Number.isFinite(p.longitude)),
+    [problems]
+  );
   // Haversine formula to calculate distance in km
   const getDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371; // Radius of the earth in km
@@ -103,7 +106,7 @@ export default function PublicMap() {
     );
   };
 
-  const filtered = located.filter((p) => {
+  const filtered = useMemo(() => located.filter((p) => {
     if (filterCategory && p.ai_category !== filterCategory) return false;
     if (filterStatus && p.status !== filterStatus) return false;
     if (searchQuery) {
@@ -117,7 +120,8 @@ export default function PublicMap() {
       if (dist > radiusKm) return false;
     }
     return true;
-  });
+  }), [located, filterCategory, filterStatus, searchQuery, userLocation, radiusKm]);
+  const visible = useMemo(() => filtered.slice(0, 250), [filtered]);
 
   const center = userLocation || (filtered[0]
     ? { lat: filtered[0].latitude, lng: filtered[0].longitude }
@@ -244,7 +248,7 @@ export default function PublicMap() {
                   style={{ width: '100%', height: '100%' }}
                   gestureHandling="greedy"
                 >
-                  {filtered.map((p) => (
+                  {visible.map((p) => (
                     <Marker
                       key={p.id}
                       position={{ lat: p.latitude, lng: p.longitude }}

@@ -7,6 +7,16 @@ import { Button, Card, Input, TextArea, Select, StatusBadge, Alert, PageLoader }
 
 const asData = (r) => (r && r.data !== undefined ? r.data : r);
 const STAGES = ['interested', 'funding', 'prototype', 'pilot', 'implementation', 'impact_logged'];
+const ENGAGEMENT_TYPES = [
+  { value: 'express_interest', label: 'Express Interest' },
+  { value: 'fund', label: 'Fund' },
+  { value: 'co_develop', label: 'Co-Develop' },
+];
+const FUNDING_STATUS = [
+  { value: 'none', label: 'None' },
+  { value: 'committed', label: 'Committed' },
+  { value: 'disbursed', label: 'Disbursed' },
+];
 
 export default function CollaborationWorkspace() {
   const { id } = useParams();
@@ -21,6 +31,10 @@ export default function CollaborationWorkspace() {
   const [district, setDistrict] = useState('');
   const [ipType, setIpType] = useState('');
   const [ipRef, setIpRef] = useState('');
+  const [testingOutcomes, setTestingOutcomes] = useState('');
+  const [startupCreated, setStartupCreated] = useState(false);
+  const [fundingStatus, setFundingStatus] = useState('none');
+  const [ipFile, setIpFile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -31,6 +45,9 @@ export default function CollaborationWorkspace() {
       const c = asData(await collaborationsApi.get(id));
       setCollab(c);
       setStage(c.stage || 'interested');
+      setFundingStatus(c.funding_status || 'none');
+      setTestingOutcomes(c.testing_outcomes || '');
+      setStartupCreated(!!c.startup_created);
     } catch (e) {
       setError(e.response?.data?.detail || 'Failed to load collaboration.');
     } finally {
@@ -51,6 +68,44 @@ export default function CollaborationWorkspace() {
     setBusy(true);
     try { await collaborationsApi.update(id, { stage }); setError(''); }
     catch (e) { setError(e.response?.data?.detail || 'Failed to update stage.'); }
+    finally { setBusy(false); }
+  };
+
+  const setEngagement = async (engagementType) => {
+    if (!guard()) return;
+    setBusy(true);
+    try {
+      // A committed (non-express) engagement typically means the collab leaves
+      // "interested" — promote the stage to funding for fund/co-develop.
+      const patch = { engagement_type: engagementType };
+      if (engagementType !== 'express_interest' && collab.stage === 'interested') patch.stage = 'funding';
+      await collaborationsApi.update(id, patch);
+      setError('');
+      await load();
+    } catch (e) { setError(e.response?.data?.detail || 'Failed to update engagement.'); }
+    finally { setBusy(false); }
+  };
+
+  const saveFunding = async () => {
+    if (!guard()) return;
+    setBusy(true);
+    try {
+      await collaborationsApi.update(id, { funding_status: fundingStatus, testing_outcomes: testingOutcomes, startup_created: startupCreated });
+      setError('');
+    } catch (e) { setError(e.response?.data?.detail || 'Failed to save funding/testing info.'); }
+    finally { setBusy(false); }
+  };
+
+  const uploadIp = async (e) => {
+    e.preventDefault();
+    if (!ipFile || !ipType.trim() || !guard()) return;
+    setBusy(true);
+    try {
+      await collaborationsApi.uploadIpDocument(id, ipFile, ipType, 'filed', ipRef || null);
+      setIpFile(null); setIpType(''); setIpRef('');
+      setError('');
+      await load();
+    } catch (err) { setError(err.response?.data?.detail || 'Failed to upload IP document.'); }
     finally { setBusy(false); }
   };
 
@@ -110,18 +165,80 @@ export default function CollaborationWorkspace() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 mb-6">
               <div>
                 <h1 className="text-2xl font-extrabold text-primary-navy">Collaboration</h1>
-                <p className="text-sm text-ink-muted mt-1">Proposal: {collab.proposal_id}</p>
+                <p className="text-sm text-ink-muted mt-1">
+                  Proposal: {collab.proposal_id} · Engagement: {collab.engagement_type || 'express_interest'}
+                  {collab.funding_status ? ` · Funding: ${collab.funding_status}` : ''}
+                </p>
               </div>
-              <div className="flex items-end gap-3">
-                <Select
-                  label="Stage"
-                  value={stage}
-                  onChange={(e) => setStage(e.target.value)}
-                  options={STAGES.map((s) => ({ value: s, label: s.replace('_', ' ') }))}
-                />
-                <Button size="sm" loading={busy} onClick={updateStage} disabled={user?.role !== 'industry'}>Update</Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={collab.engagement_type === 'fund' ? 'primary' : 'ghost'}
+                  size="sm"
+                  loading={busy}
+                  onClick={() => setEngagement('fund')}
+                  disabled={user?.role !== 'industry'}
+                >Fund</Button>
+                <Button
+                  variant={collab.engagement_type === 'co_develop' ? 'primary' : 'ghost'}
+                  size="sm"
+                  loading={busy}
+                  onClick={() => setEngagement('co_develop')}
+                  disabled={user?.role !== 'industry'}
+                >Co-Develop</Button>
               </div>
             </div>
+
+            <Card className="mb-6">
+              <h2 className="font-bold text-primary-navy mb-3">Engagement & Testing</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Select
+                  label="Engagement Type"
+                  value={collab.engagement_type || 'express_interest'}
+                  onChange={(e) => setEngagement(e.target.value)}
+                  options={ENGAGEMENT_TYPES}
+                  disabled={user?.role !== 'industry'}
+                />
+                <Select
+                  label="Funding Status"
+                  value={fundingStatus}
+                  onChange={(e) => setFundingStatus(e.target.value)}
+                  options={FUNDING_STATUS}
+                  disabled={user?.role !== 'industry'}
+                />
+                <label className="flex items-end gap-2 pb-2">
+                  <input
+                    type="checkbox"
+                    checked={startupCreated}
+                    onChange={(e) => setStartupCreated(e.target.checked)}
+                    className="h-4 w-4 accent-[var(--color-primary)]"
+                    disabled={user?.role !== 'industry'}
+                  />
+                  <span className="text-sm font-medium text-ink">Startup created</span>
+                </label>
+              </div>
+              <div className="mt-4">
+                <TextArea
+                  label="Testing Outcomes"
+                  rows={3}
+                  value={testingOutcomes}
+                  onChange={(e) => setTestingOutcomes(e.target.value)}
+                  placeholder="Pilot / field-trial results, adoption feedback, co-development milestones..."
+                  disabled={user?.role !== 'industry'}
+                />
+              </div>
+              <div className="mt-4">
+                <Button size="sm" loading={busy} onClick={saveFunding} disabled={user?.role !== 'industry'}>Save Fund & Test Info</Button>
+                <div className="flex items-end gap-3 mt-4">
+                  <Select
+                    label="Stage"
+                    value={stage}
+                    onChange={(e) => setStage(e.target.value)}
+                    options={STAGES.map((s) => ({ value: s, label: s.replace('_', ' ') }))}
+                  />
+                  <Button size="sm" loading={busy} onClick={updateStage} disabled={user?.role !== 'industry'}>Update</Button>
+                </div>
+              </div>
+            </Card>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
@@ -170,15 +287,34 @@ export default function CollaborationWorkspace() {
                 <Card>
                   <h2 className="font-bold text-primary-navy mb-3">IP Records</h2>
                   <form onSubmit={addIp} className="space-y-3">
-                    <Input label="Type" value={ipType} onChange={(e) => setIpType(e.target.value)} placeholder="patent / copyright" />
-                    <Input label="Reference No." value={ipRef} onChange={(e) => setIpRef(e.target.value)} placeholder="optional" />
-                    <Button type="submit" size="sm" loading={busy} disabled={user?.role !== 'industry'}>Add IP Record</Button>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input label="Type" value={ipType} onChange={(e) => setIpType(e.target.value)} placeholder="patent / copyright" />
+                      <Input label="Reference No." value={ipRef} onChange={(e) => setIpRef(e.target.value)} placeholder="optional" />
+                    </div>
+                    <Button type="submit" size="sm" variant="ghost" loading={busy} disabled={user?.role !== 'industry'}>Add IP Record (text)</Button>
+                  </form>
+                  <form onSubmit={uploadIp} className="space-y-3 mt-4 border-t border-line pt-4">
+                    <p className="text-xs text-ink-muted">Attach an actual IP document (patent/copyright filing).</p>
+                    <Input
+                      label="Document"
+                      type="file"
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+                      onChange={(e) => setIpFile(e.target.files?.[0] || null)}
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input label="IP Type" value={ipType} onChange={(e) => setIpType(e.target.value)} placeholder="patent / copyright" />
+                      <Input label="Reference No." value={ipRef} onChange={(e) => setIpRef(e.target.value)} placeholder="optional" />
+                    </div>
+                    <Button type="submit" size="sm" loading={busy} disabled={user?.role !== 'industry' || !ipFile}>Upload IP Document</Button>
                   </form>
                   <div className="mt-4 space-y-2">
                     {(collab.ip_records || []).map((r) => (
                       <div key={r.id} className="text-sm border-b border-line pb-2">
                         <p className="font-semibold text-primary-navy">{r.type} · {r.status}</p>
                         <p className="text-ink-muted">{r.reference_no || '—'}</p>
+                        {r.file_url && (
+                          <a href={r.file_url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">View document</a>
+                        )}
                       </div>
                     ))}
                   </div>

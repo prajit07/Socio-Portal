@@ -15,13 +15,10 @@ export function AuthProvider({ children }) {
 
   const fetchMe = useCallback(async () => {
     try {
-      console.log('Fetching /auth/me...');
       const res = await api.get('/auth/me');
-      console.log('Me response:', res.data);
       setUser(res.data);
       localStorage.setItem('user', JSON.stringify(res.data));
-    } catch (err) {
-      console.error('Fetch me failed:', err.response?.data || err.message);
+    } catch {
       logout();
     } finally {
       setLoading(false);
@@ -41,19 +38,12 @@ export function AuthProvider({ children }) {
   }, [fetchMe]);
 
   const login = async (email, password) => {
-    console.log('Attempting login for:', email);
-    try {
-      const res = await api.post('/auth/login', new URLSearchParams({ username: email, password }), {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      });
-      console.log('Login response:', res.data);
-      const { access_token } = res.data;
-      localStorage.setItem('token', access_token);
-      await fetchMe();
-    } catch (err) {
-      console.error('Login error:', err.response?.data || err.message);
-      throw err;
-    }
+    const res = await api.post('/auth/login', new URLSearchParams({ username: email, password }), {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    });
+    const { access_token } = res.data;
+    localStorage.setItem('token', access_token);
+    await fetchMe();
   };
 
   const register = async (data) => {

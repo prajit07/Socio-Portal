@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { APIProvider, Map, Marker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
 import Navbar from '../components/Navbar';
@@ -32,7 +32,8 @@ export default function MapView() {
     setLoading(true);
     setError('');
     try {
-      const res = await problemsApi.list({ limit: 500 });
+      // Bounded fetch + capped markers: 500 full rows + 500 <Marker/>s janks low-end devices.
+      const res = await problemsApi.list({ limit: 200 });
       // Safely handle both array and paginated-object responses
       const data = Array.isArray(res.data)
         ? res.data
@@ -48,9 +49,11 @@ export default function MapView() {
   // eslint-disable-next-line react/set-state-in-effect -- initial server data fetch on mount
   useEffect(() => { load(); }, [load]);
 
-  const located = problems.filter(
+  const located = useMemo(() => problems.filter(
     (p) => typeof p.latitude === 'number' && typeof p.longitude === 'number'
-  );
+  ), [problems]);
+  // Cap rendered markers — Maps stays smooth, counts still reflect full data.
+  const visible = useMemo(() => located.slice(0, 250), [located]);
   const center = located.length > 0
     ? { lat: located[0].latitude, lng: located[0].longitude }
     : { lat: 20.5937, lng: 78.9629 };
@@ -105,7 +108,7 @@ export default function MapView() {
                   style={{ width: '100%', height: '100%' }}
                   gestureHandling="greedy"
                 >
-                  {located.map((p) => (
+                  {visible.map((p) => (
                     <Marker
                       key={p.id}
                       position={{ lat: p.latitude, lng: p.longitude }}
@@ -114,6 +117,11 @@ export default function MapView() {
                       <Pin backgroundColor={STATUS_COLORS[p.status] || '#1E5EFF'} glyphColor="#fff" borderColor="#0B2545" />
                     </Marker>
                   ))}
+                  {located.length > visible.length && (
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-primary-deep/80 text-white text-xs px-3 py-1 rounded-full">
+                      Showing {visible.length} of {located.length} — zoom/filter for more
+                    </div>
+                  )}
                   {active && (
                     <InfoWindow
                       position={{ lat: active.latitude, lng: active.longitude }}

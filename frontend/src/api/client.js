@@ -153,6 +153,16 @@ export const collaborationsApi = {
   updateMilestone: (id, mid, data) => api.patch(`/collaborations/${id}/milestones/${mid}`, data),
   addDeliverable: (id, data) => api.post(`/collaborations/${id}/deliverables`, data),
   addIp: (id, data) => api.post(`/collaborations/${id}/ip`, data),
+  uploadIpDocument: (id, file, type, status, referenceNo) => {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('type', type);
+    form.append('status', status);
+    if (referenceNo) form.append('reference_no', referenceNo);
+    return api.post(`/collaborations/${id}/ip/upload`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
   addImpact: (id, data) => api.post(`/collaborations/${id}/impact`, data),
 };
 

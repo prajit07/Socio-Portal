@@ -104,10 +104,11 @@ def create_notification(
 
     if send_email and email_address:
         subject = "Socio Connect — New Notification"
+        base_url = (settings.PUBLIC_BASE_URL or "http://localhost:5173").rstrip("/")
         body = (
             f"{message}\n\n"
             "Log in to Socio Connect to view details:\n"
-            "http://localhost:5174/notifications\n\n"
+            f"{base_url}/notifications\n\n"
             "— The Socio Connect Team"
         )
         _send_email_async(email_address, subject, body)

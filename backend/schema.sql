@@ -249,13 +249,17 @@ CREATE TABLE IF NOT EXISTS industries (
 );
 
 CREATE TABLE IF NOT EXISTS collaborations (
-  id          VARCHAR(20) PRIMARY KEY,
-  proposal_id VARCHAR(20) NOT NULL REFERENCES solutions (id),
-  industry_id VARCHAR(20) NOT NULL REFERENCES industries (id),
-  stage       VARCHAR(20) NOT NULL,
-  notes       TEXT,
-  started_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+  id                VARCHAR(20)  PRIMARY KEY,
+  proposal_id       VARCHAR(20)  NOT NULL REFERENCES solutions (id),
+  industry_id       VARCHAR(20)  NOT NULL REFERENCES industries (id),
+  stage             VARCHAR(20)  NOT NULL,
+  engagement_type   VARCHAR(20)  NOT NULL DEFAULT 'express_interest',
+  funding_status    VARCHAR(20),
+  testing_outcomes  TEXT,
+  startup_created   BOOLEAN      NOT NULL DEFAULT FALSE,
+  notes             TEXT,
+  started_at        TIMESTAMPTZ  NOT NULL DEFAULT now(),
+  updated_at        TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS milestones (
@@ -283,6 +287,7 @@ CREATE TABLE IF NOT EXISTS ip_records (
   type             VARCHAR(20),
   status           VARCHAR(20),
   reference_no     VARCHAR(100),
+  file_url         VARCHAR(500),
   created_at       TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
 

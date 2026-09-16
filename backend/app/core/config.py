@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     # Email OTP (Google SMTP). Paste your sender address + app password below to
     # enable real email sending. When EMAIL_USER/EMAIL_PASS are empty, OTP codes are
     # printed to the server console (dev mode) so the flow is testable without creds.
+    # Public base URL of the frontend, used in emails & notification deep-links.
+    # Set to your deployed origin (e.g. https://socio-portal.vercel.app) in
+    # production so links aren't localhost.
+    PUBLIC_BASE_URL: str = "http://localhost:5173"
     EMAIL_HOST: str = "smtp.gmail.com"
     EMAIL_PORT: int = 587
     EMAIL_USER: str = ""  # sender Gmail address, e.g. you@gmail.com

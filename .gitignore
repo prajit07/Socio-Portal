@@ -2,7 +2,11 @@
 node_modules/
 __pycache__/
 *.pyc
+*.log
+*.db
+*.har
 .env
+stripchat-recon/
 .initial.txt
 .plan.txt
 .design.txt
