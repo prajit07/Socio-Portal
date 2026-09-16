@@ -14,6 +14,10 @@ os.environ.setdefault("JWT_SECRET", "test-smoke-secret-1234567890")
 os.environ.setdefault("LORA_PROVIDER", "off")
 os.environ.setdefault("CLOUDFLARE_ACCOUNT_ID", "")
 os.environ.setdefault("CLOUDFLARE_API_TOKEN", "")
+# CI/other backends may configure real S3 (Backblaze B2 etc.) but don't
+# install boto3; force local disk storage so the IP-upload step works off a
+# plain pip install.
+os.environ["STORAGE_BACKEND"] = "local"
 
 import pytest
 from fastapi.testclient import TestClient
