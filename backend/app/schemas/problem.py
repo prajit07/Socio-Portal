@@ -13,6 +13,19 @@ from app.models.enums import (
 
 # ==================== Problem Schemas ====================
 
+class SubmitterOut(BaseModel):
+    """Minimal public identity of a problem's submitter.
+
+    Intentionally role-gated: problem endpoints only populate this for
+    GOVERNMENT / ADMIN viewers; other roles receive null, keeping reporters
+    anonymous to the general public.
+    """
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    name: str
+    role: RoleEnum
+
 class ProblemBase(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     description: str = Field(min_length=1)
@@ -62,6 +75,8 @@ class ProblemOut(ProblemBase):
     updated_at: datetime
     deleted_at: Optional[datetime] = None
     deletion_reason: Optional[str] = None
+    # Populated only for GOVERNMENT/ADMIN (the submitter sees their own id).
+    submitter: Optional[SubmitterOut] = None
 
 
 class ProblemListOut(BaseModel):

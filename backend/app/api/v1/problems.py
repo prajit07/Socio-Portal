@@ -166,7 +166,22 @@ def get_problem(
     if problem.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Problem not found")
 
-    return problem
+    from app.schemas.problem import SubmitterOut
+
+    # Build the response explicitly so the lazy-loaded submitter relationship
+    # is only serialized for GOVERNMENT/ADMIN viewers; everyone else gets null,
+    # keeping reporters anonymous to the general public.
+    out = ProblemOut.model_validate(problem)
+    out.submitter = None
+    if current_user is not None and current_user.role in [
+        RoleEnum.GOVERNMENT,
+        RoleEnum.ADMIN,
+    ]:
+        sub = db.query(User).filter(User.id == problem.submitter_id).first()
+        if sub is not None:
+            out.submitter = SubmitterOut.model_validate(sub)
+
+    return out
 
 
 @router.patch("/{problem_id}", response_model=ProblemOut)

@@ -142,6 +142,36 @@ class TestCitizenLifecycle:
         problems = r.json()
         assert any(p["title"] == "Water logging" for p in problems)
 
+    def test_submitter_gated_to_gov_admin(self, client):
+        """submitter identity is visible only to GOVERNMENT/ADMIN viewers."""
+        _register(client, "citizen4@demo.com")
+        ctoken = _login(client, "citizen4@demo.com")
+        problem = client.post(
+            "/api/v1/problems",
+            json={"title": "Anonymous leak check", "description": "Desc."},
+            headers=_auth_header(ctoken),
+        ).json()
+
+        # Citizen (non-gov) viewing the detail: submitter must be null.
+        r = client.get(f"/api/v1/problems/{problem['id']}", headers=_auth_header(ctoken))
+        assert r.status_code == 200
+        assert r.json().get("submitter") is None
+
+        # Anonymous guest: also null.
+        r = client.get(f"/api/v1/problems/{problem['id']}")
+        assert r.status_code == 200
+        assert r.json().get("submitter") is None
+
+        # Government viewer: submitter identity surfaced.
+        _register(client, "gov1@demo.com", role="government")
+        gtoken = _login(client, "gov1@demo.com")
+        r = client.get(f"/api/v1/problems/{problem['id']}", headers=_auth_header(gtoken))
+        assert r.status_code == 200
+        sub = r.json().get("submitter")
+        assert sub is not None
+        assert sub["name"] == "citizen4"
+        assert sub["role"] == "citizen"
+
 
 # ---------------------------------------------------------------------------
 # Industry lifecycle: collab with Fund/Co-Develop + testing/IP payloads

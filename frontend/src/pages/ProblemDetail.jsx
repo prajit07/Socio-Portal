@@ -57,7 +57,7 @@ export default function ProblemDetail(){
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">{problem.title}</h1>
             <div className="flex flex-wrap gap-4 text-sm text-gray-500 mb-6">
-              <span>Submitted {new Date(problem.created_at).toLocaleDateString()} • {roleLabels[problem.submitter?.role]||'Unknown'}</span>
+              <span>Submitted {new Date(problem.created_at).toLocaleDateString()} • {problem.submitter ? `${problem.submitter.name} (${roleLabels[problem.submitter.role] || problem.submitter.role})` : roleLabels[problem.submitter?.role] || 'Unknown'}</span>
               <span className="font-mono text-xs">{problem.id}</span>
             </div>
             {problem.address && <div className="mb-6 p-4 bg-indigo-50 border border-indigo-100 rounded-lg flex gap-3"><svg className="w-5 h-5 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2.998 2.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg><div><p className="font-medium text-gray-900">Location</p><p className="text-gray-600 text-sm">{problem.address}</p>{problem.latitude&&<p className="text-xs text-gray-400">{problem.latitude.toFixed(4)}, {problem.longitude.toFixed(4)}</p>}</div></div>}
