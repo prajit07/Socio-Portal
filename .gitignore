@@ -6,7 +6,6 @@ __pycache__/
 *.db
 *.har
 .env
-stripchat-recon/
 .initial.txt
 .plan.txt
 .design.txt
