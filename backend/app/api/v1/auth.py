@@ -68,7 +68,10 @@ def _issue_otp_background(db: Session, background_tasks: BackgroundTasks, email:
         otp_service.prune_expired(db)
     except Exception:
         pass
-    return code  # Always return dev_code for testing
+    # Only surface the plaintext code when NO email sender is configured (pure
+    # local dev). In production the code is delivered by email and must never
+    # be exposed in the API response — leaking it would defeat the whole OTP.
+    return code if not settings.email_configured else None
 
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)

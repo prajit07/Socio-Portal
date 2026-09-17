@@ -204,6 +204,10 @@ def _compute_analytics(db: Session) -> dict:
             or 0
         )
     except Exception:
+        # Column not migrated yet — roll back the aborted transaction BEFORE
+        # running the fallback, otherwise Postgres keeps rejecting every query
+        # in the same transaction ("current transaction is aborted").
+        db.rollback()
         startups_created = (
             db.query(func.count(Industry.id))
             .filter(Industry.type == "startup")
