@@ -7,6 +7,8 @@ import { problemsApi, aiApi } from '../api/client';
 import ProblemDeleteButton from '../components/ProblemDeleteButton';
 import { Button, Card, StatusBadge, PriorityBadge, Badge, Alert, PageLoader } from '../components/ui';
 
+const ORDER = ['pending_validation', 'validated', 'open', 'in_review', 'proposal_submitted', 'in_collaboration', 'prototype', 'pilot', 'implemented', 'closed'];
+
 function Timeline({ status }) {
   const { t } = useTranslation();
   const TIMELINE = [
