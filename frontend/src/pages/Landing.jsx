@@ -153,7 +153,7 @@ export default function Landing() {
                   </div>
                   <p className="text-sm text-ink-soft mt-2 line-clamp-3">{p.description}</p>
                   <div className="mt-3 text-xs text-ink-muted">
-                    {[p.address, p.ai_category].filter(Boolean).join(' · ') || new Date(p.created_at).toLocaleDateString()}
+                    {[p.address, t(p.ai_category)].filter(Boolean).join(' · ') || new Date(p.created_at).toLocaleDateString()}
                   </div>
                 </Card>
               </Link>

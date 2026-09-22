@@ -136,7 +136,7 @@ export default function MapView() {
                           <p className="text-xs text-gray-500 mt-1">{active.address}</p>
                         )}
                         {active.ai_category && (
-                          <p className="text-xs text-gray-400">{active.ai_category}</p>
+                          <p className="text-xs text-gray-400">{t(active.ai_category)}</p>
                         )}
                         <Link
                           to={`/problems/${active.id}`}

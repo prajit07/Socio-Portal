@@ -140,7 +140,7 @@ export default function ProblemTrack() {
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge status={displayProblem.status} />
                   {displayProblem.ai_priority && <PriorityBadge priority={displayProblem.ai_priority} />}
-                  {displayProblem.ai_category && <Badge color="primary">{displayProblem.ai_category}</Badge>}
+                  {displayProblem.ai_category && <Badge color="primary">{t(displayProblem.ai_category)}</Badge>}
                 </div>
                 <div className="flex items-center gap-2">
                   <select 

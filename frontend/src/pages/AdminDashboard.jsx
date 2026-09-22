@@ -137,7 +137,7 @@ export default function AdminDashboard() {
                 <div key={p.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-line pb-3">
                   <div>
                     <p className="font-semibold text-primary-navy">{p.title}</p>
-                    <p className="text-xs text-ink-muted">{p.ai_category} · {p.status}{p.ai_duplicate_of ? ` · ${t('dup of {{id}}', { id: p.ai_duplicate_of })}` : ''}</p>
+                    <p className="text-xs text-ink-muted">{t(p.ai_category)} · {p.status}{p.ai_duplicate_of ? ` · ${t('dup of {{id}}', { id: p.ai_duplicate_of })}` : ''}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Select

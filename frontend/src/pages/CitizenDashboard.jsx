@@ -115,7 +115,7 @@ export default function CitizenDashboard() {
                 {p.ai_category && (
                   <div className="mt-2">
                     <span className="inline-block text-[11px] font-semibold uppercase tracking-wide rounded-full bg-tag-blue/10 text-tag-blue px-2 py-0.5">
-                      {p.ai_category}
+                      {t(p.ai_category)}
                     </span>
                   </div>
                 )}

@@ -230,7 +230,7 @@ export default function SubmitProblem() {
             <div className="mt-6 grid grid-cols-2 gap-3 text-left">
               <div className="rounded-card border border-line p-4">
                 <div className="text-xs uppercase tracking-wide text-ink-muted">{t('AI Category')}</div>
-                <div className="font-semibold text-tag-blue mt-1">{result.ai_category || '—'}</div>
+                <div className="font-semibold text-tag-blue mt-1">{t(result.ai_category) || '—'}</div>
               </div>
               <div className="rounded-card border border-line p-4">
                 <div className="text-xs uppercase tracking-wide text-ink-muted">{t('Priority')}</div>

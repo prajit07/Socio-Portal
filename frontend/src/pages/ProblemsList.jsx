@@ -149,7 +149,7 @@ export default function ProblemsList() {
                   </div>
                   {p.ai_category && (
                     <span className="mt-2 inline-block text-[11px] font-semibold uppercase tracking-wide rounded-full bg-tag-blue/10 text-tag-blue px-2 py-0.5">
-                      {p.ai_category}
+                      {t(p.ai_category)}
                     </span>
                   )}
                 </Card>

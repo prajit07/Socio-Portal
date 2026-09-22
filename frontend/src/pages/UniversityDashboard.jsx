@@ -225,7 +225,7 @@ export default function UniversityDashboard() {
                   <p className="text-sm text-ink-soft mt-2 line-clamp-3">{p.description}</p>
                   {p.ai_category && (
                     <span className="inline-block mt-2 text-[11px] font-semibold uppercase tracking-wide rounded-full bg-tag-blue/10 text-tag-blue px-2 py-0.5">
-                      {p.ai_category}
+                      {t(p.ai_category)}
                     </span>
                   )}
                 </Card>

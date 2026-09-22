@@ -268,7 +268,7 @@ export default function PublicMap() {
                         <div className="font-bold text-sm">{active.title}</div>
                         <StatusBadge status={active.status} size="sm" />
                         {active.ai_category && (
-                          <Badge variant="outline" className="text-xs">{active.ai_category}</Badge>
+                          <Badge variant="outline" className="text-xs">{t(active.ai_category)}</Badge>
                         )}
                         {active.ai_priority && (
                           <Badge variant="outline" className="text-xs capitalize">{t(active.ai_priority)} {t('priority')}</Badge>

@@ -54,7 +54,7 @@ export default function ProblemDetail(){
             <div className="flex flex-wrap gap-2 mb-4">
               <StatusBadge status={problem.status}/>
               {problem.ai_priority && <PriorityBadge priority={problem.ai_priority}/>}
-              {problem.ai_category && <Badge variant="purple">{problem.ai_category}</Badge>}
+              {problem.ai_category && <Badge variant="purple">{t(problem.ai_category)}</Badge>}
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">{problem.title}</h1>
             <div className="flex flex-wrap gap-4 text-sm text-gray-500 mb-6">
