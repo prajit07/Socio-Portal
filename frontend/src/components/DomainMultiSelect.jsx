@@ -1,6 +1,8 @@
+import { useTranslation } from 'react-i18next';
 import { DOMAIN_OPTIONS } from '../constants/domains';
 
 export default function DomainMultiSelect({ selected = [], onChange }) {
+  const { t } = useTranslation();
   const list = DOMAIN_OPTIONS;
   const toggle = (opt) => {
     if (selected.includes(opt)) onChange(selected.filter((o) => o !== opt));
@@ -26,7 +28,7 @@ export default function DomainMultiSelect({ selected = [], onChange }) {
             >
               ✓
             </span>
-            <span className="truncate">{opt}</span>
+            <span className="truncate">{t(opt)}</span>
           </button>
         );
       })}

@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 // Status -> design.txt §7 color mapping
 const statusStyles = {
   pending_validation: 'bg-tag-warning text-white',
@@ -68,31 +70,34 @@ export function Badge({ children, variant = 'solid', color = 'primary', size = '
 }
 
 export function StatusBadge({ status, size = 'md' }) {
+  const { t } = useTranslation();
   const cls = statusStyles[status] || 'bg-bg-soft text-ink-soft';
   const sizes = { sm: 'text-[11px] px-2 py-0.5', md: 'text-xs px-2.5 py-1' };
   return (
     <span className={`inline-flex items-center rounded-full font-semibold capitalize ${cls} ${sizes[size]}`}>
-      {status?.replace(/_/g, ' ')}
+      {t(status?.replace(/_/g, ' '))}
     </span>
   );
 }
 
 export function PriorityBadge({ priority, size = 'md' }) {
+  const { t } = useTranslation();
   const cls = priorityStyles[priority] || 'bg-bg-soft text-ink-soft';
   const sizes = { sm: 'text-[11px] px-2 py-0.5', md: 'text-xs px-2.5 py-1' };
   return (
     <span className={`inline-flex items-center rounded-full font-semibold capitalize ${cls} ${sizes[size]}`}>
-      {priority}
+      {t(priority)}
     </span>
   );
 }
 
 export function RoleBadge({ role, size = 'md' }) {
+  const { t } = useTranslation();
   const cls = roleStyles[role] || 'bg-bg-soft text-ink-soft';
   const sizes = { sm: 'text-[11px] px-2 py-0.5', md: 'text-xs px-2.5 py-1' };
   return (
     <span className={`inline-flex items-center rounded-full font-semibold ${cls} ${sizes[size]}`}>
-      {roleLabels[role] || role}
+      {roleLabels[role] ? t(roleLabels[role]) : role}
     </span>
   );
 }

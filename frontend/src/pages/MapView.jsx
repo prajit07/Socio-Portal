@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { APIProvider, Map, Marker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
 import Navbar from '../components/Navbar';
 import { problemsApi } from '../api/client';
@@ -23,6 +24,7 @@ const STATUS_COLORS = {
 };
 
 export default function MapView() {
+  const { t } = useTranslation();
   const [problems, setProblems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -40,7 +42,7 @@ export default function MapView() {
         : res.data?.items ?? res.data?.results ?? [];
       setProblems(data);
     } catch (e) {
-      setError(e.response?.data?.detail || 'Failed to load map data. Please try again.');
+      setError(e.response?.data?.detail || t('Failed to load map data. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -64,11 +66,11 @@ export default function MapView() {
       <main className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
-            <h1 className="text-2xl font-extrabold text-primary-navy">Problem Map</h1>
+            <h1 className="text-2xl font-extrabold text-primary-navy">{t('Problem Map')}</h1>
             <p className="text-ink-soft mt-1">
               {loading
-                ? 'Loading problems…'
-                : `${located.length} of ${problems.length} problems have location data.`}
+                ? t('Loading problems…')
+                : t('{{located}} of {{problems}} problems have location data.', { located: located.length, problems: problems.length })}
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
@@ -78,7 +80,7 @@ export default function MapView() {
                 {['open', 'in_review', 'in_collaboration', 'implemented'].map((s) => (
                   <Badge key={s} variant="outline" className="gap-1 text-xs">
                     <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_COLORS[s] }} />
-                    {s.replace(/_/g, ' ')}
+                    {t(s.replace(/_/g, ' '))}
                   </Badge>
                 ))}
               </>
@@ -89,14 +91,14 @@ export default function MapView() {
         {error && (
           <Alert variant="danger" className="mb-4">
             {error}
-            <button onClick={load} className="ml-2 underline font-semibold">Retry</button>
+            <button onClick={load} className="ml-2 underline font-semibold">{t('Retry')}</button>
           </Alert>
         )}
 
         {loading ? (
           <div className="flex flex-col items-center justify-center h-[70vh] gap-4">
             <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            <p className="text-ink-muted text-sm">Loading map data…</p>
+            <p className="text-ink-muted text-sm">{t('Loading map data…')}</p>
           </div>
         ) : (
           <Card padding="none" className="overflow-hidden">
@@ -119,7 +121,7 @@ export default function MapView() {
                   ))}
                   {located.length > visible.length && (
                     <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-primary-deep/80 text-white text-xs px-3 py-1 rounded-full">
-                      Showing {visible.length} of {located.length} — zoom/filter for more
+                      {t('Showing {{visible}} of {{located}} — zoom/filter for more', { visible: visible.length, located: located.length })}
                     </div>
                   )}
                   {active && (
@@ -140,7 +142,7 @@ export default function MapView() {
                           to={`/problems/${active.id}`}
                           className="text-primary text-xs font-semibold block mt-2 hover:underline"
                         >
-                          View details →
+                          {t('View details →')}
                         </Link>
                       </div>
                     </InfoWindow>
@@ -154,8 +156,8 @@ export default function MapView() {
         {!loading && located.length === 0 && !error && (
           <div className="mt-6 text-center py-12 text-ink-muted">
             <p className="text-4xl mb-3">📍</p>
-            <p className="font-semibold">No problems with location data yet.</p>
-            <p className="text-sm mt-1">Problems submitted with a pin or "Use My Current Location" will appear here.</p>
+            <p className="font-semibold">{t('No problems with location data yet.')}</p>
+            <p className="text-sm mt-1">{t('Problems submitted with a pin or "Use My Current Location" will appear here.')}</p>
           </div>
         )}
 
@@ -164,23 +166,23 @@ export default function MapView() {
           <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="text-center py-4">
               <div className="text-2xl font-extrabold text-primary-navy">{problems.length}</div>
-              <div className="text-xs text-ink-muted mt-1">Total Problems</div>
+              <div className="text-xs text-ink-muted mt-1">{t('Total Problems')}</div>
             </Card>
             <Card className="text-center py-4">
               <div className="text-2xl font-extrabold text-primary-navy">{located.length}</div>
-              <div className="text-xs text-ink-muted mt-1">Located on Map</div>
+              <div className="text-xs text-ink-muted mt-1">{t('Located on Map')}</div>
             </Card>
             <Card className="text-center py-4">
               <div className="text-2xl font-extrabold text-tag-success">
                 {problems.filter((p) => ['implemented', 'closed'].includes(p.status)).length}
               </div>
-              <div className="text-xs text-ink-muted mt-1">Resolved</div>
+              <div className="text-xs text-ink-muted mt-1">{t('Resolved')}</div>
             </Card>
             <Card className="text-center py-4">
               <div className="text-2xl font-extrabold text-primary">
                 {problems.filter((p) => ['open', 'validated', 'in_review'].includes(p.status)).length}
               </div>
-              <div className="text-xs text-ink-muted mt-1">Active / Open</div>
+              <div className="text-xs text-ink-muted mt-1">{t('Active / Open')}</div>
             </Card>
           </div>
         )}

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { APIProvider, Map, Marker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
@@ -23,6 +24,7 @@ const CATEGORIES = [
 ];
 
 export default function PublicMap() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [problems, setProblems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -86,7 +88,7 @@ export default function PublicMap() {
     setFetchingLocation(true);
     setError('');
     if (!navigator.geolocation) {
-      setError('Geolocation is not supported by your browser.');
+      setError(t('Geolocation is not supported by your browser.'));
       setFetchingLocation(false);
       return;
     }
@@ -100,7 +102,7 @@ export default function PublicMap() {
       },
       (err) => {
         console.warn('Geolocation error:', err);
-        setError('Unable to fetch your location. Please check your browser permissions.');
+        setError(t('Unable to fetch your location. Please check your browser permissions.'));
         setFetchingLocation(false);
       }
     );
@@ -138,17 +140,17 @@ export default function PublicMap() {
       <main className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-extrabold text-primary-navy">Public Problem Map</h1>
+            <h1 className="text-2xl font-extrabold text-primary-navy">{t('Public Problem Map')}</h1>
             <p className="text-ink-soft mt-1">
-              {filtered.length} problems with location data
-              {filterCategory ? ` in "${filterCategory}"` : ''}
-              {filterStatus ? ` (${filterStatus.replace(/_/g, ' ')})` : ''}
+              {t('{{n}} problems with location data', { n: filtered.length })}
+              {filterCategory ? t(' in "{{category}}"', { category: filterCategory }) : ''}
+              {filterStatus ? t(' ({{status}})', { status: t(filterStatus.replace(/_/g, ' ')) }) : ''}
             </p>
           </div>
           {!user && (
             <div className="flex gap-3">
-              <Link to="/register"><Button size="sm">Get Involved</Button></Link>
-              <Link to="/login"><Button size="sm" variant="secondary">Sign In</Button></Link>
+              <Link to="/register"><Button size="sm">{t('Get Involved')}</Button></Link>
+              <Link to="/login"><Button size="sm" variant="secondary">{t('Sign In')}</Button></Link>
             </div>
           )}
         </div>
@@ -159,41 +161,41 @@ export default function PublicMap() {
         <Card className="mb-6" padding="md">
           <div className="flex flex-col lg:flex-row lg:items-end gap-4">
             <Input
-              label="Search"
-              placeholder="Search problems..."
+              label={t('Search')}
+              placeholder={t('Search problems...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="lg:flex-1"
             />
             <Select
-              label="Category"
+              label={t('Category')}
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
               options={[
-                { value: '', label: 'All Categories' },
-                ...CATEGORIES.map((c) => ({ value: c, label: c })),
+                { value: '', label: t('All Categories') },
+                ...CATEGORIES.map((c) => ({ value: c, label: t(c) })),
               ]}
               className="lg:w-48"
             />
             <Select
-              label="Status"
+              label={t('Status')}
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               options={[
-                { value: '', label: 'All Statuses' },
-                { value: 'open', label: 'Open' },
-                { value: 'validated', label: 'Validated' },
-                { value: 'in_review', label: 'In Review' },
-                { value: 'proposal_submitted', label: 'Proposal Submitted' },
-                { value: 'in_collaboration', label: 'In Collaboration' },
-                { value: 'implemented', label: 'Implemented' },
-                { value: 'closed', label: 'Closed' },
+                { value: '', label: t('All Statuses') },
+                { value: 'open', label: t('Open') },
+                { value: 'validated', label: t('Validated') },
+                { value: 'in_review', label: t('In Review') },
+                { value: 'proposal_submitted', label: t('Proposal Submitted') },
+                { value: 'in_collaboration', label: t('In Collaboration') },
+                { value: 'implemented', label: t('Implemented') },
+                { value: 'closed', label: t('Closed') },
               ]}
               className="lg:w-40"
             />
             
             <div className="flex flex-col lg:w-48">
-              <label className="block text-sm font-semibold text-ink mb-1.5">Near Me</label>
+              <label className="block text-sm font-semibold text-ink mb-1.5">{t('Near Me')}</label>
               <div className="flex items-center">
                 <Button 
                   type="button" 
@@ -203,22 +205,22 @@ export default function PublicMap() {
                   disabled={fetchingLocation}
                   className="w-full whitespace-nowrap"
                 >
-                  {userLocation ? 'Clear Location' : 'Fetch Location'}
+                  {userLocation ? t('Clear Location') : t('Fetch Location')}
                 </Button>
               </div>
             </div>
 
             {userLocation && (
               <Select
-                label="Radius"
+                label={t('Radius')}
                 value={radiusKm}
                 onChange={(e) => setRadiusKm(Number(e.target.value))}
                 options={[
-                  { value: 5, label: '5 km' },
-                  { value: 10, label: '10 km' },
-                  { value: 25, label: '25 km' },
-                  { value: 50, label: '50 km' },
-                  { value: 100, label: '100 km' },
+                  { value: 5, label: t('5 km') },
+                  { value: 10, label: t('10 km') },
+                  { value: 25, label: t('25 km') },
+                  { value: 50, label: t('50 km') },
+                  { value: 100, label: t('100 km') },
                 ]}
                 className="lg:w-32"
               />
@@ -231,7 +233,7 @@ export default function PublicMap() {
           {Object.entries(statusCounts).map(([status, count]) => (
             <Badge key={status} variant="outline" className="gap-1">
               <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_COLORS[status] || '#ccc' }} />
-              {status.replace(/_/g, ' ')} ({count})
+              {t(status.replace(/_/g, ' '))} ({count})
             </Badge>
           ))}
         </div>
@@ -269,13 +271,13 @@ export default function PublicMap() {
                           <Badge variant="outline" className="text-xs">{active.ai_category}</Badge>
                         )}
                         {active.ai_priority && (
-                          <Badge variant="outline" className="text-xs capitalize">{active.ai_priority} priority</Badge>
+                          <Badge variant="outline" className="text-xs capitalize">{t(active.ai_priority)} {t('priority')}</Badge>
                         )}
                         {active.address && (
                           <p className="text-xs text-gray-500">{active.address}</p>
                         )}
                         <Link to={`/problems/${active.id}`} className="text-primary text-xs font-semibold block mt-1">
-                          View details →
+                          {t('View details →')}
                         </Link>
                       </div>
                     </InfoWindow>
@@ -290,25 +292,25 @@ export default function PublicMap() {
         <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="text-center py-4">
             <div className="text-2xl font-extrabold text-primary-navy">{located.length}</div>
-            <div className="text-xs text-ink-muted mt-1">Located Problems</div>
+            <div className="text-xs text-ink-muted mt-1">{t('Located Problems')}</div>
           </Card>
           <Card className="text-center py-4">
             <div className="text-2xl font-extrabold text-primary-navy">
               {filtered.filter((p) => ['open', 'validated', 'in_review'].includes(p.status)).length}
             </div>
-            <div className="text-xs text-ink-muted mt-1">Open & Active</div>
+            <div className="text-xs text-ink-muted mt-1">{t('Open & Active')}</div>
           </Card>
           <Card className="text-center py-4">
             <div className="text-2xl font-extrabold text-tag-success">
               {filtered.filter((p) => ['implemented', 'closed'].includes(p.status)).length}
             </div>
-            <div className="text-xs text-ink-muted mt-1">Resolved</div>
+            <div className="text-xs text-ink-muted mt-1">{t('Resolved')}</div>
           </Card>
           <Card className="text-center py-4">
             <div className="text-2xl font-extrabold text-primary">
               {new Set(filtered.map((p) => p.ai_category).filter(Boolean)).size}
             </div>
-            <div className="text-xs text-ink-muted mt-1">Categories</div>
+            <div className="text-xs text-ink-muted mt-1">{t('Categories')}</div>
           </Card>
         </div>
       </main>

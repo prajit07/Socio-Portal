@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
@@ -21,6 +22,7 @@ const isNearby = (problem, uni) => {
 };
 
 export default function TeamCreate() {
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -50,7 +52,7 @@ export default function TeamCreate() {
         const preset = params.get('problemId');
         if (preset && probs.some((x) => x.id === preset)) setProblemId(preset);
       } catch (e) {
-        setError(e.response?.data?.detail || 'Failed to load form data.');
+        setError(e.response?.data?.detail || t('Failed to load form data.'));
       } finally {
         setLoading(false);
       }
@@ -76,7 +78,7 @@ export default function TeamCreate() {
       const res = await teamsApi.create({ problem_id: problemId, name: name.trim(), university_id: universityId });
       navigate(`/university/teams/${asData(res).id}`);
     } catch (e) {
-      setError(e.response?.data?.detail || 'Failed to create team.');
+      setError(e.response?.data?.detail || t('Failed to create team.'));
     } finally {
       setBusy(false);
     }
@@ -90,69 +92,69 @@ export default function TeamCreate() {
     <div className="min-h-screen bg-bg-soft">
       <Navbar />
       <main className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-8">
-        <Link to="/university/dashboard" className="text-sm text-primary hover:underline">← Back to dashboard</Link>
-        <h1 className="text-2xl font-extrabold text-primary-navy mt-3">Form a Team</h1>
-        <p className="text-ink-soft mt-1 text-sm">Assemble a team from your institute to solve a civic problem. You join as team lead.</p>
+        <Link to="/university/dashboard" className="text-sm text-primary hover:underline">{t('← Back to dashboard')}</Link>
+        <h1 className="text-2xl font-extrabold text-primary-navy mt-3">{t('Form a Team')}</h1>
+        <p className="text-ink-soft mt-1 text-sm">{t('Assemble a team from your institute to solve a civic problem. You join as team lead.')}</p>
         {error && <Alert variant="danger" className="my-4">{error}</Alert>}
         {unis.length === 0 && user?.role === 'university_admin' && (
           <Alert variant="warning" className="my-4">
-            No institute is registered to your account yet.{' '}
+            {t('No institute is registered to your account yet.')}{' '}
             <Link to="/university/dashboard" className="font-semibold text-primary hover:underline">
-              Register your institute first
+              {t('Register your institute first')}
             </Link>
           </Alert>
         )}
         {unis.length === 0 && user?.role !== 'university_admin' && (
           <Alert variant="warning" className="my-4">
-            You aren&apos;t linked to any institute yet. Ask your institute SPOC to add you, or re-register with your institution selected.
+            {t("You aren't linked to any institute yet. Ask your institute SPOC to add you, or re-register with your institution selected.")}
           </Alert>
         )}
         {problems.length === 0 && (
-          <Alert variant="warning" className="my-4">No problems available to form a team for yet.</Alert>
+          <Alert variant="warning" className="my-4">{t('No problems available to form a team for yet.')}</Alert>
         )}
         <Card className="mt-4">
           <form onSubmit={submit} className="space-y-4">
             <Select
-              label="Problem *"
+              label={t('Problem *')}
               value={problemId}
               onChange={(e) => setProblemId(e.target.value)}
               options={[
-                { value: '', label: 'Select a problem to solve' },
+                { value: '', label: t('Select a problem to solve') },
                 ...sortedProblems.map(({ p, near }) => ({
                   value: p.id,
-                  label: `${p.title || p.id}${p.address ? ` — ${trunc(p.address)}` : ''}${near ? ' · Nearby' : ''}`,
+                  label: `${p.title || p.id}${p.address ? ` — ${trunc(p.address)}` : ''}${near ? ` · ${t('Nearby')}` : ''}`,
                 })),
               ]}
-              hint={myUni?.district || myUni?.state ? `Showing problems near ${[myUni.district, myUni.state].filter(Boolean).join(', ')} first.` : undefined}
+              hint={myUni?.district || myUni?.state ? t('Showing problems near {{places}} first.', { places: [myUni.district, myUni.state].filter(Boolean).join(', ') }) : undefined}
               required
             />
             {selected && (selected.address || selected.latitude != null) && (
               <div className="rounded-card border border-line bg-bg-soft px-4 py-3 text-sm">
-                <div className="font-semibold text-primary-navy">Problem location</div>
+                <div className="font-semibold text-primary-navy">{t('Problem location')}</div>
                 {selected.address && <p className="text-ink-soft mt-1">{selected.address}</p>}
                 {selected.latitude != null && selected.longitude != null && (
                   <p className="text-xs text-ink-muted mt-1 font-mono">{selected.latitude.toFixed(4)}, {selected.longitude.toFixed(4)}</p>
                 )}
-                <Link to="/problems/map" className="text-xs font-semibold text-primary hover:underline">View on public map →</Link>
+                <Link to="/problems/map" className="text-xs font-semibold text-primary hover:underline">{t('View on public map →')}</Link>
               </div>
             )}
-            <Input label="Team Name *" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Innovators Club" required />
+            <Input label={t('Team Name *')} value={name} onChange={(e) => setName(e.target.value)} placeholder={t('e.g. Innovators Club')} required />
             {unis.length === 1 ? (
               <div>
-                <label className="block text-sm font-semibold text-ink mb-1.5">Institute</label>
+                <label className="block text-sm font-semibold text-ink mb-1.5">{t('Institute')}</label>
                 <p className="rounded-btn border border-line bg-bg-soft px-4 py-2.5 text-sm font-semibold text-primary-navy">{unis[0].name}</p>
               </div>
             ) : (
               <Select
-                label="Institute *"
+                label={t('Institute *')}
                 value={universityId}
                 onChange={(e) => setUniversityId(e.target.value)}
-                options={[{ value: '', label: 'Select your institute' }, ...unis.map((u) => ({ value: u.id, label: u.name }))]}
+                options={[{ value: '', label: t('Select your institute') }, ...unis.map((u) => ({ value: u.id, label: u.name }))]}
                 required
               />
             )}
             <div className="flex justify-end">
-              <Button type="submit" loading={busy} disabled={!canSubmit}>Create Team</Button>
+              <Button type="submit" loading={busy} disabled={!canSubmit}>{t('Create Team')}</Button>
             </div>
           </form>
         </Card>

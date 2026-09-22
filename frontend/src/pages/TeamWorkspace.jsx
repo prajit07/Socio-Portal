@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { teamsApi, problemsApi } from '../api/client';
@@ -7,6 +8,7 @@ import { Button, Card, Input, Alert, PageLoader, StatusBadge } from '../componen
 const asData = (r) => (r && r.data !== undefined ? r.data : r);
 
 export default function TeamWorkspace() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const [team, setTeam] = useState(null);
   const [problem, setProblem] = useState(null);
@@ -25,7 +27,7 @@ export default function TeamWorkspace() {
         try { setProblem(asData(await problemsApi.get(t.problem_id))); } catch { /* ignore */ }
       }
     } catch (e) {
-      setError(e.response?.data?.detail || 'Failed to load team.');
+      setError(e.response?.data?.detail || t('Failed to load team.'));
     } finally {
       setLoading(false);
     }
@@ -45,7 +47,7 @@ export default function TeamWorkspace() {
       setRole('member');
       await fetchData();
     } catch (e) {
-      setError(e.response?.data?.detail || 'Failed to add member.');
+      setError(e.response?.data?.detail || t('Failed to add member.'));
     } finally {
       setAdding(false);
     }
@@ -57,7 +59,7 @@ export default function TeamWorkspace() {
     <div className="min-h-screen bg-bg-soft">
       <Navbar />
       <main className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8 py-8">
-        <Link to="/university/dashboard" className="text-sm text-primary hover:underline">← Back to dashboard</Link>
+        <Link to="/university/dashboard" className="text-sm text-primary hover:underline">{t('← Back to dashboard')}</Link>
 
         {error && <Alert variant="danger" className="my-4">{error}</Alert>}
 
@@ -71,15 +73,15 @@ export default function TeamWorkspace() {
                     {problem.title}
                   </Link>
                 ) : (
-                  <p className="text-sm text-ink-muted">Problem: {team.problem_id}</p>
+                  <p className="text-sm text-ink-muted">{t('Problem: {{id}}', { id: team.problem_id })}</p>
                 )}
               </div>
               <Link to={`/university/proposals/new?teamId=${team.id}&problemId=${team.problem_id}`}>
-                <Button>New Proposal</Button>
+                <Button>{t('New Proposal')}</Button>
               </Link>
             </div>
 
-            <h2 className="text-lg font-bold text-primary-navy mb-3">Members</h2>
+            <h2 className="text-lg font-bold text-primary-navy mb-3">{t('Members')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
               {(team.members || []).map((m) => (
                 <Card key={m.id}>
@@ -93,28 +95,28 @@ export default function TeamWorkspace() {
                 </Card>
               ))}
               {(!team.members || team.members.length === 0) && (
-                <Card className="text-center py-8 text-ink-soft">No members yet.</Card>
+                <Card className="text-center py-8 text-ink-soft">{t('No members yet.')}</Card>
               )}
             </div>
 
             <Card>
-              <h3 className="font-bold text-primary-navy mb-3">Add Member</h3>
+              <h3 className="font-bold text-primary-navy mb-3">{t('Add Member')}</h3>
               <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-3">
                 <Input
-                  label="User ID"
+                  label={t('User ID')}
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
-                  placeholder="User ID"
+                  placeholder={t('User ID')}
                   required
                 />
                 <Input
-                  label="Role"
+                  label={t('Role')}
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
-                  placeholder="member / lead"
+                  placeholder={t('member / lead')}
                 />
                 <div className="flex items-end">
-                  <Button type="submit" loading={adding}>Add Member</Button>
+                  <Button type="submit" loading={adding}>{t('Add Member')}</Button>
                 </div>
               </form>
             </Card>

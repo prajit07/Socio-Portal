@@ -1,30 +1,31 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { problemsApi } from '../api/client';
 import { Input, Select, Card, Button, StatusBadge, PriorityBadge, Alert, ListSkeleton } from '../components/ui';
 
-const STATUS_OPTIONS = [
-  { value: '', label: 'All Statuses' },
-  { value: 'open', label: 'Open' },
-  { value: 'validated', label: 'Validated' },
-  { value: 'in_review', label: 'In Review' },
-  { value: 'proposal_submitted', label: 'Proposal Submitted' },
-  { value: 'in_collaboration', label: 'In Collaboration' },
-  { value: 'prototype', label: 'Prototype' },
-  { value: 'pilot', label: 'Pilot' },
-  { value: 'implemented', label: 'Implemented' },
-  { value: 'closed', label: 'Closed' },
-  { value: 'duplicate', label: 'Duplicate' },
-];
-
 export default function ProblemsList() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [problems, setProblems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filters, setFilters] = useState({ status: '', ai_category: '', ai_priority: '' });
+  const STATUS_OPTIONS = [
+    { value: '', label: t('All Statuses') },
+    { value: 'open', label: t('Open') },
+    { value: 'validated', label: t('Validated') },
+    { value: 'in_review', label: t('In Review') },
+    { value: 'proposal_submitted', label: t('Proposal Submitted') },
+    { value: 'in_collaboration', label: t('In Collaboration') },
+    { value: 'prototype', label: t('Prototype') },
+    { value: 'pilot', label: t('Pilot') },
+    { value: 'implemented', label: t('Implemented') },
+    { value: 'closed', label: t('Closed') },
+    { value: 'duplicate', label: t('Duplicate') },
+  ];
 // Citizens previously saw only their own reports here; the public explorer
   // must show everything, so default to all with an opt-in "Mine only" toggle.
   const [mineOnly, setMineOnly] = useState(false);
@@ -46,7 +47,7 @@ export default function ProblemsList() {
       const res = await problemsApi.list(params);
       setProblems(res.data);
     } catch (e) {
-      setError(e.response?.data?.detail || 'Failed to load problems.');
+      setError(e.response?.data?.detail || t('Failed to load problems.'));
     } finally {
       setLoading(false);
     }
@@ -54,7 +55,7 @@ export default function ProblemsList() {
 
   // eslint-disable-next-line react/set-state-in-effect -- refetch from server when filters change
   useEffect(() => { fetchData(); }, [fetchData]);
-  useEffect(() => { document.title = 'Problems — Socio Connect'; }, []);
+  useEffect(() => { document.title = t('Problems — Socio Connect'); }, []);
 
   // Industry users: API already filters by domain tags; show a hint banner
   const isIndustry = user?.role === 'industry';
@@ -66,12 +67,12 @@ export default function ProblemsList() {
         <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-extrabold text-primary-navy">
-              Problem Explorer
+              {t('Problem Explorer')}
             </h1>
             <p className="text-ink-soft mt-1">
               {isIndustry
-                ? 'Problems matched to your domain tags.'
-                : 'Browse and discover problems across communities. Public — no login required to view.'}
+                ? t('Problems matched to your domain tags.')
+                : t('Browse and discover problems across communities. Public — no login required to view.')}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -83,12 +84,12 @@ export default function ProblemsList() {
                   onChange={(e) => setMineOnly(e.target.checked)}
                   className="h-4 w-4 accent-primary"
                 />
-                Mine only
+                {t('Mine only')}
               </label>
             )}
             {!user && (
               <Link to="/problems/map">
-                <Button variant="secondary" size="sm">View map</Button>
+                <Button variant="secondary" size="sm">{t('View map')}</Button>
               </Link>
             )}
           </div>
@@ -99,27 +100,27 @@ export default function ProblemsList() {
         <Card className="mb-6" padding="md">
           <div className="flex flex-col lg:flex-row lg:items-end gap-4">
             <Select
-              label="Status"
+              label={t('Status')}
               options={STATUS_OPTIONS}
               value={filters.status}
               onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}
               className="lg:w-56"
             />
             <Input
-              label="Category contains"
-              placeholder="e.g. Water, Health"
+              label={t('Category contains')}
+              placeholder={t('e.g. Water, Health')}
               value={filters.ai_category}
               onChange={(e) => setFilters((f) => ({ ...f, ai_category: e.target.value }))}
               className="lg:flex-1"
             />
             <Select
-              label="Priority"
+              label={t('Priority')}
               options={[
-                { value: '', label: 'Any priority' },
-                { value: 'low', label: 'Low' },
-                { value: 'medium', label: 'Medium' },
-                { value: 'high', label: 'High' },
-                { value: 'critical', label: 'Critical' },
+                { value: '', label: t('Any priority') },
+                { value: 'low', label: t('Low') },
+                { value: 'medium', label: t('Medium') },
+                { value: 'high', label: t('High') },
+                { value: 'critical', label: t('Critical') },
               ]}
               value={filters.ai_priority}
               onChange={(e) => setFilters((f) => ({ ...f, ai_priority: e.target.value }))}
@@ -131,7 +132,7 @@ export default function ProblemsList() {
         {loading ? (
           <ListSkeleton count={6} />
         ) : problems.length === 0 ? (
-          <Card className="text-center py-12 text-ink-soft">No problems match your filters.</Card>
+          <Card className="text-center py-12 text-ink-soft">{t('No problems match your filters.')}</Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {problems.map((p) => (

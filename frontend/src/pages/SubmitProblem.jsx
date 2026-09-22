@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import LocationPicker from '../components/LocationPicker';
@@ -7,9 +8,8 @@ import { problemsApi, aiApi } from '../api/client';
 import { transcribeAudio } from '../lib/puterSpeech';
 import { Button, Input, TextArea, Card, Badge, Alert, PageLoader } from '../components/ui';
 
-const STEPS = ['Details', 'Location & Review'];
-
 function VoiceRecorder({ onRecordingReady }) {
+  const { t } = useTranslation();
   const [recording, setRecording] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
   const [transcript, setTranscript] = useState('');
@@ -49,7 +49,7 @@ function VoiceRecorder({ onRecordingReady }) {
       mr.start();
       setRecording(true);
     } catch {
-      setError('Microphone access denied or unavailable. You can upload an audio file instead.');
+      setError(t('Microphone access denied or unavailable. You can upload an audio file instead.'));
     }
   };
 
@@ -68,7 +68,7 @@ function VoiceRecorder({ onRecordingReady }) {
       setTranscript(newText);
       onRecordingReady(blobRef, 'voice_note.webm', newText);
     } catch {
-      setError('Translation failed.');
+      setError(t('Translation failed.'));
     } finally {
       setTranslating(false);
     }
@@ -80,16 +80,16 @@ function VoiceRecorder({ onRecordingReady }) {
     <div className="border border-line rounded-card p-4 bg-bg-soft">
       <div className="flex items-center gap-3">
         <Button type="button" variant={recording ? 'danger' : 'secondary'} size="sm" onClick={recording ? stop : start}>
-          {recording ? 'Stop Recording' : 'Start Voice Note'}
+          {recording ? t('Stop Recording') : t('Start Voice Note')}
         </Button>
         {audioUrl && <audio controls src={audioUrl} className="h-8" />}
       </div>
-      {transcribing && <p className="text-xs text-ink-muted mt-2">Transcribing with Puter…</p>}
+      {transcribing && <p className="text-xs text-ink-muted mt-2">{t('Transcribing with Puter…')}</p>}
 
       {transcript && (
         <div className="mt-3 rounded-card border border-line bg-white p-3 text-sm text-ink-soft">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-ink uppercase tracking-wide">Transcript</span>
+            <span className="text-xs font-semibold text-ink uppercase tracking-wide">{t('Transcript')}</span>
             <div className="flex items-center gap-2">
               <select
                 value={targetLang}
@@ -99,7 +99,7 @@ function VoiceRecorder({ onRecordingReady }) {
                 {languages.map(l => <option key={l} value={l}>{l}</option>)}
               </select>
               <Button type="button" size="sm" variant="secondary" onClick={handleTranslate} loading={translating} disabled={translating}>
-                Translate
+                {t('Translate')}
               </Button>
             </div>
           </div>
@@ -112,6 +112,8 @@ function VoiceRecorder({ onRecordingReady }) {
 }
 
 export default function SubmitProblem() {
+  const { t } = useTranslation();
+  const STEPS = [t('Details'), t('Location & Review')];
   const { user } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
@@ -131,7 +133,7 @@ export default function SubmitProblem() {
 
   const handleExtractTags = async () => {
     if (!form.title.trim() && !form.description.trim()) {
-      setTagHint('Please fill in a title and description first.');
+      setTagHint(t('Please fill in a title and description first.'));
       return;
     }
     setTagExtracting(true);
@@ -147,9 +149,9 @@ export default function SubmitProblem() {
         return { ...f, tags: combined.join(', ') };
       });
 
-      setTagHint(`AI suggested ${rawTags.length} tag${rawTags.length !== 1 ? 's' : ''} · ${res.data?.category || ''} · Priority: ${res.data?.priority || ''}`);
+      setTagHint(t('AI suggested {{count}} tag{{plural}} · {{category}} · Priority: {{priority}}', { count: rawTags.length, plural: rawTags.length !== 1 ? 's' : '', category: res.data?.category || '', priority: res.data?.priority || '' }));
     } catch {
-      setTagHint('Tag extraction failed. You can still type tags manually.');
+      setTagHint(t('Tag extraction failed. You can still type tags manually.'));
     } finally {
       setTagExtracting(false);
     }
@@ -205,7 +207,7 @@ export default function SubmitProblem() {
 
       setStep(2); // success screen
     } catch (e) {
-      setError(e.response?.data?.detail || 'Failed to submit problem.');
+      setError(e.response?.data?.detail || t('Failed to submit problem.'));
     } finally {
       setLoading(false);
     }
@@ -223,28 +225,28 @@ export default function SubmitProblem() {
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-tag-success/10 text-tag-success">
               <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
             </div>
-            <h1 className="text-2xl font-extrabold text-primary-navy">Problem submitted!</h1>
-            <p className="text-ink-soft mt-1">Our AI has processed your report.</p>
+            <h1 className="text-2xl font-extrabold text-primary-navy">{t('Problem submitted!')}</h1>
+            <p className="text-ink-soft mt-1">{t('Our AI has processed your report.')}</p>
             <div className="mt-6 grid grid-cols-2 gap-3 text-left">
               <div className="rounded-card border border-line p-4">
-                <div className="text-xs uppercase tracking-wide text-ink-muted">AI Category</div>
+                <div className="text-xs uppercase tracking-wide text-ink-muted">{t('AI Category')}</div>
                 <div className="font-semibold text-tag-blue mt-1">{result.ai_category || '—'}</div>
               </div>
               <div className="rounded-card border border-line p-4">
-                <div className="text-xs uppercase tracking-wide text-ink-muted">Priority</div>
+                <div className="text-xs uppercase tracking-wide text-ink-muted">{t('Priority')}</div>
                 <div className="font-semibold mt-1 capitalize text-primary-navy">{result.ai_priority || '—'}</div>
               </div>
               <div className="rounded-card border border-line p-4 col-span-2">
-                <div className="text-xs uppercase tracking-wide text-ink-muted">Status</div>
+                <div className="text-xs uppercase tracking-wide text-ink-muted">{t('Status')}</div>
                 <div className="mt-1"><Badge color={result.status === 'duplicate' ? 'danger' : 'blue'}>{result.status}</Badge></div>
                 {result.ai_duplicate_of && (
-                  <p className="text-xs text-tag-warning mt-1">Flagged as duplicate of {result.ai_duplicate_of}</p>
+                  <p className="text-xs text-tag-warning mt-1">{t('Flagged as duplicate of {{id}}', { id: result.ai_duplicate_of })}</p>
                 )}
               </div>
             </div>
             <div className="mt-6 flex justify-center gap-3">
-              <Button onClick={() => navigate(`/problems/${result.id}`)}>Track this problem</Button>
-              <Button variant="secondary" onClick={() => navigate('/citizen/dashboard')}>Go to Dashboard</Button>
+              <Button onClick={() => navigate(`/problems/${result.id}`)}>{t('Track this problem')}</Button>
+              <Button variant="secondary" onClick={() => navigate('/citizen/dashboard')}>{t('Go to Dashboard')}</Button>
             </div>
           </Card>
         </main>
@@ -257,8 +259,8 @@ export default function SubmitProblem() {
       <Navbar />
       <main className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-extrabold text-primary-navy">Report a Problem</h1>
-          <p className="text-ink-soft mt-1">Step {step + 1} of 2 — {STEPS[step]}</p>
+          <h1 className="text-2xl font-extrabold text-primary-navy">{t('Report a Problem')}</h1>
+          <p className="text-ink-soft mt-1">{t('Step {{n}} of 2 — {{step}}', { n: step + 1, step: STEPS[step] })}</p>
           <div className="mt-4 flex gap-2">
             {STEPS.map((s, i) => (
               <div key={s} className={`flex-1 h-1.5 rounded-full ${i <= step ? 'bg-primary' : 'bg-line'}`} />
@@ -272,12 +274,12 @@ export default function SubmitProblem() {
           {step === 0 && (
             <div className="space-y-6">
               <div className="space-y-4">
-                <Input label="Title *" name="title" value={form.title} onChange={update('title')} placeholder="Brief, descriptive title" required />
-                <TextArea label="Description *" name="description" value={form.description} onChange={update('description')} rows={6} placeholder="What is the issue? Who is affected? How long has it persisted?" required />
+                <Input label={t('Title *')} name="title" value={form.title} onChange={update('title')} placeholder={t('Brief, descriptive title')} required />
+                <TextArea label={t('Description *')} name="description" value={form.description} onChange={update('description')} rows={6} placeholder={t('What is the issue? Who is affected? How long has it persisted?')} required />
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-semibold text-ink">Tags (optional, comma separated)</label>
+                    <label className="block text-sm font-semibold text-ink">{t('Tags (optional, comma separated)')}</label>
                     <button
                       type="button"
                       onClick={handleExtractTags}
@@ -290,19 +292,19 @@ export default function SubmitProblem() {
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                           </svg>
-                          Extracting…
+                          {t('Extracting…')}
                         </>
                       ) : (
                         <>
                           <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                           </svg>
-                          ✨ Extract Tags with AI
+                          {t('✨ Extract Tags with AI')}
                         </>
                       )}
                     </button>
                   </div>
-                  <Input name="tags" value={form.tags} onChange={update('tags')} placeholder="water, sanitation, health" hint="Keywords help AI categorization." />
+                  <Input name="tags" value={form.tags} onChange={update('tags')} placeholder={t('water, sanitation, health')} hint={t('Keywords help AI categorization.')} />
 
                   {tagHint && (
                     <p className="text-xs mt-2 px-3 py-1.5 rounded-lg bg-violet-50 border border-violet-200 text-violet-700 font-medium">
@@ -314,11 +316,11 @@ export default function SubmitProblem() {
 
               <div className="border-t border-line pt-5 space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Voice note</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('Voice note')}</label>
                   <VoiceRecorder onRecordingReady={onVoiceReady} />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Upload evidence</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('Upload evidence')}</label>
                   <input
                     type="file"
                     multiple
@@ -335,7 +337,7 @@ export default function SubmitProblem() {
                             <Badge variant="outline">{f.kind}</Badge>
                           </div>
                           {f.kind === 'audio' && f.transcribing && (
-                            <p className="text-xs text-ink-muted mt-1">Transcribing with Puter…</p>
+                            <p className="text-xs text-ink-muted mt-1">{t('Transcribing with Puter…')}</p>
                           )}
                           {f.kind === 'audio' && f.transcript && (
                             <p className="text-xs text-ink-soft mt-1 italic">“{f.transcript}”</p>
@@ -359,27 +361,27 @@ export default function SubmitProblem() {
               />
 
               <div className="border-t border-line pt-5 space-y-3 text-sm">
-                <div className="text-sm font-semibold text-ink">Review your report</div>
-                <div><span className="font-semibold text-primary-navy">Title:</span> {form.title}</div>
-                <div><span className="font-semibold text-primary-navy">Description:</span> <span className="text-ink-soft">{form.description}</span></div>
-                <div><span className="font-semibold text-primary-navy">Tags:</span> {form.tags || '—'}</div>
-                <div><span className="font-semibold text-primary-navy">Evidence:</span> {files.length + (voiceBlob ? 1 : 0)} file(s)</div>
-                <div><span className="font-semibold text-primary-navy">Location:</span> {form.address || (position ? `${position[0].toFixed(4)}, ${position[1].toFixed(4)}` : '—')}</div>
-                <Alert variant="info">On submit, our AI will categorize, score priority, check for duplicates and route your problem to relevant universities & industry partners.</Alert>
+                <div className="text-sm font-semibold text-ink">{t('Review your report')}</div>
+                <div><span className="font-semibold text-primary-navy">{t('Title:')}</span> {form.title}</div>
+                <div><span className="font-semibold text-primary-navy">{t('Description:')}</span> <span className="text-ink-soft">{form.description}</span></div>
+                <div><span className="font-semibold text-primary-navy">{t('Tags:')}</span> {form.tags || '—'}</div>
+                <div><span className="font-semibold text-primary-navy">{t('Evidence:')}</span> {files.length + (voiceBlob ? 1 : 0)} {t('file(s)')}</div>
+                <div><span className="font-semibold text-primary-navy">{t('Location:')}</span> {form.address || (position ? `${position[0].toFixed(4)}, ${position[1].toFixed(4)}` : '—')}</div>
+                <Alert variant="info">{t('On submit, our AI will categorize, score priority, check for duplicates and route your problem to relevant universities & industry partners.')}</Alert>
               </div>
             </div>
           )}
 
           <div className="mt-6 flex justify-between">
             <Button variant="ghost" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
-              Back
+              {t('Back')}
             </Button>
             {step < 1 ? (
               <Button onClick={() => setStep((s) => s + 1)} disabled={!form.title || !form.description}>
-                Next
+                {t('Next')}
               </Button>
             ) : (
-              <Button onClick={submit} loading={loading}>Submit Problem</Button>
+              <Button onClick={submit} loading={loading}>{t('Submit Problem')}</Button>
             )}
           </div>
         </Card>

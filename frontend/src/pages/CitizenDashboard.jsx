@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { problemsApi } from '../api/client';
 import ProblemDeleteButton from '../components/ProblemDeleteButton';
 import { Button, Card, StatCard, StatusBadge, PriorityBadge, Alert, ListSkeleton } from '../components/ui';
+import { useTranslation } from 'react-i18next';
 
 const ICONS = {
   total: (
@@ -23,6 +24,7 @@ const ICONS = {
 
 export default function CitizenDashboard() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [problems, setProblems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -34,7 +36,7 @@ export default function CitizenDashboard() {
       const res = await problemsApi.list({ limit: 50, mine_only: true });
       setProblems(res.data);
     } catch (e) {
-      setError(e.response?.data?.detail || 'Failed to load your problems.');
+      setError(e.response?.data?.detail || t('Failed to load your problems.'));
     } finally {
       setLoading(false);
     }
@@ -57,14 +59,14 @@ export default function CitizenDashboard() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl font-extrabold text-primary-navy">
-              Welcome, {user?.name?.split(' ')[0] || 'Citizen'}
+              {t('Welcome, {{name}}', { name: user?.name?.split(' ')[0] || t('Citizen') })}
             </h1>
-            <p className="text-ink-soft mt-1">Track the problems you've reported and their progress.</p>
+            <p className="text-ink-soft mt-1">{t("Track the problems you've reported and their progress.")}</p>
           </div>
           <Link to="/citizen/submit-problem">
             <Button size="lg">
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-              Report a Problem
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+              {t('Report a Problem')}
             </Button>
           </Link>
         </div>
@@ -72,20 +74,20 @@ export default function CitizenDashboard() {
         {error && <Alert variant="danger" className="mb-6">{error}</Alert>}
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard label="Reported" value={stats.total} icon={ICONS.total} />
-          <StatCard label="Open" value={stats.open} icon={ICONS.open} accent="primary" />
-          <StatCard label="In Progress" value={stats.review} icon={ICONS.review} accent="warning" />
-          <StatCard label="Resolved" value={stats.resolved} icon={ICONS.resolved} accent="success" />
+          <StatCard label={t('Reported')} value={stats.total} icon={ICONS.total} />
+          <StatCard label={t('Open')} value={stats.open} icon={ICONS.open} accent="primary" />
+          <StatCard label={t('In Progress')} value={stats.review} icon={ICONS.review} accent="warning" />
+          <StatCard label={t('Resolved')} value={stats.resolved} icon={ICONS.resolved} accent="success" />
         </div>
 
-        <h2 className="text-lg font-bold text-primary-navy mb-4">My Problems</h2>
+        <h2 className="text-lg font-bold text-primary-navy mb-4">{t('My Problems')}</h2>
         {loading ? (
           <ListSkeleton count={4} />
         ) : problems.length === 0 ? (
           <Card className="text-center py-12">
-            <p className="text-ink-soft">You haven't reported any problems yet.</p>
+            <p className="text-ink-soft">{t("You haven't reported any problems yet.")}</p>
             <Link to="/citizen/submit-problem" className="mt-4 inline-block">
-              <Button>Report your first problem</Button>
+              <Button>{t('Report your first problem')}</Button>
             </Link>
           </Card>
         ) : (

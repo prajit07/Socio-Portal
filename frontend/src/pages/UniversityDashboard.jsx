@@ -4,11 +4,13 @@ import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { problemsApi, teamsApi, proposalsApi, universitiesApi } from '../api/client';
 import { Button, Card, StatusBadge, Alert, PageLoader, TextArea, Input } from '../components/ui';
+import { useTranslation } from 'react-i18next';
 
 const asData = (r) => (r && r.data !== undefined ? r.data : r);
 
 export default function UniversityDashboard() {
   const { user, loading: authLoading } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [tab, setTab] = useState('problems');
   const [problems, setProblems] = useState([]);
@@ -35,13 +37,13 @@ export default function UniversityDashboard() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [p, t, pr] = await Promise.all([
+      const [p, tm, pr] = await Promise.all([
         problemsApi.list(),
         teamsApi.list(),
         proposalsApi.list(),
       ]);
       setProblems(asData(p) || []);
-      setTeams(asData(t) || []);
+      setTeams(asData(tm) || []);
       setProposals(asData(pr) || []);
       if (user?.role === 'university_admin') {
         const mine = asData(await universitiesApi.mine()) || [];
@@ -50,7 +52,7 @@ export default function UniversityDashboard() {
         if (uid) setStudents(asData(await universitiesApi.listStudents(uid)) || []);
       }
     } catch (e) {
-      setError(e.response?.data?.detail || 'Failed to load dashboard.');
+      setError(e.response?.data?.detail || t('Failed to load dashboard.'));
     } finally {
       setLoading(false);
     }
@@ -62,7 +64,7 @@ export default function UniversityDashboard() {
   const loadStudents = async () => {
     if (!universityId) return;
     try { setStudents(asData(await universitiesApi.listStudents(universityId)) || []); }
-    catch (e) { setError(e.response?.data?.detail || 'Failed to load students.'); }
+    catch (e) { setError(e.response?.data?.detail || t('Failed to load students.')); }
   };
 
   const addBulk = async () => {
@@ -73,7 +75,7 @@ export default function UniversityDashboard() {
       if (parts.length < 4) continue;
       items.push({ name: parts[0], email: parts[1], department: parts[2], roll_number: parts[3] });
     }
-    if (items.length === 0) { setError('Enter one student per line: Name, email, Department, Roll Number'); return; }
+    if (items.length === 0) { setError(t('Enter one student per line: Name, email, Department, Roll Number')); return; }
     try {
       const res = await universitiesApi.addStudentsBulk(universityId, { students: items });
       setStudentResults(asData(res) || []);
@@ -81,7 +83,7 @@ export default function UniversityDashboard() {
       await loadStudents();
       setError('');
     } catch (e) {
-      setError(e.response?.data?.detail || 'Failed to add students.');
+      setError(e.response?.data?.detail || t('Failed to add students.'));
     }
   };
 
@@ -97,7 +99,7 @@ export default function UniversityDashboard() {
       await loadStudents();
       setError('');
     } catch (e) {
-      setError(e.response?.data?.detail || 'Failed to add student.');
+      setError(e.response?.data?.detail || t('Failed to add student.'));
     }
   };
 
@@ -117,7 +119,7 @@ export default function UniversityDashboard() {
       setStudents(asData(await universitiesApi.listStudents(uni.id)) || []);
       setError('');
     } catch (e2) {
-      setError(e2.response?.data?.detail || 'Failed to create institute.');
+      setError(e2.response?.data?.detail || t('Failed to create institute.'));
     } finally {
       setCreatingUni(false);
     }
@@ -129,7 +131,7 @@ export default function UniversityDashboard() {
       await proposalsApi.approve(id);
       setProposals((prev) => prev.map((x) => (x.id === id ? { ...x, status: 'approved' } : x)));
     } catch (e) {
-      setError(e.response?.data?.detail || 'Failed to approve proposal.');
+      setError(e.response?.data?.detail || t('Failed to approve proposal.'));
     } finally {
       setBusyId(null);
     }
@@ -144,11 +146,11 @@ export default function UniversityDashboard() {
 
 
   const tabs = [
-    { id: 'problems', label: 'Problem Feed' },
-    { id: 'teams', label: 'My Teams' },
-    { id: 'proposals', label: 'My Proposals' },
-    { id: 'approvals', label: 'Mentor Approvals' },
-    ...(user?.role === 'university_admin' ? [{ id: 'students', label: 'Students' }] : []),
+    { id: 'problems', label: t('Problem Feed') },
+    { id: 'teams', label: t('My Teams') },
+    { id: 'proposals', label: t('My Proposals') },
+    { id: 'approvals', label: t('Mentor Approvals') },
+    ...(user?.role === 'university_admin' ? [{ id: 'students', label: t('Students') }] : []),
   ];
 
   const submitted = proposals.filter((p) => p.status === 'submitted');
@@ -160,33 +162,33 @@ export default function UniversityDashboard() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-extrabold text-primary-navy">
-              University Workspace
+              {t('University Workspace')}
             </h1>
-            <p className="text-ink-soft mt-1">Collaborate on civic problems as {user?.role?.replace('_', ' ')}.</p>
+            <p className="text-ink-soft mt-1">{t('Collaborate on civic problems as {{role}}.', { role: user?.role ? t(user.role.replace('_', ' ')) : '' })}</p>
           </div>
-          <Button onClick={handleFormTeam}>Form Team</Button>
+          <Button onClick={handleFormTeam}>{t('Form Team')}</Button>
         </div>
 
         {error && <Alert variant="danger" className="mb-6">{error}</Alert>}
 
         {user?.role === 'university_admin' && !universityId && (
           <Alert variant="warning" className="mb-6">
-            <span className="font-semibold">Complete your workspace setup:</span> register your institute to unlock teams, students and proposals.{' '}
+            <span className="font-semibold">{t('Complete your workspace setup:')}</span> {t('register your institute to unlock teams, students and proposals.')}{' '}
             <button type="button" onClick={() => setTab('problems')} className="font-semibold text-primary hover:underline">
-              Set up now →
+              {t('Set up now →')}
             </button>
           </Alert>
         )}
 
         <div className="flex flex-wrap gap-2 mb-6">
-          {tabs.map((t) => (
+          {tabs.map((tb) => (
             <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`px-4 py-2 rounded-btn text-sm font-semibold transition ${tab === t.id ? 'bg-primary text-white' : 'bg-white text-ink-soft border border-line'}`}
+              key={tb.id}
+              onClick={() => setTab(tb.id)}
+              className={`px-4 py-2 rounded-btn text-sm font-semibold transition ${tab === tb.id ? 'bg-primary text-white' : 'bg-white text-ink-soft border border-line'}`}
             >
-              {t.label}
-              {t.id === 'approvals' && submitted.length > 0 && (
+              {tb.label}
+              {tb.id === 'approvals' && submitted.length > 0 && (
                 <span className="ml-2 rounded-full bg-tag-danger text-white text-xs px-2 py-0.5">{submitted.length}</span>
               )}
             </button>
@@ -199,15 +201,15 @@ export default function UniversityDashboard() {
           <>
             {user?.role === 'university_admin' && !universityId && (
               <Card className="mb-6">
-                <h2 className="font-bold text-primary-navy mb-1">Create your institute</h2>
-                <p className="text-sm text-ink-soft mb-4">As SPOC, register your institution once to start adding students, forming teams and submitting proposals.</p>
+                <h2 className="font-bold text-primary-navy mb-1">{t('Create your institute')}</h2>
+                <p className="text-sm text-ink-soft mb-4">{t('As SPOC, register your institution once to start adding students, forming teams and submitting proposals.')}</p>
                 <form onSubmit={createInstitute} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Input label="Institute Name *" value={uniName} onChange={(e) => setUniName(e.target.value)} placeholder="e.g. Jharkhand Technical University" required />
-                  <Input label="Registration No. (optional)" value={uniRegNo} onChange={(e) => setUniRegNo(e.target.value)} />
-                  <Input label="District (optional)" value={uniDistrict} onChange={(e) => setUniDistrict(e.target.value)} placeholder="Used to surface nearby problems" />
-                  <Input label="State (optional)" value={uniState} onChange={(e) => setUniState(e.target.value)} />
+                  <Input label={t('Institute Name *')} value={uniName} onChange={(e) => setUniName(e.target.value)} placeholder={t('e.g. Jharkhand Technical University')} required />
+                  <Input label={t('Registration No. (optional)')} value={uniRegNo} onChange={(e) => setUniRegNo(e.target.value)} />
+                  <Input label={t('District (optional)')} value={uniDistrict} onChange={(e) => setUniDistrict(e.target.value)} placeholder={t('Used to surface nearby problems')} />
+                  <Input label={t('State (optional)')} value={uniState} onChange={(e) => setUniState(e.target.value)} />
                   <div className="flex items-end sm:col-span-2">
-                    <Button type="submit" size="sm" loading={creatingUni}>Create Institute</Button>
+                    <Button type="submit" size="sm" loading={creatingUni}>{t('Create Institute')}</Button>
                   </div>
                 </form>
               </Card>
@@ -233,15 +235,15 @@ export default function UniversityDashboard() {
           </>
         ) : tab === 'teams' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {teams.map((t) => (
-              <Link key={t.id} to={`/university/teams/${t.id}`}>
+            {teams.map((team) => (
+              <Link key={team.id} to={`/university/teams/${team.id}`}>
                 <Card hover>
-                  <h3 className="font-bold text-primary-navy">{t.name}</h3>
-                  <p className="text-xs text-ink-muted mt-1">Problem: {t.problem_id}</p>
+                  <h3 className="font-bold text-primary-navy">{team.name}</h3>
+                  <p className="text-xs text-ink-muted mt-1">{t('Problem: {{id}}', { id: team.problem_id })}</p>
                 </Card>
               </Link>
             ))}
-            {teams.length === 0 && <Card className="text-center py-12 text-ink-soft">No teams yet.</Card>}
+            {teams.length === 0 && <Card className="text-center py-12 text-ink-soft">{t('No teams yet.')}</Card>}
           </div>
         ) : tab === 'proposals' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -252,36 +254,36 @@ export default function UniversityDashboard() {
                     <h3 className="font-bold text-primary-navy line-clamp-2">{pr.title}</h3>
                     <StatusBadge status={pr.status} size="sm" />
                   </div>
-                  <p className="text-xs text-ink-muted mt-1">Problem: {pr.problem_id}</p>
+                  <p className="text-xs text-ink-muted mt-1">{t('Problem: {{id}}', { id: pr.problem_id })}</p>
                 </Card>
               </Link>
             ))}
-            {proposals.length === 0 && <Card className="text-center py-12 text-ink-soft">No proposals yet.</Card>}
+            {proposals.length === 0 && <Card className="text-center py-12 text-ink-soft">{t('No proposals yet.')}</Card>}
           </div>
         ) : tab === 'students' ? (
           <div className="space-y-6">
             {!universityId && (
               <Card className="text-center py-12">
-                <p className="text-ink-soft">Register your institute to start managing students.</p>
-                <Button size="sm" className="mt-4" onClick={() => setTab('problems')}>Complete workspace setup</Button>
+                <p className="text-ink-soft">{t('Register your institute to start managing students.')}</p>
+                <Button size="sm" className="mt-4" onClick={() => setTab('problems')}>{t('Complete workspace setup')}</Button>
               </Card>
             )}
             {universityId && (
               <>
                 <Card>
-                  <h2 className="font-bold text-primary-navy mb-3">Students ({students.length})</h2>
+                  <h2 className="font-bold text-primary-navy mb-3">{t('Students ({{count}})', { count: students.length })}</h2>
                   {students.length === 0 ? (
-                    <p className="text-ink-soft">No students added yet.</p>
+                    <p className="text-ink-soft">{t('No students added yet.')}</p>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="text-left text-ink-muted border-b border-line">
-                            <th className="py-2">Name</th>
-                            <th>Email</th>
-                            <th>Department</th>
-                            <th>Roll No.</th>
-                            <th>Verified</th>
+                            <th className="py-2">{t('Name')}</th>
+                            <th>{t('Email')}</th>
+                            <th>{t('Department')}</th>
+                            <th>{t('Roll No.')}</th>
+                            <th>{t('Verified')}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -291,7 +293,7 @@ export default function UniversityDashboard() {
                               <td>{s.email}</td>
                               <td>{s.department || '—'}</td>
                               <td>{s.roll_number || '—'}</td>
-                              <td>{s.is_email_verified ? 'Yes' : 'No'}</td>
+                              <td>{s.is_email_verified ? t('Yes') : t('No')}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -301,36 +303,36 @@ export default function UniversityDashboard() {
                 </Card>
 
                 <Card>
-                  <h2 className="font-bold text-primary-navy mb-1">Add Students in Bulk</h2>
-                  <p className="text-xs text-ink-muted mb-3">One student per line: <span className="font-mono">Full Name, email, Department, Roll Number</span></p>
+                  <h2 className="font-bold text-primary-navy mb-1">{t('Add Students in Bulk')}</h2>
+                  <p className="text-xs text-ink-muted mb-3">{t('One student per line:')} <span className="font-mono">Full Name, email, Department, Roll Number</span></p>
                   <TextArea rows={5} value={bulkText} onChange={(e) => setBulkText(e.target.value)} placeholder={"Alice, alice@uni.edu, CSE, 21CS01\nBob, bob@uni.edu, ECE, 21EC02"} />
                   <div className="mt-3">
-                    <Button size="sm" onClick={addBulk}>Add Students</Button>
+                    <Button size="sm" onClick={addBulk}>{t('Add Students')}</Button>
                   </div>
                 </Card>
 
                 <Card>
-                  <h2 className="font-bold text-primary-navy mb-3">Add a Single Student</h2>
+                  <h2 className="font-bold text-primary-navy mb-3">{t('Add a Single Student')}</h2>
                   <form onSubmit={addSingle} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <Input label="Name" value={sName} onChange={(e) => setSName(e.target.value)} required />
-                    <Input label="Email" type="email" value={sEmail} onChange={(e) => setSEmail(e.target.value)} required />
-                    <Input label="Department" value={sDept} onChange={(e) => setSDept(e.target.value)} required />
-                    <Input label="Roll Number" value={sRoll} onChange={(e) => setSRoll(e.target.value)} required />
-                    <Input label="Password (optional)" value={sPw} onChange={(e) => setSPw(e.target.value)} placeholder="auto-generated if blank" />
+                    <Input label={t('Name')} value={sName} onChange={(e) => setSName(e.target.value)} required />
+                    <Input label={t('Email')} type="email" value={sEmail} onChange={(e) => setSEmail(e.target.value)} required />
+                    <Input label={t('Department')} value={sDept} onChange={(e) => setSDept(e.target.value)} required />
+                    <Input label={t('Roll Number')} value={sRoll} onChange={(e) => setSRoll(e.target.value)} required />
+                    <Input label={t('Password (optional)')} value={sPw} onChange={(e) => setSPw(e.target.value)} placeholder={t('auto-generated if blank')} />
                     <div className="flex items-end">
-                      <Button type="submit" size="sm">Add Student</Button>
+                      <Button type="submit" size="sm">{t('Add Student')}</Button>
                     </div>
                   </form>
                 </Card>
 
                 {studentResults.length > 0 && (
                   <Card>
-                    <h2 className="font-bold text-primary-navy mb-3">Created Credentials</h2>
-                    <p className="text-xs text-ink-muted mb-2">Share these with students — passwords are shown only once.</p>
+                    <h2 className="font-bold text-primary-navy mb-3">{t('Created Credentials')}</h2>
+                    <p className="text-xs text-ink-muted mb-2">{t('Share these with students — passwords are shown only once.')}</p>
                     <div className="space-y-1 text-sm">
                       {studentResults.map((r, i) => (
                         <div key={i} className="border-b border-line pb-1">
-                          <span className="font-semibold">{r.email}</span> — {r.status === 'created' ? `password: ${r.password}` : r.reason}
+                          <span className="font-semibold">{r.email}</span> — {r.status === 'created' ? t('password: {{password}}', { password: r.password }) : r.reason}
                         </div>
                       ))}
                     </div>
@@ -345,12 +347,12 @@ export default function UniversityDashboard() {
               <Card key={pr.id} className="flex items-center justify-between gap-4">
                 <div>
                   <Link to={`/university/proposals/${pr.id}`} className="font-bold text-primary-navy hover:underline">{pr.title}</Link>
-                  <p className="text-xs text-ink-muted mt-1">Problem: {pr.problem_id}</p>
+                  <p className="text-xs text-ink-muted mt-1">{t('Problem: {{id}}', { id: pr.problem_id })}</p>
                 </div>
-                <Button size="sm" onClick={() => handleApprove(pr.id)} loading={busyId === pr.id}>Approve</Button>
+                <Button size="sm" onClick={() => handleApprove(pr.id)} loading={busyId === pr.id}>{t('Approve')}</Button>
               </Card>
             ))}
-            {submitted.length === 0 && <Card className="text-center py-12 text-ink-soft">No proposals awaiting approval.</Card>}
+            {submitted.length === 0 && <Card className="text-center py-12 text-ink-soft">{t('No proposals awaiting approval.')}</Card>}
           </div>
         )}
       </main>

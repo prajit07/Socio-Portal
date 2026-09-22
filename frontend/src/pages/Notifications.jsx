@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { notificationsApi } from '../api/client';
 import { Button, Card, Alert, PageLoader } from '../components/ui';
+import { useTranslation } from 'react-i18next';
 
 export default function Notifications() {
+  const { t } = useTranslation();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -15,7 +17,7 @@ export default function Notifications() {
       const res = await notificationsApi.list();
       setItems(res.data);
     } catch (e) {
-      setError(e.response?.data?.detail || 'Failed to load notifications.');
+      setError(e.response?.data?.detail || t('Failed to load notifications.'));
     } finally {
       setLoading(false);
     }
@@ -42,15 +44,15 @@ export default function Notifications() {
       <main className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-extrabold text-primary-navy">Notifications</h1>
-            <p className="text-ink-soft mt-1">{unread} unread</p>
+            <h1 className="text-2xl font-extrabold text-primary-navy">{t('Notifications')}</h1>
+            <p className="text-ink-soft mt-1">{t('{{count}} unread', { count: unread })}</p>
           </div>
-          {unread > 0 && <Button variant="secondary" size="sm" onClick={markAll}>Mark all read</Button>}
+          {unread > 0 && <Button variant="secondary" size="sm" onClick={markAll}>{t('Mark all read')}</Button>}
         </div>
 
         {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
         {loading ? <PageLoader /> : items.length === 0 ? (
-          <Card className="text-center py-12 text-ink-soft">You're all caught up.</Card>
+          <Card className="text-center py-12 text-ink-soft">{t("You're all caught up.")}</Card>
         ) : (
           <div className="space-y-3">
             {items.map((n) => (
@@ -64,10 +66,10 @@ export default function Notifications() {
                     </div>
                   </div>
                   {n.reference_id && (
-                    <Link to={`/problems/${n.reference_id}`} className="text-xs font-semibold text-primary hover:underline">View</Link>
+                    <Link to={`/problems/${n.reference_id}`} className="text-xs font-semibold text-primary hover:underline">{t('View')}</Link>
                   )}
                   {!n.is_read && (
-                    <button onClick={() => markRead(n.id)} className="text-xs font-semibold text-ink-muted hover:text-primary hover:underline">Mark read</button>
+                    <button onClick={() => markRead(n.id)} className="text-xs font-semibold text-ink-muted hover:text-primary hover:underline">{t('Mark read')}</button>
                   )}
                 </div>
               </Card>

@@ -9,6 +9,7 @@ import Navbar from '../components/Navbar';
 import { governmentApi } from '../api/client';
 import { Card, StatCard, Alert, CardSkeleton } from '../components/ui';
 import { asData } from '../lib/utils';
+import { useTranslation } from 'react-i18next';
 
 const COLORS = [
   '#1E5EFF', '#22C7F2', '#1B9C68', '#F59E0B', '#D64550', '#8B5CF6',
@@ -17,15 +18,17 @@ const COLORS = [
 
 const PRIORITY_COLORS = { low: '#8A94A6', medium: '#F59E0B', high: '#F97316', critical: '#D64550' };
 
-function ChartEmpty({ message = 'No data available.' }) {
+function ChartEmpty({ message }) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center justify-center h-[280px] text-ink-soft text-sm">
-      {message}
+      {message ?? t('No data available.')}
     </div>
   );
 }
 
 export default function GovAnalytics() {
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -37,7 +40,7 @@ export default function GovAnalytics() {
         const res = await governmentApi.analytics();
         setData(asData(res));
       } catch (e) {
-        setError(e.response?.data?.detail || 'Failed to load analytics.');
+        setError(e.response?.data?.detail || t('Failed to load analytics.'));
       } finally {
         setLoading(false);
       }
@@ -96,28 +99,28 @@ export default function GovAnalytics() {
       <main className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl font-extrabold text-primary-navy">Analytics Dashboard</h1>
-            <p className="text-ink-soft mt-1">Deep insights into societal innovation activity across all sectors.</p>
+            <h1 className="text-2xl font-extrabold text-primary-navy">{t('Analytics Dashboard')}</h1>
+            <p className="text-ink-soft mt-1">{t('Deep insights into societal innovation activity across all sectors.')}</p>
           </div>
           <div className="flex gap-3">
-            <Link to="/gov/dashboard" className="text-sm font-semibold text-primary hover:underline">&larr; KPI Dashboard</Link>
-            <Link to="/problems" className="text-sm font-semibold text-primary hover:underline">View Problems &rarr;</Link>
+            <Link to="/gov/dashboard" className="text-sm font-semibold text-primary hover:underline">{t('← KPI Dashboard')}</Link>
+            <Link to="/problems" className="text-sm font-semibold text-primary hover:underline">{t('View Problems →')}</Link>
           </div>
         </div>
 
         {error && <Alert variant="danger" className="mb-6">{error}</Alert>}
 
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-          <StatCard label="Total Problems" value={k.total_problems || 0} accent="primary" />
-          <StatCard label="Resolved" value={k.resolved || 0} accent="success" />
-          <StatCard label="Completion Rate" value={`${k.completion_rate || 0}%`} accent="primary" />
-          <StatCard label="Beneficiaries" value={(k.total_beneficiaries || 0).toLocaleString()} accent="cyan" />
-          <StatCard label="Impact Reports" value={k.impact_reports || 0} accent="success" />
+          <StatCard label={t('Total Problems')} value={k.total_problems || 0} accent="primary" />
+          <StatCard label={t('Resolved')} value={k.resolved || 0} accent="success" />
+          <StatCard label={t('Completion Rate')} value={`${k.completion_rate || 0}%`} accent="primary" />
+          <StatCard label={t('Beneficiaries')} value={(k.total_beneficiaries || 0).toLocaleString()} accent="cyan" />
+          <StatCard label={t('Impact Reports')} value={k.impact_reports || 0} accent="success" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <Card className="lg:col-span-2">
-            <h2 className="font-bold text-primary-navy mb-4">Monthly Problem Submissions</h2>
+            <h2 className="font-bold text-primary-navy mb-4">{t('Monthly Problem Submissions')}</h2>
             {monthlyData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
                 <AreaChart data={monthlyData}>
@@ -129,12 +132,12 @@ export default function GovAnalytics() {
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <ChartEmpty message="No monthly trend data." />
+              <ChartEmpty message={t('No monthly trend data.')} />
             )}
           </Card>
 
           <Card>
-            <h2 className="font-bold text-primary-navy mb-4">Status Breakdown</h2>
+            <h2 className="font-bold text-primary-navy mb-4">{t('Status Breakdown')}</h2>
             {statusData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
@@ -158,14 +161,14 @@ export default function GovAnalytics() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <ChartEmpty message="No status data." />
+              <ChartEmpty message={t('No status data.')} />
             )}
           </Card>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <Card>
-            <h2 className="font-bold text-primary-navy mb-4">Problems by District</h2>
+            <h2 className="font-bold text-primary-navy mb-4">{t('Problems by District')}</h2>
             {districtData.length > 0 ? (
               <ResponsiveContainer width="100%" height={Math.max(280, districtData.length * 36)}>
                 <BarChart data={districtData} layout="vertical" margin={{ left: 10, right: 20 }}>
@@ -177,12 +180,12 @@ export default function GovAnalytics() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <ChartEmpty message="No district data." />
+              <ChartEmpty message={t('No district data.')} />
             )}
           </Card>
 
           <Card>
-            <h2 className="font-bold text-primary-navy mb-4">Problems by Category</h2>
+            <h2 className="font-bold text-primary-navy mb-4">{t('Problems by Category')}</h2>
             {categoryData.length > 0 ? (
               <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={categoryData} margin={{ left: 0 }}>
@@ -198,14 +201,14 @@ export default function GovAnalytics() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <ChartEmpty message="No category data." />
+              <ChartEmpty message={t('No category data.')} />
             )}
           </Card>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <Card>
-            <h2 className="font-bold text-primary-navy mb-4">Priority Distribution</h2>
+            <h2 className="font-bold text-primary-navy mb-4">{t('Priority Distribution')}</h2>
             {priorityData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={priorityData}>
@@ -221,12 +224,12 @@ export default function GovAnalytics() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <ChartEmpty message="No priority data." />
+              <ChartEmpty message={t('No priority data.')} />
             )}
           </Card>
 
           <Card className="lg:col-span-2">
-            <h2 className="font-bold text-primary-navy mb-4">Category Trends (6 months)</h2>
+            <h2 className="font-bold text-primary-navy mb-4">{t('Category Trends (6 months)')}</h2>
             {catTrends.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
                 <LineChart data={mergedCatTrendData}>
@@ -250,16 +253,16 @@ export default function GovAnalytics() {
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <ChartEmpty message="No category trend data." />
+              <ChartEmpty message={t('No category trend data.')} />
             )}
           </Card>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <Card>
-            <h2 className="font-bold text-primary-navy mb-4">Collaboration Stages</h2>
+            <h2 className="font-bold text-primary-navy mb-4">{t('Collaboration Stages')}</h2>
             {collabStages.length === 0 ? (
-              <ChartEmpty message="No active collaborations." />
+              <ChartEmpty message={t('No active collaborations.')} />
             ) : collabStages.length < 3 ? (
               <div className="space-y-3 py-4">
                 {collabStages.map((s) => (
@@ -275,7 +278,7 @@ export default function GovAnalytics() {
                   <PolarGrid />
                   <PolarAngleAxis dataKey="stage" tick={{ fontSize: 11 }} />
                   <PolarRadiusAxis tick={{ fontSize: 10 }} />
-                  <Radar name="Collaborations" dataKey="count" stroke="#1E5EFF" fill="#1E5EFF" fillOpacity={0.3} />
+                  <Radar name={t('Collaborations')} dataKey="count" stroke="#1E5EFF" fill="#1E5EFF" fillOpacity={0.3} />
                   <Tooltip />
                 </RadarChart>
               </ResponsiveContainer>
@@ -283,14 +286,14 @@ export default function GovAnalytics() {
           </Card>
 
           <Card>
-            <h2 className="font-bold text-primary-navy mb-4">Completion Funnel</h2>
+            <h2 className="font-bold text-primary-navy mb-4">{t('Completion Funnel')}</h2>
             <div className="space-y-3 mt-4">
               {[
-                { label: 'Total Submitted', value: k.total_problems || 0, color: '#1E5EFF' },
-                { label: 'Open / In Review', value: k.open || 0, color: '#22C7F2' },
-                { label: 'Proposals', value: k.proposals || 0, color: '#8B5CF6' },
-                { label: 'Active Collaborations', value: k.active_collaborations || 0, color: '#F59E0B' },
-                { label: 'Resolved', value: k.resolved || 0, color: '#1B9C68' },
+                { label: t('Total Submitted'), value: k.total_problems || 0, color: '#1E5EFF' },
+                { label: t('Open / In Review'), value: k.open || 0, color: '#22C7F2' },
+                { label: t('Proposals'), value: k.proposals || 0, color: '#8B5CF6' },
+                { label: t('Active Collaborations'), value: k.active_collaborations || 0, color: '#F59E0B' },
+                { label: t('Resolved'), value: k.resolved || 0, color: '#1B9C68' },
               ].map((item) => {
                 const pct = k.total_problems ? Math.round((item.value / k.total_problems) * 100) : 0;
                 return (

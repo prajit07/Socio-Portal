@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import { governmentApi } from '../api/client';
 import { Card, StatCard, StatusBadge, Alert, CardSkeleton, ListSkeleton } from '../components/ui';
 import { asData } from '../lib/utils';
+import { useTranslation } from 'react-i18next';
 
 const STATUS_COLORS = {
   open: '#22C7F2',
@@ -33,6 +34,7 @@ async function fetchDashboardData() {
 }
 
 export default function GovernmentDashboard() {
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [boards, setBoards] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -52,7 +54,7 @@ export default function GovernmentDashboard() {
           setError('');
         }
       } catch (e) {
-        if (!cancelled) setError(e.response?.data?.detail || 'Failed to load analytics.');
+        if (!cancelled) setError(e.response?.data?.detail || t('Failed to load analytics.'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -68,7 +70,7 @@ export default function GovernmentDashboard() {
       setBoards(b);
       setError('');
     } catch (e) {
-      setError(e.response?.data?.detail || 'Failed to load analytics.');
+      setError(e.response?.data?.detail || t('Failed to load analytics.'));
     } finally {
       setRefreshing(false);
     }
@@ -111,17 +113,17 @@ export default function GovernmentDashboard() {
       <main className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-extrabold text-primary-navy">Government Dashboard</h1>
-            <p className="text-ink-soft mt-1">Real-time oversight of all societal innovation activity.</p>
+            <h1 className="text-2xl font-extrabold text-primary-navy">{t('Government Dashboard')}</h1>
+            <p className="text-ink-soft mt-1">{t('Real-time oversight of all societal innovation activity.')}</p>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/gov/analytics" className="text-sm font-semibold text-primary hover:underline">View Analytics &rarr;</Link>
+            <Link to="/gov/analytics" className="text-sm font-semibold text-primary hover:underline">{t('View Analytics →')}</Link>
             <button
               onClick={handleRefresh}
               disabled={refreshing}
               className="rounded-btn border border-line px-4 py-2 text-sm font-semibold text-ink-soft hover:bg-bg-soft transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {refreshing ? 'Refreshing...' : 'Refresh'}
+              {refreshing ? t('Refreshing...') : t('Refresh')}
             </button>
           </div>
         </div>
@@ -129,21 +131,21 @@ export default function GovernmentDashboard() {
         {error && <Alert variant="danger" className="mt-4">{error}</Alert>}
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 my-6">
-          <StatCard label="Total Problems" value={k.total_problems || 0} accent="primary" />
-          <StatCard label="Open" value={k.open || 0} accent="cyan" />
-          <StatCard label="Resolved" value={k.resolved || 0} accent="success" />
-          <StatCard label="Active Collaborations" value={k.active_collaborations || 0} accent="primary" />
+          <StatCard label={t('Total Problems')} value={k.total_problems || 0} accent="primary" />
+          <StatCard label={t('Open')} value={k.open || 0} accent="cyan" />
+          <StatCard label={t('Resolved')} value={k.resolved || 0} accent="success" />
+          <StatCard label={t('Active Collaborations')} value={k.active_collaborations || 0} accent="primary" />
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <StatCard label="Proposals" value={k.proposals || 0} accent="cyan" />
-          <StatCard label="Universities" value={k.universities || 0} accent="success" />
-          <StatCard label="Industries" value={k.industries || 0} accent="primary" />
-          <StatCard label="Completion Rate" value={`${k.completion_rate || 0}%`} accent="success" />
+          <StatCard label={t('Proposals')} value={k.proposals || 0} accent="cyan" />
+          <StatCard label={t('Universities')} value={k.universities || 0} accent="success" />
+          <StatCard label={t('Industries')} value={k.industries || 0} accent="primary" />
+          <StatCard label={t('Completion Rate')} value={`${k.completion_rate || 0}%`} accent="success" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
-            <h2 className="font-bold text-primary-navy mb-4">Status Breakdown</h2>
+            <h2 className="font-bold text-primary-navy mb-4">{t('Status Breakdown')}</h2>
             <div className="space-y-3">
               {(data?.by_status || []).map((x) => (
                 <div key={x.status} className="flex items-center gap-3">
@@ -161,13 +163,13 @@ export default function GovernmentDashboard() {
                 </div>
               ))}
               {(!data?.by_status || data.by_status.length === 0) && (
-                <p className="text-ink-soft text-sm py-4 text-center">No status data available.</p>
+                <p className="text-ink-soft text-sm py-4 text-center">{t('No status data available.')}</p>
               )}
             </div>
           </Card>
 
           <Card>
-            <h2 className="font-bold text-primary-navy mb-4">By Category</h2>
+            <h2 className="font-bold text-primary-navy mb-4">{t('By Category')}</h2>
             <div className="space-y-3">
               {(data?.by_category || []).map((x, i) => (
                 <div key={x.category} className="flex items-center gap-3">
@@ -185,7 +187,7 @@ export default function GovernmentDashboard() {
                 </div>
               ))}
               {(!data?.by_category || data.by_category.length === 0) && (
-                <p className="text-ink-soft text-sm py-4 text-center">No category data available.</p>
+                <p className="text-ink-soft text-sm py-4 text-center">{t('No category data available.')}</p>
               )}
             </div>
           </Card>
@@ -193,7 +195,7 @@ export default function GovernmentDashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
           <Card>
-            <h2 className="font-bold text-primary-navy mb-4">Top Universities</h2>
+            <h2 className="font-bold text-primary-navy mb-4">{t('Top Universities')}</h2>
             <div className="space-y-2">
               {visibleUnis.map((u, i) => (
                 <div key={u.id} className="flex items-center justify-between border-b border-line pb-2 last:border-0">
@@ -202,13 +204,13 @@ export default function GovernmentDashboard() {
                     <span className="font-semibold text-primary-navy truncate">{u.name}</span>
                   </div>
                   <span className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs text-ink-muted">{u.member_count ?? 0} members</span>
-                    {u.verified && <span className="text-xs text-tag-success font-semibold">verified</span>}
+                    <span className="text-xs text-ink-muted">{t('{{count}} members', { count: u.member_count ?? 0 })}</span>
+                    {u.verified && <span className="text-xs text-tag-success font-semibold">{t('verified')}</span>}
                   </span>
                 </div>
               ))}
               {universities.length === 0 && (
-                <p className="text-ink-soft text-sm py-4 text-center">No universities yet.</p>
+                <p className="text-ink-soft text-sm py-4 text-center">{t('No universities yet.')}</p>
               )}
             </div>
             {universities.length > PREVIEW_COUNT && (
@@ -216,13 +218,13 @@ export default function GovernmentDashboard() {
                 onClick={() => setShowAllUnis((v) => !v)}
                 className="mt-3 w-full rounded-btn border border-line-soft px-3 py-2 text-sm font-semibold text-primary hover:bg-bg-soft transition-colors"
               >
-                {showAllUnis ? 'View Less' : `View More (${universities.length - PREVIEW_COUNT})`}
+                {showAllUnis ? t('View Less') : t('View More ({{count}})', { count: universities.length - PREVIEW_COUNT })}
               </button>
             )}
           </Card>
 
           <Card>
-            <h2 className="font-bold text-primary-navy mb-4">Top Industries</h2>
+            <h2 className="font-bold text-primary-navy mb-4">{t('Top Industries')}</h2>
             <div className="space-y-2">
               {visibleInds.map((u, i) => (
                 <div key={u.id} className="flex items-center justify-between border-b border-line pb-2 last:border-0">
@@ -231,13 +233,13 @@ export default function GovernmentDashboard() {
                     <span className="font-semibold text-primary-navy truncate">{u.name}</span>
                   </div>
                   <span className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs text-ink-muted">{u.collaboration_count ?? 0} collabs</span>
+                    <span className="text-xs text-ink-muted">{t('{{count}} collabs', { count: u.collaboration_count ?? 0 })}</span>
                     {u.type && <span className="text-xs text-ink-muted">{u.type}</span>}
                   </span>
                 </div>
               ))}
               {industries.length === 0 && (
-                <p className="text-ink-soft text-sm py-4 text-center">No industries yet.</p>
+                <p className="text-ink-soft text-sm py-4 text-center">{t('No industries yet.')}</p>
               )}
             </div>
             {industries.length > PREVIEW_COUNT && (
@@ -245,7 +247,7 @@ export default function GovernmentDashboard() {
                 onClick={() => setShowAllInds((v) => !v)}
                 className="mt-3 w-full rounded-btn border border-line-soft px-3 py-2 text-sm font-semibold text-primary hover:bg-bg-soft transition-colors"
               >
-                {showAllInds ? 'View Less' : `View More (${industries.length - PREVIEW_COUNT})`}
+                {showAllInds ? t('View Less') : t('View More ({{count}})', { count: industries.length - PREVIEW_COUNT })}
               </button>
             )}
           </Card>

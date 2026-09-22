@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { APIProvider, Map, Marker, Pin } from '@vis.gl/react-google-maps';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -32,6 +33,7 @@ function toLatLng(e) {
  *   - Automatic reverse geocoding on every pin drop / GPS fix to fill address box
  */
 export default function LocationPicker({ position, setPosition, address, setAddress }) {
+  const { t } = useTranslation();
   const [geoLoading, setGeoLoading] = useState(false);
   const [markLoading, setMarkLoading] = useState(false);
   const [error, setError] = useState('');
@@ -67,7 +69,7 @@ export default function LocationPicker({ position, setPosition, address, setAddr
   // "Use Current Location" button handler
   const handleCurrentLocation = () => {
     if (!navigator.geolocation) {
-      setError('Geolocation is not supported by your browser.');
+      setError(t('Geolocation is not supported by your browser.'));
       return;
     }
     setGeoLoading(true);
@@ -82,7 +84,7 @@ export default function LocationPicker({ position, setPosition, address, setAddr
         setGeoLoading(false);
       },
       () => {
-        setError('Could not get your location. Please check browser permissions.');
+        setError(t('Could not get your location. Please check browser permissions.'));
         setGeoLoading(false);
       },
       { enableHighAccuracy: true, timeout: 10000 }
@@ -93,7 +95,7 @@ export default function LocationPicker({ position, setPosition, address, setAddr
   const handleMarkOnMap = async () => {
     const query = searchInput.trim() || address.trim();
     if (!query) {
-      setError('Please enter an address to search.');
+      setError(t('Please enter an address to search.'));
       return;
     }
     setMarkLoading(true);
@@ -106,7 +108,7 @@ export default function LocationPicker({ position, setPosition, address, setAddr
         { headers }
       );
       if (!res.ok) {
-        setError('Address not found. Try a more specific address.');
+        setError(t('Address not found. Try a more specific address.'));
         return;
       }
       const data = await res.json();
@@ -116,7 +118,7 @@ export default function LocationPicker({ position, setPosition, address, setAddr
       setMapCenter({ lat, lng });
       if (searchInput.trim()) setAddress(searchInput.trim());
     } catch {
-      setError('Failed to search address. Please check your connection.');
+      setError(t('Failed to search address. Please check your connection.'));
     } finally {
       setMarkLoading(false);
     }
@@ -127,13 +129,13 @@ export default function LocationPicker({ position, setPosition, address, setAddr
       {/* Address input row with "Mark on Map" button */}
       <div>
         <label className="block text-sm font-semibold text-ink mb-1.5">
-          Address
+          {t('Address')}
         </label>
         <div className="flex gap-2">
           <input
             type="text"
             className="flex-1 px-4 py-2.5 rounded-lg border border-line bg-white text-ink placeholder-ink-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-sm"
-            placeholder="e.g. Anna Salai, Chennai, Tamil Nadu"
+            placeholder={t('e.g. Anna Salai, Chennai, Tamil Nadu')}
             value={address}
             onChange={(e) => {
               setAddress(e.target.value);
@@ -157,7 +159,7 @@ export default function LocationPicker({ position, setPosition, address, setAddr
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             )}
-            Place on Map
+            {t('Place on Map')}
           </button>
         </div>
       </div>
@@ -179,7 +181,7 @@ export default function LocationPicker({ position, setPosition, address, setAddr
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06z" />
           </svg>
         )}
-        {geoLoading ? 'Detecting location…' : '📍 Use My Current Location'}
+        {geoLoading ? t('Detecting location…') : t('📍 Use My Current Location')}
       </button>
 
       {error && (
@@ -206,7 +208,7 @@ export default function LocationPicker({ position, setPosition, address, setAddr
       </div>
 
       <p className="text-xs text-ink-muted">
-        Click anywhere on the map to drop a pin, or use the buttons above to set your location.
+        {t('Click anywhere on the map to drop a pin, or use the buttons above to set your location.')}
         {position && (
           <span className="ml-1 font-mono text-ink-muted">
             ({position[0].toFixed(5)}, {position[1].toFixed(5)})

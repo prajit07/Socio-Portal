@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 
 export function Modal({ open, onClose, title, children, footer, size = 'md' }) {
+  const { t } = useTranslation();
   const ref = useRef(null);
   useEffect(() => {
     function onKey(e) {
@@ -23,7 +25,7 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }) {
         {title && (
           <div className="flex items-center justify-between px-6 py-4 border-b border-line">
             <h3 className="text-lg font-bold text-primary-navy">{title}</h3>
-            <button onClick={onClose} className="p-1 rounded hover:bg-bg-soft" aria-label="Close">
+            <button onClick={onClose} className="p-1 rounded hover:bg-bg-soft" aria-label={t('Close')}>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -39,6 +41,7 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }) {
 }
 
 export function ConfirmDialog({ open, title, message, confirmLabel = 'Confirm', onConfirm, onCancel, danger = false }) {
+  const { t } = useTranslation();
   return (
     <Modal
       open={open}
@@ -48,13 +51,13 @@ export function ConfirmDialog({ open, title, message, confirmLabel = 'Confirm', 
       footer={
         <>
           <button onClick={onCancel} className="px-4 py-2.5 text-sm font-bold rounded-btn border border-line-soft hover:bg-bg-soft">
-            Cancel
+            {t('Cancel')}
           </button>
           <button
             onClick={onConfirm}
             className={`px-4 py-2.5 text-sm font-bold rounded-btn text-white ${danger ? 'bg-tag-danger hover:brightness-95' : 'bg-primary hover:bg-primary-dark'}`}
           >
-            {confirmLabel}
+            {t(confirmLabel)}
           </button>
         </>
       }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams, useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { proposalsApi } from '../api/client';
@@ -7,6 +8,7 @@ import { Button, Card, Input, TextArea, Alert, PageLoader } from '../components/
 const asData = (r) => (r && r.data !== undefined ? r.data : r);
 
 export default function ProposalEditor() {
+  const { t } = useTranslation();
   const [params] = useSearchParams();
   const { id: paramId } = useParams();
   const navigate = useNavigate();
@@ -41,7 +43,7 @@ export default function ProposalEditor() {
           document_urls: Array.isArray(p.document_urls) ? p.document_urls.join(', ') : (p.document_urls || ''),
         });
       } catch (e) {
-        setError(e.response?.data?.detail || 'Failed to load proposal.');
+        setError(e.response?.data?.detail || t('Failed to load proposal.'));
       } finally {
         setLoading(false);
       }
@@ -78,7 +80,7 @@ export default function ProposalEditor() {
         navigate('/university/dashboard');
       }
     } catch (e) {
-      setError(e.response?.data?.detail || 'Failed to save proposal.');
+      setError(e.response?.data?.detail || t('Failed to save proposal.'));
     } finally {
       setSaving(false);
     }
@@ -90,13 +92,13 @@ export default function ProposalEditor() {
     <div className="min-h-screen bg-bg-soft">
       <Navbar />
       <main className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-8">
-        <Link to="/university/dashboard" className="text-sm text-primary hover:underline">← Back to dashboard</Link>
+        <Link to="/university/dashboard" className="text-sm text-primary hover:underline">{t('← Back to dashboard')}</Link>
         <h1 className="text-2xl font-extrabold text-primary-navy mt-3">
-          {isEdit ? 'Edit Proposal' : 'New Proposal'}
+          {isEdit ? t('Edit Proposal') : t('New Proposal')}
         </h1>
         {!isEdit && (
           <p className="text-sm text-ink-muted mt-1">
-            Team: {teamId || '—'} · Problem: {problemId || '—'}
+            {t('Team: {{teamId}} · Problem: {{problemId}}', { teamId: teamId || '—', problemId: problemId || '—' })}
           </p>
         )}
 
@@ -104,14 +106,14 @@ export default function ProposalEditor() {
 
         <Card className="mt-4">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Input label="Title" value={form.title} onChange={update('title')} placeholder="Proposal title" required />
-            <TextArea label="Description" rows={6} value={form.description} onChange={update('description')} placeholder="Describe your solution" required />
-            <Input label="Estimated Budget" type="number" value={form.estimated_budget} onChange={update('estimated_budget')} placeholder="e.g. 50000" />
-            <Input label="Estimated Timeline" value={form.estimated_timeline} onChange={update('estimated_timeline')} placeholder="e.g. 3 months" />
-            <Input label="Document URLs (comma separated, optional)" value={form.document_urls} onChange={update('document_urls')} placeholder="https://..." />
+            <Input label={t('Title')} value={form.title} onChange={update('title')} placeholder={t('Proposal title')} required />
+            <TextArea label={t('Description')} rows={6} value={form.description} onChange={update('description')} placeholder={t('Describe your solution')} required />
+            <Input label={t('Estimated Budget')} type="number" value={form.estimated_budget} onChange={update('estimated_budget')} placeholder={t('e.g. 50000')} />
+            <Input label={t('Estimated Timeline')} value={form.estimated_timeline} onChange={update('estimated_timeline')} placeholder={t('e.g. 3 months')} />
+            <Input label={t('Document URLs (comma separated, optional)')} value={form.document_urls} onChange={update('document_urls')} placeholder={t('https://...')} />
             <div className="flex justify-end gap-3">
-              <Button type="button" variant="secondary" onClick={() => navigate(-1)}>Cancel</Button>
-              <Button type="submit" loading={saving}>{isEdit ? 'Save Changes' : 'Create & Submit'}</Button>
+              <Button type="button" variant="secondary" onClick={() => navigate(-1)}>{t('Cancel')}</Button>
+              <Button type="submit" loading={saving}>{isEdit ? t('Save Changes') : t('Create & Submit')}</Button>
             </div>
           </form>
         </Card>

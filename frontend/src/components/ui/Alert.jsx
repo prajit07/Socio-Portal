@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const styles = {
   info: 'bg-bg-soft border-line-soft text-primary-navy',
@@ -8,6 +9,7 @@ const styles = {
 };
 
 export function Alert({ children, variant = 'info', dismissible = false, onDismiss, className = '' }) {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(true);
   if (!visible) return null;
   return (
@@ -17,7 +19,7 @@ export function Alert({ children, variant = 'info', dismissible = false, onDismi
         <button
           onClick={() => (onDismiss ? onDismiss() : setVisible(false))}
           className="flex-shrink-0 p-1 rounded hover:bg-black/10 transition-colors"
-          aria-label="Dismiss"
+          aria-label={t('Dismiss')}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

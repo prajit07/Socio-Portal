@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { universitiesApi } from '../api/client';
 import { Input } from './ui';
 
 export default function InstitutionSelect({ value, label, onChange, error }) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState(label || '');
   const [all, setAll] = useState([]); // [{id, name}]
   const [loaded, setLoaded] = useState(false);
@@ -71,7 +73,7 @@ export default function InstitutionSelect({ value, label, onChange, error }) {
 
   return (
     <div className="relative" ref={boxRef}>
-      <label className="block text-sm font-semibold text-ink mb-2">Your Institution</label>
+      <label className="block text-sm font-semibold text-ink mb-2">{t('Your Institution')}</label>
       <Input
         value={query}
         onChange={(e) => {
@@ -80,20 +82,20 @@ export default function InstitutionSelect({ value, label, onChange, error }) {
           if (!e.target.value) onChange('', '');
         }}
         onFocus={() => setOpen(true)}
-        placeholder="Search your college / university…"
+        placeholder={t('Search your college / university…')}
         required
         error={error}
       />
       {open && query.trim().length >= 2 && (
         <div className="absolute z-20 mt-1 w-full max-h-64 overflow-auto rounded-btn border border-line bg-white shadow-lg">
-          {!loaded && <div className="px-3 py-2 text-sm text-ink-muted">Loading directory…</div>}
+          {!loaded && <div className="px-3 py-2 text-sm text-ink-muted">{t('Loading directory…')}</div>}
           {loaded && results.length === 0 && (
             <button
               type="button"
               onClick={addMissing}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-bg-soft border-b border-line"
             >
-              Can't find it? <span className="font-semibold text-primary">Add &ldquo;{query.trim()}&rdquo;</span>
+              {t("Can't find it?")} <span className="font-semibold text-primary">{t('Add "{{name}}"', { name: query.trim() })}</span>
             </button>
           )}
           {results.map((inst) => (
@@ -112,12 +114,12 @@ export default function InstitutionSelect({ value, label, onChange, error }) {
               onClick={addMissing}
               className="block w-full text-left px-3 py-2 text-sm hover:bg-bg-soft text-ink-muted"
             >
-              Not listed? <span className="font-semibold text-primary">Add &ldquo;{query.trim()}&rdquo;</span>
+              {t('Not listed?')} <span className="font-semibold text-primary">{t('Add "{{name}}"', { name: query.trim() })}</span>
             </button>
           )}
         </div>
       )}
-      {value && <p className="mt-1 text-xs text-ink-muted">Selected: <span className="font-semibold">{label}</span></p>}
+      {value && <p className="mt-1 text-xs text-ink-muted">{t('Selected:')} <span className="font-semibold">{label}</span></p>}
     </div>
   );
 }
