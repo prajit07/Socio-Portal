@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { problemsApi, teamsApi, universitiesApi } from '../api/client';
 import { Button, Card, Input, Select, Alert, PageLoader } from '../components/ui';
+import InstitutionSelect from '../components/InstitutionSelect';
 
 const asData = (r) => (r && r.data !== undefined ? r.data : r);
 const trunc = (s, n = 60) => (s && s.length > n ? `${s.slice(0, n - 1)}…` : s || '');
@@ -34,6 +35,12 @@ export default function TeamCreate() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  // self-link flow
+  const [linkInstId, setLinkInstId] = useState('');
+  const [linkInstName, setLinkInstName] = useState('');
+  const [linkDept, setLinkDept] = useState('');
+  const [linkRoll, setLinkRoll] = useState('');
+  const [linking, setLinking] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -84,6 +91,30 @@ export default function TeamCreate() {
     }
   };
 
+  const doSelfLink = async (e) => {
+    e.preventDefault();
+    if (!linkInstId) {
+      setError(t('Search and select your institute to link it.'));
+      return;
+    }
+    setLinking(true);
+    setError('');
+    try {
+      await universitiesApi.selfLink(linkInstId, {
+        department: linkDept.trim() || undefined,
+        roll_number: linkRoll.trim() || undefined,
+      });
+      const mine = asData(await universitiesApi.memberOf()) || [];
+      setUnis(mine);
+      setUniversityId(mine.length === 1 ? mine[0].id : '');
+      setLinkInstId(''); setLinkInstName(''); setLinkDept(''); setLinkRoll('');
+    } catch (e2) {
+      setError(e2.response?.data?.detail || t('Failed to link institute.'));
+    } finally {
+      setLinking(false);
+    }
+  };
+
   if (loading) return <PageLoader />;
 
   const canSubmit = name.trim() && problemId && universityId && !busy;
@@ -104,10 +135,35 @@ export default function TeamCreate() {
             </Link>
           </Alert>
         )}
-        {unis.length === 0 && user?.role !== 'university_admin' && (
-          <Alert variant="warning" className="my-4">
-            {t("You aren't linked to any institute yet. Ask your institute SPOC to add you, or re-register with your institution selected.")}
-          </Alert>
+        {unis.length === 0 && ['student', 'faculty'].includes(user?.role) && (
+          <Card className="my-4">
+            <h2 className="font-bold text-primary-navy mb-1">{t('Link your institute to join the challenge')}</h2>
+            <p className="text-sm text-ink-soft mb-4">
+              {t('Teams are formed around your institute. Link yourself in a few seconds — your institute will see you in its roster.')}
+            </p>
+            <form onSubmit={doSelfLink} className="space-y-4">
+              <InstitutionSelect
+                value={linkInstId}
+                label={linkInstName}
+                onChange={(id, name) => {
+                  setLinkInstId(id || '');
+                  setLinkInstName(name || '');
+                }}
+                error={undefined}
+              />
+              {user?.role === 'student' && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Input label={t('Department')} value={linkDept} onChange={(e) => setLinkDept(e.target.value)} placeholder={t('e.g. Computer Science')} />
+                  <Input label={t('Roll Number')} value={linkRoll} onChange={(e) => setLinkRoll(e.target.value)} placeholder={t('e.g. 21CS0123')} />
+                </div>
+              )}
+              <div className="flex justify-end">
+                <Button type="submit" loading={linking} disabled={!linkInstId}>
+                  {t('Link My Institute')}
+                </Button>
+              </div>
+            </form>
+          </Card>
         )}
         {problems.length === 0 && (
           <Alert variant="warning" className="my-4">{t('No problems available to form a team for yet.')}</Alert>

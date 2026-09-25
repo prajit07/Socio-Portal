@@ -23,7 +23,8 @@ class TeamOut(BaseModel):
 
 
 class AddMemberIn(BaseModel):
-    user_id: str
+    user_id: Optional[str] = None
+    email: Optional[str] = None
     role: Optional[str] = None
 
 

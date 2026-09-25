@@ -3,6 +3,7 @@ import string
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -12,6 +13,7 @@ from app.models.user import User
 from app.models.org import University, UniversityMember
 from app.models.enums import RoleEnum
 from app.schemas.org import UniversityCreate, UniversityOut, UniversityMemberCreate, StudentBulkAdd, UniversitySuggest
+from app.services.notification_service import create_notification
 
 
 router = APIRouter(prefix="/universities", tags=["universities"])
@@ -128,6 +130,51 @@ def my_memberships(
         {**UniversityOut.model_validate(u).model_dump(mode="json"), "member_role": role}
         for u, role in rows
     ]
+
+
+class SelfLinkIn(BaseModel):
+    department: Optional[str] = None
+    roll_number: Optional[str] = None
+
+
+@router.post("/{university_id}/self-link", response_model=dict)
+def self_link_institute(
+    university_id: str,
+    payload: SelfLinkIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Let a student/faculty member link themselves to an institute without
+    waiting for the SPOC to add them. The institute still verifies its roster
+    (the member row is visible to the institute admin), but team formation is
+    unblocked immediately."""
+    if current_user.role.value not in ("student", "faculty"):
+        raise HTTPException(status_code=403, detail="Only students and faculty can link themselves to an institute")
+    uni = db.get(University, university_id)
+    if not uni:
+        raise HTTPException(status_code=404, detail="University not found")
+    existing = (
+        db.query(UniversityMember)
+        .filter(UniversityMember.university_id == university_id, UniversityMember.user_id == current_user.id)
+        .first()
+    )
+    if existing:
+        return {"ok": True, "already_member": True, "member_role": existing.member_role}
+    member = UniversityMember(
+        university_id=university_id,
+        user_id=current_user.id,
+        member_role="faculty_mentor" if current_user.role.value == "faculty" else "student",
+        department=payload.department,
+        roll_number=payload.roll_number,
+    )
+    db.add(member)
+    create_notification(
+        db,
+        user_id=current_user.id,
+        message=f"You are now linked to {uni.name}.",
+    )
+    db.commit()
+    return {"ok": True, "already_member": False, "member_role": member.member_role}
 
 
 @router.get("/{university_id}", response_model=UniversityOut)

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { problemsApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { Button, Card, CardContent, Badge, StatusBadge, PriorityBadge, Input, PageLoader } from '../components/ui';
@@ -11,6 +11,7 @@ export default function ProblemDetail(){
   const roleLabels = { citizen:t('Citizen'), student:t('Student'), faculty:t('Faculty'), university_admin:t('University Admin'), industry:t('Industry'), government:t('Government'), admin:t('Admin') };
   const { id } = useParams();
   const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [problem,setProblem]=useState(null);
   const [solutions,setSolutions]=useState([]);
   const [loading,setLoading]=useState(true);
@@ -31,6 +32,16 @@ export default function ProblemDetail(){
   // eslint-disable-next-line react/set-state-in-effect -- initial server data fetch
   useEffect(()=>{ if(!authLoading) fetchData(); },[authLoading,fetchData]);
   const canSolve = user && ['student','faculty','university_admin','industry','admin'].includes(user.role);
+  // University roles propose through the team pipeline (institute-linked teams →
+  // proposals → industry). Industry/admin still use the inline solution form.
+  const isUniSolver = user && ['student','faculty','university_admin'].includes(user.role);
+  const handlePropose = () => {
+    if (isUniSolver) {
+      navigate(`/university/teams/new?problemId=${id}`);
+      return;
+    }
+    setShowForm(true);
+  };
   const handleSubmit=async(e)=>{
     e.preventDefault(); setSubmitting(true);
     try{
@@ -71,7 +82,7 @@ export default function ProblemDetail(){
         <Card className="mt-6">
           <div className="p-6 border-b flex justify-between items-center">
             <h2 className="text-xl font-bold text-gray-900">{t('Solutions')} <span className="text-gray-500 font-normal">({solutions.length})</span></h2>
-            {canSolve && !showForm && <Button variant="success" onClick={()=>setShowForm(true)}><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>{t('Propose Solution')}</Button>}
+            {canSolve && !showForm && <Button variant="success" onClick={handlePropose}><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>{t('Propose Solution')}</Button>}
           </div>
           {showForm&&<div className="p-6 border-b bg-emerald-50/50"><h3 className="font-semibold mb-4">{t('Propose a Solution')}</h3><form onSubmit={handleSubmit} className="space-y-4">
             <Input label={t('Title *')} value={form.title} onChange={e=>setForm({...form,title:e.target.value})} required/>

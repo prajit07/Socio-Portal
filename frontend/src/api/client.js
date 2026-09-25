@@ -108,6 +108,7 @@ export const universitiesApi = {
   memberOf: () => api.get('/universities/member-of'),
   create: (data) => api.post('/universities', data),
   get: (id) => api.get(`/universities/${id}`),
+  selfLink: (id, data = {}) => api.post(`/universities/${id}/self-link`, data),
   addMember: (id, data) => api.post(`/universities/${id}/members`, data),
   members: (id) => api.get(`/universities/${id}/members`),
   listStudents: (id) => api.get(`/universities/${id}/students`),
@@ -122,6 +123,11 @@ export const teamsApi = {
   list: () => api.get('/teams'),
   get: (id) => api.get(`/teams/${id}`),
   addMember: (id, data) => api.post(`/teams/${id}/members`, data),
+};
+
+// Phase 4 — Collaboration search (find students/faculty to invite)
+export const usersApi = {
+  search: (q) => api.get('/users/search', { params: { q } }),
 };
 
 // Phase 4 — Proposals (solutions)

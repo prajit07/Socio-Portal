@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { teamsApi, problemsApi } from '../api/client';
+import { teamsApi, problemsApi, usersApi } from '../api/client';
 import { Button, Card, Input, Alert, PageLoader, StatusBadge } from '../components/ui';
 
 const asData = (r) => (r && r.data !== undefined ? r.data : r);
@@ -12,11 +12,13 @@ export default function TeamWorkspace() {
   const { id } = useParams();
   const [team, setTeam] = useState(null);
   const [problem, setProblem] = useState(null);
-  const [userId, setUserId] = useState('');
-  const [role, setRole] = useState('member');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [adding, setAdding] = useState(false);
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [email, setEmail] = useState('');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -36,15 +38,44 @@ export default function TeamWorkspace() {
   // eslint-disable-next-line react/set-state-in-effect -- initial server data fetch
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const handleAdd = async (e) => {
-    e.preventDefault();
-    if (!userId.trim()) return;
+  const onSearch = async (v) => {
+    setQuery(v);
+    setError('');
+    if (!v.trim() || v.trim().length < 2) { setResults([]); return; }
+    setSearching(true);
+    try {
+      const r = asData(await usersApi.search(v.trim())) || [];
+      const memberIds = new Set((team?.members || []).map((m) => m.user_id));
+      setResults(r.filter((u) => !memberIds.has(u.id)));
+    } catch (e) {
+      setError(e.response?.data?.detail || t('Search failed.'));
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleAddUser = async (userId, role = 'member') => {
     setAdding(true);
     setError('');
     try {
-      await teamsApi.addMember(id, { user_id: userId.trim(), role });
-      setUserId('');
-      setRole('member');
+      await teamsApi.addMember(id, { user_id: userId, role });
+      setQuery(''); setResults([]);
+      await fetchData();
+    } catch (e) {
+      setError(e.response?.data?.detail || t('Failed to add member.'));
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const handleAddByEmail = async (e) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setAdding(true);
+    setError('');
+    try {
+      await teamsApi.addMember(id, { email: email.trim(), role: 'member' });
+      setEmail('');
       await fetchData();
     } catch (e) {
       setError(e.response?.data?.detail || t('Failed to add member.'));
@@ -100,24 +131,49 @@ export default function TeamWorkspace() {
             </div>
 
             <Card>
-              <h3 className="font-bold text-primary-navy mb-3">{t('Add Member')}</h3>
-              <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-3">
-                <Input
-                  label={t('User ID')}
-                  value={userId}
-                  onChange={(e) => setUserId(e.target.value)}
-                  placeholder={t('User ID')}
-                  required
-                />
-                <Input
-                  label={t('Role')}
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  placeholder={t('member / lead')}
-                />
-                <div className="flex items-end">
-                  <Button type="submit" loading={adding}>{t('Add Member')}</Button>
+              <h3 className="font-bold text-primary-navy mb-3">{t('Invite Collaborators')}</h3>
+              <p className="text-xs text-ink-muted mb-3">
+                {t('Search by name or email to invite registered students/faculty to your team.')}
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 relative">
+                  <Input
+                    label={t('Search collaborators')}
+                    value={query}
+                    onChange={(e) => onSearch(e.target.value)}
+                    placeholder={t('Name or email…')}
+                  />
+                  {searching && <p className="text-xs text-ink-muted mt-1">{t('Searching…')}</p>}
+                  {results.length > 0 && (
+                    <div className="absolute z-20 mt-1 w-full max-h-64 overflow-auto rounded-btn border border-line bg-white shadow-lg">
+                      {results.map((u) => (
+                        <div key={u.id} className="flex items-center justify-between gap-2 px-3 py-2 hover:bg-bg-soft border-b border-line last:border-0">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-primary-navy truncate">{u.name}</p>
+                            <p className="text-xs text-ink-muted truncate">{u.email} · {t(u.role.replace('_', ' '))}</p>
+                          </div>
+                          <Button size="sm" onClick={() => handleAddUser(u.id)} loading={adding}>{t('Add')}</Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {query.trim().length >= 2 && !searching && results.length === 0 && (
+                    <p className="text-xs text-ink-muted mt-1">{t('No matches. Try inviting by email below.')}</p>
+                  )}
                 </div>
+              </div>
+
+              <form onSubmit={handleAddByEmail} className="flex flex-col sm:flex-row items-end gap-3 mt-4">
+                <div className="sm:flex-1 w-full">
+                  <Input
+                    label={t('Invite by email')}
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={t('teammate@college.edu')}
+                  />
+                </div>
+                <Button type="submit" loading={adding} disabled={!email.trim()}>{t('Add by Email')}</Button>
               </form>
             </Card>
           </>
