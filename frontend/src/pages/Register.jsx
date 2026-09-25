@@ -81,10 +81,6 @@ export default function Register() {
         university_id: role === 'student' && form.university_id ? form.university_id : undefined,
         department: role === 'student' ? form.department || undefined : undefined,
         roll_number: role === 'student' ? form.roll_number || undefined : undefined,
-        domain_tags:
-          role === 'industry' && form.domain_tags
-            ? form.domain_tags.split(',').map((s) => s.trim()).filter(Boolean)
-            : undefined,
       };
       await authApi.register(payload);
       await requestCode(form.email, 'register');
@@ -92,17 +88,22 @@ export default function Register() {
     } catch (err) {
       if (err.response?.status === 409) {
         setEmailExists(true);
-      } else if (!err.response) {
-        // No response at all (server asleep/restarting, CORS, offline) —
-        // never blame the email for a transport failure.
-        setError(t('Cannot reach the server. Is the backend running on :8000? Check the Network tab for a CORS/connection error.'));
-      } else {
+      } else if (err.response) {
         const detail = err.response.data?.detail;
         setError(
           Array.isArray(detail)
             ? detail.map((d) => d.msg || JSON.stringify(d)).join(' ')
             : detail || t('Registration failed. Email may already be used.')
         );
+      } else if (err.request) {
+        // A response was never received: server asleep/restarting, DNS, offline
+        // or a blocked CORS preflight. Only a real transport failure lands here.
+        setError(t('Cannot reach the server. Is the backend running on :8000? Check the Network tab for a CORS/connection error.'));
+      } else {
+        // No response AND no request — the failure happened before the network
+        // (a bug in this form), so don't blame the backend.
+        console.error('Registration failed before dispatch:', err);
+        setError(t('Something went wrong while submitting the form. Please try again.'));
       }
     } finally {
       setLoading(false);
@@ -246,12 +247,15 @@ export default function Register() {
                       onChange={update('industry_type')}
                       options={INDUSTRY_TYPES.map(it => ({ ...it, label: t(it.label) }))}
                     />
-                    <DomainMultiSelect
-                      label={t("Domain Expertise (comma separated)")}
-                      value={form.domain_tags}
-                      onChange={(tags) => setForm({ ...form, domain_tags: tags })}
-                      placeholder={t("e.g. education, healthcare, infrastructure")}
-                    />
+                    <div>
+                      <label className="block text-sm font-semibold text-ink mb-2">
+                        {t('Domain Expertise')}
+                      </label>
+                      <DomainMultiSelect
+                        selected={form.domain_tags}
+                        onChange={(tags) => setForm({ ...form, domain_tags: tags })}
+                      />
+                    </div>
                   </div>
                 )}
 
