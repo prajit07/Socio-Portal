@@ -47,6 +47,27 @@ export default function GovAnalytics() {
     })();
   }, []);
 
+  const k = data?.kpis || {};
+  const statusData = useMemo(() => (data?.by_status || []).map((x) => ({ name: x.status.replace(/_/g, ' '), value: x.count })), [data]);
+  const categoryData = useMemo(() => (data?.by_category || []).map((x) => ({ name: x.category, count: x.count })), [data]);
+  const priorityData = useMemo(() => (data?.by_priority || []).map((x) => ({ name: x.priority, count: x.count, fill: PRIORITY_COLORS[x.priority] || '#ccc' })), [data]);
+  const districtData = data?.by_district || [];
+  const monthlyData = data?.monthly_trends || [];
+  const catTrends = data?.category_trends || [];
+  const collabStages = data?.collaboration_stages || [];
+
+  const categoryTrendMonths = catTrends.length > 0 && catTrends[0].data
+    ? catTrends[0].data.map((d) => d.month)
+    : [];
+  const mergedCatTrendData = useMemo(() => categoryTrendMonths.map((month) => {
+    const point = { month };
+    catTrends.forEach((ct) => {
+      const match = ct.data.find((d) => d.month === month);
+      point[ct.category] = match ? match.count : 0;
+    });
+    return point;
+  }), [catTrends]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-bg-soft">
@@ -71,27 +92,6 @@ export default function GovAnalytics() {
       </div>
     );
   }
-
-  const k = data?.kpis || {};
-  const statusData = useMemo(() => (data?.by_status || []).map((x) => ({ name: x.status.replace(/_/g, ' '), value: x.count })), [data]);
-  const categoryData = useMemo(() => (data?.by_category || []).map((x) => ({ name: x.category, count: x.count })), [data]);
-  const priorityData = useMemo(() => (data?.by_priority || []).map((x) => ({ name: x.priority, count: x.count, fill: PRIORITY_COLORS[x.priority] || '#ccc' })), [data]);
-  const districtData = data?.by_district || [];
-  const monthlyData = data?.monthly_trends || [];
-  const catTrends = data?.category_trends || [];
-  const collabStages = data?.collaboration_stages || [];
-
-  const categoryTrendMonths = catTrends.length > 0 && catTrends[0].data
-    ? catTrends[0].data.map((d) => d.month)
-    : [];
-  const mergedCatTrendData = useMemo(() => categoryTrendMonths.map((month) => {
-    const point = { month };
-    catTrends.forEach((ct) => {
-      const match = ct.data.find((d) => d.month === month);
-      point[ct.category] = match ? match.count : 0;
-    });
-    return point;
-  }), [catTrends]);
 
   return (
     <div className="min-h-screen bg-bg-soft">
