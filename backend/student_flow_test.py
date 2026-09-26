@@ -152,12 +152,13 @@ def main():
         "problem_id": pid,
         "title": f"Solar-powered water ATMs {tag}",
         "description": f"Community-run solar water ATMs with IoT monitoring {tag}.",
-        "estimated_budget": "250000",
+        "estimated_budget": 250000,  # number — the exact shape the frontend sends (ProposalEditor Number())
         "estimated_timeline": "6 months",
         "document_urls": ["https://example.com/spec.pdf"],
     }, token=t2)
     log(f"create proposal (teammate): {s} {prop.get('id') if isinstance(prop, dict) else prop}")
-    assert_ok(s == 201 and isinstance(prop, dict) and prop.get("id"), "proposal drafted")
+    assert_ok(s == 201 and isinstance(prop, dict) and prop.get("id"), "proposal drafted (numeric budget accepted)")
+    assert_ok(isinstance(prop, dict) and prop.get("estimated_budget") == "250000", "numeric budget coerced to string")
     spid = prop["id"]
     # submit is author-scoped: a non-author team lead must be rejected
     s, d = req("POST", f"/proposals/{spid}/submit", token=t1)
