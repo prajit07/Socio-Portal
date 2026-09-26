@@ -127,6 +127,15 @@ class Solution(Base):
         default=SolutionStatusEnum.DRAFT,
         nullable=False
     )
+
+    # Review & forwarding trail (Phase 4/5)
+    approved_by: Mapped[Optional[str]] = mapped_column(String(20), ForeignKey("users.id"), nullable=True)
+    approved_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    forwarded_to_industry_id: Mapped[Optional[str]] = mapped_column(
+        String(20), ForeignKey("industries.id"), nullable=True
+    )
+    forwarded_by: Mapped[Optional[str]] = mapped_column(String(20), ForeignKey("users.id"), nullable=True)
+    forwarded_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     
     # Links
     github_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
@@ -143,7 +152,7 @@ class Solution(Base):
     
     # Author (solver)
     author_id: Mapped[str] = mapped_column(String(20), ForeignKey("users.id"), nullable=False)
-    author: Mapped["User"] = relationship(back_populates="solutions")
+    author: Mapped["User"] = relationship(foreign_keys=[author_id], back_populates="solutions")
     
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

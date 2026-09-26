@@ -56,6 +56,7 @@ class SolutionStatusEnum(str, enum.Enum):
     SUBMITTED = "submitted"
     UNDER_REVIEW = "under_review"
     ACCEPTED = "accepted"
+    FORWARDED = "forwarded"
     REJECTED = "rejected"
 
 

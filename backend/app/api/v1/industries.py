@@ -76,13 +76,24 @@ def update_industry(
 
 @router.get("/{industry_id}/proposals", response_model=list[dict])
 def industry_proposals(industry_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    """Posted solution proposals (submitted/accepted) for an industry to pick up."""
+    """Posted solution proposals for an industry to pick up.
+
+    Shows proposals forwarded to this industry, plus submitted/approved ones
+    that are still open for any industry (no explicit recipient set).
+    """
     ind = db.get(Industry, industry_id)
     if not ind:
         raise HTTPException(status_code=404, detail="Industry not found")
+    from sqlalchemy import or_
     proposals = (
         db.query(Solution)
-        .filter(Solution.status.in_([SolutionStatusEnum.SUBMITTED, SolutionStatusEnum.ACCEPTED]))
+        .filter(
+            Solution.status.in_([SolutionStatusEnum.SUBMITTED, SolutionStatusEnum.ACCEPTED, SolutionStatusEnum.FORWARDED]),
+            or_(
+                Solution.forwarded_to_industry_id.is_(None),
+                Solution.forwarded_to_industry_id == ind.id,
+            ),
+        )
         .order_by(Solution.created_at.desc())
         .all()
     )
@@ -96,6 +107,7 @@ def industry_proposals(industry_id: str, db: Session = Depends(get_db), current_
             "status": p.status.value if isinstance(p.status, SolutionStatusEnum) else p.status,
             "budget_estimate": p.estimated_budget,
             "timeline_estimate": p.estimated_timeline,
+            "forwarded_to_industry_id": p.forwarded_to_industry_id,
         }
         for p in proposals
     ]

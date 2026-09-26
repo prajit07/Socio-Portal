@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -7,11 +8,18 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.models.enums import RoleEnum, ProblemStatusEnum, SolutionStatusEnum
+from app.models.enums import (
+    RoleEnum,
+    ProblemStatusEnum,
+    SolutionStatusEnum,
+    NotificationTypeEnum,
+)
 from app.models.problem import Problem, Solution
 from app.models.user import User
 from app.models.team import Team, TeamMember
+from app.models.org import Industry, UniversityMember
 from app.schemas.problem import SolutionOut, SolutionListOut
+from app.services.notification_service import create_notification
 
 router = APIRouter(prefix="/proposals", tags=["proposals"])
 
@@ -99,6 +107,20 @@ def list_proposals(
         ).all()
         team_ids = [t[0] for t in team_ids]
         q = q.filter(Solution.team_id.in_(team_ids)) if team_ids else q.filter(False)
+    elif current_user.role.value == "university_admin":
+        # University admin scopes to proposals from teams of their own institutes.
+        owned_unis = db.query(UniversityMember.university_id).filter(
+            UniversityMember.user_id == current_user.id,
+            UniversityMember.member_role == "admin",
+        ).all()
+        owned = {u[0] for u in owned_unis}
+        team_ids = (
+            db.query(Team.id).filter(Team.university_id.in_(owned)).all()
+            if owned
+            else db.query(Team.id).filter(False).all()
+        )
+        team_ids = [t[0] for t in team_ids]
+        q = q.filter(Solution.team_id.in_(team_ids)) if team_ids else q.filter(False)
     return q.order_by(Solution.created_at.desc()).all()
 
 
@@ -153,6 +175,71 @@ def approve_proposal(proposal_id: str, db: Session = Depends(get_db), current_us
     if not proposal:
         raise HTTPException(status_code=404, detail="Proposal not found")
     proposal.status = SolutionStatusEnum.ACCEPTED
+    proposal.approved_by = current_user.id
+    proposal.approved_at = datetime.now(timezone.utc)
+    try:
+        create_notification(
+            db,
+            user_id=proposal.author_id,
+            message="Your proposal has been approved by your institute.",
+            notif_type=NotificationTypeEnum.STATUS_UPDATED,
+            reference_id=proposal.id,
+        )
+    except Exception:
+        pass
+    db.commit()
+    db.refresh(proposal)
+    return proposal
+
+
+class ProposalForward(BaseModel):
+    industry_id: Optional[str] = None
+
+
+@router.post("/{proposal_id}/forward", response_model=SolutionOut)
+def forward_proposal(
+    proposal_id: str,
+    payload: ProposalForward,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role.value not in ("faculty", "admin", "university_admin"):
+        raise HTTPException(status_code=403, detail="Only university admins, faculty or admins can forward proposals")
+    proposal = db.get(Solution, proposal_id)
+    if not proposal:
+        raise HTTPException(status_code=404, detail="Proposal not found")
+    if proposal.status not in (SolutionStatusEnum.SUBMITTED, SolutionStatusEnum.ACCEPTED):
+        raise HTTPException(status_code=400, detail="Only submitted or approved proposals can be forwarded to industries")
+    if payload.industry_id:
+        industry = db.get(Industry, payload.industry_id)
+        if not industry:
+            raise HTTPException(status_code=404, detail="Industry not found")
+        proposal.forwarded_to_industry_id = industry.id
+    proposal.forwarded_by = current_user.id
+    proposal.forwarded_at = datetime.now(timezone.utc)
+    proposal.status = SolutionStatusEnum.FORWARDED
+    # Notify industry partner and the student team.
+    try:
+        if payload.industry_id:
+            industry = db.get(Industry, payload.industry_id)
+            owner = db.get(User, industry.created_by) if industry and industry.created_by else None
+            if owner and owner.role.value == "industry":
+                create_notification(
+                    db,
+                    user_id=owner.id,
+                    message=f"New proposal forwarded to you by an institute.",
+                    notif_type=NotificationTypeEnum.PROPOSAL_RECEIVED,
+                    reference_id=proposal.id,
+                )
+        create_notification(
+            db,
+            user_id=proposal.author_id,
+            message="Your proposal has been forwarded to industry partners.",
+            notif_type=NotificationTypeEnum.STATUS_UPDATED,
+            reference_id=proposal.id,
+        )
+    except Exception:
+        pass
     db.commit()
     db.refresh(proposal)
     return proposal

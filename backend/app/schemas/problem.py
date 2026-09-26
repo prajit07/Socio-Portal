@@ -147,6 +147,11 @@ class SolutionOut(SolutionBase):
     status: SolutionStatusEnum
     problem_id: str
     author_id: Optional[str] = None
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    forwarded_by: Optional[str] = None
+    forwarded_at: Optional[datetime] = None
+    forwarded_to_industry_id: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

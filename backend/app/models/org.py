@@ -65,6 +65,7 @@ class Industry(Base):
     longitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     domain_tags: Mapped[Optional[list[str]]] = mapped_column(JSON, nullable=True)
     verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_by: Mapped[Optional[str]] = mapped_column(String(20), ForeignKey("users.id"), nullable=True)  # owning industry account
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
