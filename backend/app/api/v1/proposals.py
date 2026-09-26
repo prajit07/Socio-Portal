@@ -1,7 +1,8 @@
 from typing import Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+from typing import Union
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -20,17 +21,31 @@ class ProposalCreate(BaseModel):
     problem_id: str
     title: str = Field(min_length=1, max_length=200)
     description: str = Field(min_length=1)
-    estimated_budget: Optional[str] = None
+    estimated_budget: Optional[Union[str, int, float]] = None
     estimated_timeline: Optional[str] = None
     document_urls: Optional[List[str]] = None
+
+    @field_validator("estimated_budget", mode="before")
+    @classmethod
+    def coerce_budget(cls, v):
+        if v is None or isinstance(v, str):
+            return v
+        return str(int(v)) if isinstance(v, bool) is False and float(v).is_integer() else str(v)
 
 
 class ProposalUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
-    estimated_budget: Optional[str] = None
+    estimated_budget: Optional[Union[str, int, float]] = None
     estimated_timeline: Optional[str] = None
     document_urls: Optional[List[str]] = None
+
+    @field_validator("estimated_budget", mode="before")
+    @classmethod
+    def coerce_budget(cls, v):
+        if v is None or isinstance(v, str):
+            return v
+        return str(int(v)) if isinstance(v, bool) is False and float(v).is_integer() else str(v)
 
 
 @router.post("", response_model=SolutionOut, status_code=status.HTTP_201_CREATED)

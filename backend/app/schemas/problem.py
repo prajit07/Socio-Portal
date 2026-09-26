@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Union
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from app.models.enums import (
     RoleEnum,
@@ -110,10 +110,17 @@ class SolutionBase(BaseModel):
     approach: Optional[str] = None
     tech_stack: Optional[List[str]] = None
     estimated_timeline: Optional[str] = None
-    estimated_budget: Optional[str] = None
+    estimated_budget: Optional[Union[str, int, float]] = None
     github_url: Optional[str] = None
     demo_url: Optional[str] = None
     document_urls: Optional[List[str]] = None
+
+    @field_validator("estimated_budget", mode="before")
+    @classmethod
+    def coerce_budget(cls, v):
+        if v is None or isinstance(v, str):
+            return v
+        return str(int(v)) if isinstance(v, bool) is False and float(v).is_integer() else str(v)
 
 
 class SolutionCreate(SolutionBase):
@@ -126,7 +133,7 @@ class SolutionUpdate(BaseModel):
     approach: Optional[str] = None
     tech_stack: Optional[List[str]] = None
     estimated_timeline: Optional[str] = None
-    estimated_budget: Optional[str] = None
+    estimated_budget: Optional[Union[str, int, float]] = None
     github_url: Optional[str] = None
     demo_url: Optional[str] = None
     document_urls: Optional[List[str]] = None
