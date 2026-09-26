@@ -138,6 +138,7 @@ export const proposalsApi = {
   update: (id, data) => api.patch(`/proposals/${id}`, data),
   submit: (id) => api.post(`/proposals/${id}/submit`),
   approve: (id) => api.post(`/proposals/${id}/approve`),
+  forward: (id, data) => api.post(`/proposals/${id}/forward`, data),
 };
 
 // Phase 5 — Industries

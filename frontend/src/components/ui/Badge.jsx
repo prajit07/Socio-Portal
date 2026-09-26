@@ -17,6 +17,16 @@ const statusStyles = {
   closed: 'bg-bg-soft text-ink-soft',
 };
 
+// Solution (proposal) statuses
+const solutionStyles = {
+  draft: 'bg-bg-soft text-ink-soft',
+  submitted: 'bg-tag-warning text-white',
+  under_review: 'bg-tag-navy text-white',
+  accepted: 'bg-accent-cyan text-primary-navy',
+  forwarded: 'bg-tag-success text-white',
+  rejected: 'bg-tag-danger text-white',
+};
+
 const priorityStyles = {
   low: 'bg-bg-soft text-ink-soft',
   medium: 'bg-tag-warning text-white',
@@ -71,7 +81,7 @@ export function Badge({ children, variant = 'solid', color = 'primary', size = '
 
 export function StatusBadge({ status, size = 'md' }) {
   const { t } = useTranslation();
-  const cls = statusStyles[status] || 'bg-bg-soft text-ink-soft';
+  const cls = statusStyles[status] || solutionStyles[status] || 'bg-bg-soft text-ink-soft';
   const sizes = { sm: 'text-[11px] px-2 py-0.5', md: 'text-xs px-2.5 py-1' };
   return (
     <span className={`inline-flex items-center rounded-full font-semibold capitalize ${cls} ${sizes[size]}`}>

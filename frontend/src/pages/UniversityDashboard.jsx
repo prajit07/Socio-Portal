@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
-import { problemsApi, teamsApi, proposalsApi, universitiesApi } from '../api/client';
-import { Button, Card, StatusBadge, Alert, PageLoader, TextArea, Input } from '../components/ui';
+import { problemsApi, teamsApi, proposalsApi, universitiesApi, industriesApi } from '../api/client';
+import { Button, Card, StatusBadge, Alert, PageLoader, TextArea, Input, Select } from '../components/ui';
 import { useTranslation } from 'react-i18next';
 
 const asData = (r) => (r && r.data !== undefined ? r.data : r);
@@ -22,6 +22,7 @@ export default function UniversityDashboard() {
   const [students, setStudents] = useState([]);
   const [universityId, setUniversityId] = useState(null);
   const [studentResults, setStudentResults] = useState([]);
+  const [industries, setIndustries] = useState([]);
   const [bulkText, setBulkText] = useState('');
   const [sName, setSName] = useState('');
   const [sEmail, setSEmail] = useState('');
@@ -33,6 +34,7 @@ export default function UniversityDashboard() {
   const [uniDistrict, setUniDistrict] = useState('');
   const [uniState, setUniState] = useState('');
   const [creatingUni, setCreatingUni] = useState(false);
+  const [forwardTargets, setForwardTargets] = useState({}); // proposalId -> industryId
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -51,6 +53,7 @@ export default function UniversityDashboard() {
         setUniversityId(uid || null);
         if (uid) setStudents(asData(await universitiesApi.listStudents(uid)) || []);
       }
+      setIndustries(asData(await industriesApi.list()) || []);
     } catch (e) {
       setError(e.response?.data?.detail || t('Failed to load dashboard.'));
     } finally {
@@ -129,9 +132,22 @@ export default function UniversityDashboard() {
     setBusyId(id);
     try {
       await proposalsApi.approve(id);
-      setProposals((prev) => prev.map((x) => (x.id === id ? { ...x, status: 'approved' } : x)));
+      setProposals((prev) => prev.map((x) => (x.id === id ? { ...x, status: 'accepted' } : x)));
     } catch (e) {
       setError(e.response?.data?.detail || t('Failed to approve proposal.'));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleForward = async (id) => {
+    const industryId = forwardTargets[id];
+    setBusyId(`fwd:${id}`);
+    try {
+      await proposalsApi.forward(id, { industry_id: industryId || undefined });
+      setProposals((prev) => prev.map((x) => (x.id === id ? { ...x, status: 'forwarded' } : x)));
+    } catch (e) {
+      setError(e.response?.data?.detail || t('Failed to forward proposal.'));
     } finally {
       setBusyId(null);
     }
@@ -149,11 +165,11 @@ export default function UniversityDashboard() {
     { id: 'problems', label: t('Problem Feed') },
     { id: 'teams', label: t('My Teams') },
     { id: 'proposals', label: t('My Proposals') },
-    { id: 'approvals', label: t('Mentor Approvals') },
+    { id: 'approvals', label: t('Review & Forward') },
     ...(user?.role === 'university_admin' ? [{ id: 'students', label: t('Students') }] : []),
   ];
 
-  const submitted = proposals.filter((p) => p.status === 'submitted');
+  const reviewQueue = proposals.filter((p) => p.status === 'submitted' || p.status === 'accepted');
 
   return (
     <div className="min-h-screen bg-bg-soft">
@@ -188,8 +204,8 @@ export default function UniversityDashboard() {
               className={`px-4 py-2 rounded-btn text-sm font-semibold transition ${tab === tb.id ? 'bg-primary text-white' : 'bg-white text-ink-soft border border-line'}`}
             >
               {tb.label}
-              {tb.id === 'approvals' && submitted.length > 0 && (
-                <span className="ml-2 rounded-full bg-tag-danger text-white text-xs px-2 py-0.5">{submitted.length}</span>
+              {tb.id === 'approvals' && reviewQueue.length > 0 && (
+                <span className="ml-2 rounded-full bg-tag-danger text-white text-xs px-2 py-0.5">{reviewQueue.length}</span>
               )}
             </button>
           ))}
@@ -343,16 +359,32 @@ export default function UniversityDashboard() {
           </div>
         ) : (
           <div className="space-y-4">
-            {submitted.map((pr) => (
+            {reviewQueue.map((pr) => (
               <Card key={pr.id} className="flex items-center justify-between gap-4">
-                <div>
-                  <Link to={`/university/proposals/${pr.id}`} className="font-bold text-primary-navy hover:underline">{pr.title}</Link>
-                  <p className="text-xs text-ink-muted mt-1">{t('Problem: {{id}}', { id: pr.problem_id })}</p>
+                <div className="min-w-0">
+                  <Link to={`/university/proposals/${pr.id}`} className="font-bold text-primary-navy hover:underline line-clamp-2">{pr.title}</Link>
+                  <p className="text-xs text-ink-muted mt-1">{t('Problem: {{id}}', { id: pr.problem_id })} · <StatusBadge status={pr.status} size="sm" /></p>
                 </div>
-                <Button size="sm" onClick={() => handleApprove(pr.id)} loading={busyId === pr.id}>{t('Approve')}</Button>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
+                  {pr.status === 'submitted' && (
+                    <Button size="sm" onClick={() => handleApprove(pr.id)} loading={busyId === pr.id}>{t('Approve')}</Button>
+                  )}
+                  <Select
+                    className="w-full sm:w-56"
+                    value={forwardTargets[pr.id] || ''}
+                    onChange={(e) => setForwardTargets((prev) => ({ ...prev, [pr.id]: e.target.value }))}
+                    options={[
+                      { value: '', label: t('Forward to all industries') },
+                      ...industries.map((ind) => ({ value: ind.id, label: ind.name })),
+                    ]}
+                  />
+                  <Button size="sm" variant="secondary" onClick={() => handleForward(pr.id)} loading={busyId === `fwd:${pr.id}`}>
+                    {t('Forward to Industry')}
+                  </Button>
+                </div>
               </Card>
             ))}
-            {submitted.length === 0 && <Card className="text-center py-12 text-ink-soft">{t('No proposals awaiting approval.')}</Card>}
+            {reviewQueue.length === 0 && <Card className="text-center py-12 text-ink-soft">{t('No proposals awaiting review.')}</Card>}
           </div>
         )}
       </main>
