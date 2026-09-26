@@ -107,6 +107,8 @@ def industry_proposals(industry_id: str, db: Session = Depends(get_db), current_
             "status": p.status.value if isinstance(p.status, SolutionStatusEnum) else p.status,
             "budget_estimate": p.estimated_budget,
             "timeline_estimate": p.estimated_timeline,
+            "estimated_budget": p.estimated_budget,
+            "estimated_timeline": p.estimated_timeline,
             "forwarded_to_industry_id": p.forwarded_to_industry_id,
         }
         for p in proposals
